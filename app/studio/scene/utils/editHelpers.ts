@@ -6,7 +6,7 @@
  */
 
 import type { UniversalEditor } from '@/lib/core/adapters';
-import type { EditDelta } from '../lib/persistence/types';
+import type { EditDelta } from '@/lib/persistence/types';
 
 /**
  * Apply an edit delta to a scene object
