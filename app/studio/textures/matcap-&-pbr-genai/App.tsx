@@ -22,8 +22,9 @@ export default function App() {
 
   useEffect(() => {
     const checkKey = async () => {
-      if (window.aistudio) {
-        const has = await window.aistudio.hasSelectedApiKey();
+      const win = window as Window & { aistudio?: { hasSelectedApiKey: () => Promise<boolean>; openSelectKey: () => Promise<void> } };
+      if (win.aistudio) {
+        const has = await win.aistudio.hasSelectedApiKey();
         setHasApiKey(has);
       } else {
         setHasApiKey(true);
@@ -33,8 +34,9 @@ export default function App() {
   }, []);
 
   const handleKeySelection = async () => {
-    if (window.aistudio) {
-      await window.aistudio.openSelectKey();
+    const win = window as Window & { aistudio?: { hasSelectedApiKey: () => Promise<boolean>; openSelectKey: () => Promise<void> } };
+    if (win.aistudio) {
+      await win.aistudio.openSelectKey();
       setHasApiKey(true);
     }
   };

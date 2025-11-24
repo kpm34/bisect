@@ -53,7 +53,7 @@ export const generateTextureImage = async (
   // Initialize GoogleGenAI
   // If apiKey is undefined, we're in AI Studio and the library should use window.aistudio's key
   // Note: The @google/genai library from AI Studio CDN may automatically inject the API key
-  const ai = apiKey ? new GoogleGenAI({ apiKey }) : (new GoogleGenAI() as any);
+  const ai = new GoogleGenAI({ apiKey: apiKey || process.env.NEXT_PUBLIC_GOOGLE_GEMINI_API_KEY || '' });
 
   // Force Pro model if resolution is 2K, otherwise use selected quality
   const modelName = (quality === ModelQuality.HIGH || resolution === '2K')
@@ -85,15 +85,18 @@ export const generateTextureImage = async (
       contents: {
         parts: [{ text: finalPrompt }],
       },
+      // Cast config to any to allow experimental image generation params
       config: {
-        imageConfig,
-      },
+        responseModalities: ['IMAGE', 'TEXT'],
+        ...imageConfig,
+      } as any,
     });
 
     // Extract image from response
-    for (const part of response.candidates?.[0]?.content?.parts || []) {
-      if (part.inlineData) {
-        return `data:image/png;base64,${part.inlineData.data}`;
+    const parts = response.candidates?.[0]?.content?.parts || [];
+    for (const part of parts) {
+      if ((part as any).inlineData) {
+        return `data:image/png;base64,${(part as any).inlineData.data}`;
       }
     }
 

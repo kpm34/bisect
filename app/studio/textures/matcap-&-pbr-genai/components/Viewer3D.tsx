@@ -113,7 +113,7 @@ export const Viewer3D: React.FC<Viewer3DProps> = (props) => {
           </Html>
         }>
           {props.mode === TextureMode.PBR ? (
-            <Stage environment="city" intensity={0.5} contactShadow={false} adjustCamera={false}>
+            <Stage environment="city" intensity={0.5} shadows={false} adjustCamera={false}>
                {props.albedo ? <TexturedMesh {...props} /> : <PlaceholderMesh geometryType={props.geometryType} mode={props.mode} />}
             </Stage>
           ) : (

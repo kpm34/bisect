@@ -62,6 +62,14 @@ export class ScreenshotUtils {
         } = options;
 
         try {
+            // Check if Chrome extension API is available
+            if (typeof chrome === 'undefined' || !chrome?.tabs?.captureVisibleTab) {
+                return {
+                    success: false,
+                    error: 'Chrome extension API not available',
+                };
+            }
+
             // Capture visible tab
             const dataUrl = await chrome.tabs.captureVisibleTab({
                 format,

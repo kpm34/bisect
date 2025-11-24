@@ -19,7 +19,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import type { UniversalEditor } from '@/lib/core/adapters';
 import { historyStore } from '../lib/persistence/IndexedDBStore';
 import type { SceneSession, EditDelta, HistoryState } from '../lib/persistence/types';
-import { applyEditDelta } from '../utils/editHelpers';
+import { applyEditDelta } from '@/app/studio/scene/utils/editHelpers';
 
 interface UseSceneHistoryOptions {
   /** Maximum history size (default: 100) */

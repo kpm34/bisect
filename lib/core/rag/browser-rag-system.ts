@@ -128,8 +128,8 @@ export class BrowserRAGSystem {
       const similarEdits: SimilarEdit[] = results
         .filter(r => (1 - r.distance) >= this.similarityThreshold) // Convert distance to similarity
         .map(r => ({
-          command: r.metadata.command,
-          outcome: r.metadata.outcome,
+          command: r.metadata.command || '',
+          outcome: r.metadata.outcome || '',
           similarity: 1 - r.distance, // Distance to similarity score
           code: r.document // Store code in document field
         }));

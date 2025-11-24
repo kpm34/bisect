@@ -2,7 +2,7 @@ import React, { Suspense, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Stage, useTexture, Html } from '@react-three/drei';
 import * as THREE from 'three';
-import { TextureMode } from '../../lib/types/types';
+import { TextureMode } from '../lib/types/types';
 import { Loader2 } from 'lucide-react';
 
 interface Viewer3DProps {
@@ -113,7 +113,7 @@ export const Viewer3D: React.FC<Viewer3DProps> = (props) => {
           </Html>
         }>
           {props.mode === TextureMode.PBR ? (
-            <Stage environment="city" intensity={0.5} contactShadow={false} adjustCamera={false}>
+            <Stage environment="city" intensity={0.5} shadows={false} adjustCamera={false}>
                {props.albedo ? <TexturedMesh {...props} /> : <PlaceholderMesh geometryType={props.geometryType} mode={props.mode} />}
             </Stage>
           ) : (

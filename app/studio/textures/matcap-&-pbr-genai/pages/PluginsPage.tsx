@@ -301,7 +301,7 @@ matcap-studio --version
             <div><code className="text-purple-300">--mode</code> matcap | pbr (default: matcap)</div>
             <div><code className="text-purple-300">--quality</code> fast | high (default: high)</div>
             <div><code className="text-purple-300">--resolution</code> 1K | 2K (default: 1K)</div>
-            <div><code className="text-purple-300">--output</code> Output file path (default: ./matcap_{timestamp}.png)</div>
+            <div><code className="text-purple-300">--output</code> Output file path (default: ./matcap_&#123;timestamp&#125;.png)</div>
           </div>
         </div>
 

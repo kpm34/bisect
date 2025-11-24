@@ -71,7 +71,7 @@ export class MaterialApplicator {
         
         if (!url) return null;
 
-        return new Promise<THREE.Texture>((resolve) => {
+        return new Promise<THREE.Texture | null>((resolve) => {
             this.textureLoader.load(
                 url!,
                 (tex) => {
