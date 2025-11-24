@@ -230,10 +230,10 @@ export default function SelectionOutline() {
       }
       // Check if object is a Mesh (handle both THREE.Mesh instances and Spline's custom Mesh types)
       const isDirectMesh = obj instanceof THREE.Mesh || (obj as any).type?.includes('Mesh');
-      if (isDirectMesh && obj.geometry) {
+      if (isDirectMesh && (obj as any).geometry) {
         mesh = obj as unknown as THREE.Mesh;
         meshGeometry = getGeometry(mesh);
-        console.info(`✅ SelectionOutline: Object "${obj.name}" is a Mesh (type: ${(obj as any).type || obj.constructor.name})`);
+        console.info('SelectionOutline: Object is a Mesh: ' + obj.name);
       } else {
         // Not a direct mesh - search for mesh children
         console.info(`🔍 SelectionOutline: Object "${obj.name}" is not a Mesh (type: ${obj.type}), searching for mesh children...`);
@@ -286,19 +286,19 @@ export default function SelectionOutline() {
           // For Spline scenes, check both instanceof THREE.Mesh AND type.includes('Mesh')
           const isMesh = child instanceof THREE.Mesh || (child as any).type?.includes('Mesh');
           
-          if (isMesh) {
-            if (child.geometry && hasValidGeometry(child)) {
+          if (isMesh && child instanceof THREE.Mesh) {
+            if ((child as any).geometry && hasValidGeometry(child)) {
               // Prefer visible meshes, but include invisible ones too
               if (child.visible) {
                 meshesFound.unshift(child); // Add visible meshes to front
-                console.info(`  ├─ Found visible Mesh: "${child.name || 'unnamed'}" (type: ${(child as any).type || child.constructor.name}, geometry: ${child.geometry.type || 'unknown'})`);
+                console.info(`  ├─ Found visible Mesh: "${child.name || 'unnamed'}" (type: ${(child as any).type || child.constructor.name}, geometry: ${(child as any).geometry?.type || 'unknown'})`);
               } else {
                 meshesFound.push(child); // Add invisible meshes to back
-                console.info(`  ├─ Found invisible Mesh: "${child.name || 'unnamed'}" (type: ${(child as any).type || child.constructor.name}, geometry: ${child.geometry.type || 'unknown'})`);
+                console.info(`  ├─ Found invisible Mesh: "${child.name || 'unnamed'}" (type: ${(child as any).type || child.constructor.name}, geometry: ${(child as any).geometry?.type || 'unknown'})`);
               }
-            } else if (child.geometry) {
+            } else if ((child as any).geometry) {
               // Mesh has geometry but validation failed - log for debugging
-              const geom = child.geometry;
+              const geom = (child as any).geometry;
               console.warn(`  ⚠️ Mesh "${child.name || 'unnamed'}" has geometry but validation failed:`, {
                 type: geom.type,
                 hasAttributes: !!geom.attributes,
