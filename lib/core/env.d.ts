@@ -22,3 +22,13 @@ declare const chrome: {
     captureVisibleTab: (options?: { format?: string }) => Promise<string>;
   };
 } | undefined;
+
+// AI Studio API (optional, for AI Studio extension context)
+declare global {
+  interface Window {
+    aistudio?: {
+      hasSelectedApiKey: () => Promise<boolean>;
+      openSelectKey: () => Promise<void>;
+    };
+  }
+}
