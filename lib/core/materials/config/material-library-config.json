@@ -1,0 +1,141 @@
+{
+  "version": "1.0.0",
+  "schemaVersion": "1",
+  "lastUpdated": "2025-11-12",
+  "description": "SSOT for material library organization. ALL components read from this file. To change material selection, edit this file and re-run npm run process-materials.",
+
+  "categories": [
+    {
+      "id": "metal",
+      "label": "Metal",
+      "order": 1,
+      "enabled": true,
+      "featured": [
+        "chrome-mirror",
+        "gold-polished",
+        "brass-aged",
+        "copper-clean",
+        "aluminum-brushed"
+      ],
+      "advanced": [
+        "steel-industrial",
+        "titanium-anodized",
+        "iron-rusty"
+      ]
+    },
+    {
+      "id": "glass",
+      "label": "Glass",
+      "order": 2,
+      "enabled": true,
+      "featured": [
+        "clear-standard",
+        "frosted-satin",
+        "tinted-smoke",
+        "colored-amber",
+        "colored-blue"
+      ],
+      "advanced": [
+        "colored-green",
+        "stained-red",
+        "textured-ripple"
+      ]
+    },
+    {
+      "id": "wood",
+      "label": "Wood",
+      "order": 3,
+      "enabled": true,
+      "featured": [
+        "oak-natural",
+        "walnut-dark",
+        "pine-knotty",
+        "mahogany-rich",
+        "weathered-barn"
+      ],
+      "advanced": [
+        "bamboo-natural",
+        "polished-lacquered",
+        "reclaimed-industrial"
+      ]
+    },
+    {
+      "id": "stone",
+      "label": "Stone",
+      "order": 4,
+      "enabled": true,
+      "featured": [
+        "marble-carrara",
+        "granite-polished",
+        "concrete-industrial",
+        "slate-dark",
+        "sandstone-desert"
+      ],
+      "advanced": [
+        "cobblestone-street",
+        "limestone-natural",
+        "lava-volcanic"
+      ]
+    },
+    {
+      "id": "fabric",
+      "label": "Fabric",
+      "order": 5,
+      "enabled": true,
+      "featured": [
+        "leather-brown",
+        "velvet-red",
+        "silk-lustrous",
+        "denim-blue",
+        "canvas-natural"
+      ],
+      "advanced": [
+        "cotton-white",
+        "linen-natural",
+        "wool-knit"
+      ]
+    }
+  ],
+
+  "ui": {
+    "mainPanel": {
+      "maxCategories": 6,
+      "swatchSize": 46,
+      "swatchGap": 24,
+      "comment": "Dimensions for category swatches in main panel"
+    },
+    "hoverPopup": {
+      "showFeaturedOnly": true,
+      "maxItems": 5,
+      "itemHeight": 54,
+      "animationDuration": 300,
+      "comment": "Hover popup shows only featured materials (5 per category)"
+    },
+    "drawer": {
+      "showAllMaterials": true,
+      "width": 400,
+      "columns": 2,
+      "animationDuration": 300,
+      "comment": "Double-click drawer shows all materials (featured + advanced)"
+    }
+  },
+
+  "processing": {
+    "thumbnailSize": 128,
+    "includeTiers": ["featured", "advanced"],
+    "generateDescriptions": true,
+    "indexInChromaDB": false,
+    "comment": "Processing configuration for material export pipeline"
+  },
+
+  "notes": [
+    "⚠️ V1 Configuration - Material selections will evolve",
+    "📝 To change featured materials: Edit 'featured' array in any category",
+    "📝 To add new category: Add object to 'categories' array (max 6 for V1)",
+    "📝 To change UI behavior: Edit 'ui' object parameters",
+    "📝 To modify processing: Edit 'processing' object parameters",
+    "📝 After editing: Run 'npm run validate-material-config' then 'npm run process-materials'",
+    "📝 All UI components auto-update when this file changes - NO code changes needed!",
+    "🔄 Version history: V1 (2025-11-12) = 5 categories, 40 materials, 5 featured per category"
+  ]
+}
