@@ -6,6 +6,16 @@ import { generateTextureImage } from './services/geminiService';
 import { generateNormalMap, generateRoughnessMap } from './services/imageProcessing';
 import { Aperture, ArrowRight, Lock, Sparkles } from 'lucide-react';
 
+// Type declaration for AI Studio API (optional browser extension)
+declare global {
+  interface Window {
+    aistudio?: {
+      hasSelectedApiKey: () => Promise<boolean>;
+      openSelectKey: () => Promise<void>;
+    };
+  }
+}
+
 export default function App() {
   const [hasApiKey, setHasApiKey] = useState(false);
   

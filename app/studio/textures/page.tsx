@@ -2,6 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { Shell } from '@/components/shared/Shell';
+
+// Type declaration for AI Studio API (optional browser extension)
+declare global {
+  interface Window {
+    aistudio?: {
+      hasSelectedApiKey: () => Promise<boolean>;
+      openSelectKey: () => Promise<void>;
+    };
+  }
+}
 import { Viewer3D } from './matcap-&-pbr-genai/components/Viewer3D';
 import { ControlPanel } from './matcap-&-pbr-genai/components/ControlPanel';
 import { GeneratedTextureSet, GenerationConfig, TextureMode, ModelQuality } from './matcap-&-pbr-genai/types';
