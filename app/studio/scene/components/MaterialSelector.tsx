@@ -139,8 +139,10 @@ export function MaterialSelector() {
               const categoryMaterials = materialsByCategory[categoryId];
               if (!categoryMaterials || categoryMaterials.length === 0) return null;
 
-              // Use first material as center (default visible)
-              const centerIndex = 0;
+              // Reorder materials: [2 above] [center] [2 below]
+              // Take first 5 materials, center is always the middle index
+              const orderedMaterials = categoryMaterials.slice(0, 5);
+              const centerIndex = Math.floor(orderedMaterials.length / 2); // Dynamic center
 
               return (
                 <div
@@ -149,30 +151,33 @@ export function MaterialSelector() {
                   onMouseEnter={() => setHoveredCategory(categoryId)}
                   onMouseLeave={() => setHoveredCategory(null)}
                 >
-                  {/* Vertical Popup List */}
+                  {/* Vertical Popup List - 2 above, center, 2 below */}
                   <ul
                     style={{
                       ...styles.variationList,
                       ...(hoveredCategory === categoryId ? styles.variationListHovered : {})
                     }}
                   >
-                    {categoryMaterials.slice(0, 5).map((material, index) => {
+                    {orderedMaterials.map((material, index) => {
                       const isCenter = index === centerIndex;
                       const isActive = selectedMaterialId?.category === material.category &&
                                        selectedMaterialId?.id === material.id;
-                      const isVisible = hoveredCategory === categoryId || isCenter;
+                      const isHovered = hoveredCategory === categoryId;
 
                       // Get texture URL from material config
                       const baseColorUrl = material.textures?.baseColor;
 
+                      // Determine item style based on center/hover state
+                      const itemStyle = isCenter
+                        ? { ...styles.variationItem, ...styles.variationItemCenter }
+                        : isHovered
+                          ? { ...styles.variationItem, ...styles.variationItemExpanded }
+                          : { ...styles.variationItem, ...styles.variationItemCollapsed };
+
                       return (
                         <li
                           key={material.id}
-                          style={{
-                            ...styles.variationItem,
-                            opacity: isVisible ? 1 : 0,
-                            ...(isCenter ? styles.variationItemCenter : {})
-                          }}
+                          style={itemStyle}
                           onClick={() => handleMaterialClick(material)}
                         >
                           {/* Material Swatch with Texture */}
@@ -312,8 +317,11 @@ const styles: Record<string, React.CSSProperties> = {
     padding: 0,
     display: 'flex',
     flexDirection: 'column',
+    alignItems: 'center',
     zIndex: 99,
     transition: 'z-index 0.2s',
+    // Height for 5 items when expanded: (46px + 8px margin) * 5 = 270px
+    // Center item at position 2, so offset to center it
   } as React.CSSProperties,
 
   variationListHovered: {
@@ -324,14 +332,33 @@ const styles: Record<string, React.CSSProperties> = {
   variationItem: {
     width: '46px',
     height: '46px',
-    margin: '4px',
+    margin: '4px 0',
     position: 'relative',
     cursor: 'pointer',
-    transition: 'opacity 0.3s ease, transform 0.1s ease',
+    transition: 'opacity 0.3s ease, transform 0.2s ease, max-height 0.3s ease',
+    overflow: 'hidden',
   } as React.CSSProperties,
 
+  // Non-center items collapsed by default
+  variationItemCollapsed: {
+    maxHeight: '0px',
+    margin: '0',
+    opacity: 0,
+    pointerEvents: 'none' as const,
+  },
+
+  // Expanded state for non-center items
+  variationItemExpanded: {
+    maxHeight: '54px', // 46px + 8px margin
+    margin: '4px 0',
+    opacity: 1,
+    pointerEvents: 'auto' as const,
+  },
+
   variationItemCenter: {
-    // Center variation always visible
+    // Center variation always visible - no collapse
+    maxHeight: '54px',
+    opacity: 1,
   },
 
   // The circular swatch itself
