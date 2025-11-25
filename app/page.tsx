@@ -19,6 +19,7 @@ import {
   Brain,
   Globe
 } from 'lucide-react';
+import TextureShowcase from './components/TextureShowcase';
 
 export default function HomePage() {
   return (
@@ -256,6 +257,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Texture Showcase - See It In Action */}
+      <TextureShowcase />
 
       {/* CHAPTER 1: VECTOR STUDIO */}
       <section id="vector-studio" className="py-32 border-y border-charcoal/10 bg-white">
