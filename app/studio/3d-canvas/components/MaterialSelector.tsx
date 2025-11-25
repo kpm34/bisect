@@ -199,8 +199,8 @@ export function MaterialSelector() {
                                 backgroundImage: previewUrl
                                   ? `url(${previewUrl})`
                                   : undefined,
-                                backgroundColor: 'transparent',
-                                backgroundSize: '150%', // Zoom in to fill the circle
+                                backgroundColor: '#f3f4f6',
+                                backgroundSize: 'cover',
                                 backgroundRepeat: 'no-repeat',
                                 backgroundPosition: 'center',
                               }}
