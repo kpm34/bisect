@@ -8,10 +8,10 @@ export default function HomePage() {
         {/* Header */}
         <header className="text-center mb-16">
           <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
-            Unified 3D Creator
+            Bisect
           </h1>
           <p className="text-xl text-gray-300">
-            Create 3D scenes, vector graphics, and textures with zero learning curve
+            Connecting creative domains: 3D scenes, vector graphics, and textures
           </p>
         </header>
 

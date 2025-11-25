@@ -371,7 +371,7 @@ export const useUnifiedStore = create<UnifiedStore>()(
       }
     }),
     {
-      name: 'unified-3d-creator-storage',
+      name: 'bisect-storage',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         projects: state.projects,
