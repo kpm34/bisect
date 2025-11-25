@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import {
   ArrowRight,
-  Box,
   Terminal,
   PenTool,
   CheckCircle2,
@@ -17,7 +16,9 @@ import {
   Cuboid,
   Sparkles,
   Brain,
-  Globe
+  Globe,
+  Plug,
+  FileImage
 } from 'lucide-react';
 import TextureShowcase from './components/TextureShowcase';
 
@@ -36,17 +37,13 @@ export default function HomePage() {
 
             {/* Navigation Links */}
             <div className="hidden md:flex items-center gap-6">
-              <a href="#features" className="text-sm text-text-primary/60 hover:text-text-primary transition-colors">
-                Features
-              </a>
-              <a href="#vector-studio" className="text-sm text-text-primary/60 hover:text-text-primary transition-colors">
-                Vector
-              </a>
-              <a href="#3d-studio" className="text-sm text-text-primary/60 hover:text-text-primary transition-colors">
-                3D Scene
-              </a>
-              <a href="#texture-studio" className="text-sm text-text-primary/60 hover:text-text-primary transition-colors">
-                Texture
+              <Link href="/docs" className="text-sm text-text-primary/60 hover:text-text-primary transition-colors flex items-center gap-1">
+                <BookOpen size={14} />
+                Docs
+              </Link>
+              <a href="#dev-tools" className="text-sm text-text-primary/60 hover:text-text-primary transition-colors flex items-center gap-1">
+                <Terminal size={14} />
+                Dev Tools
               </a>
             </div>
           </div>
@@ -69,7 +66,7 @@ export default function HomePage() {
               href="/studio/textures"
               className="px-4 py-2 bg-cta-orange text-white rounded-lg text-sm font-medium hover:bg-cta-orange-hover transition-colors"
             >
-              Get Started
+              Tex Factory
             </Link>
           </div>
         </div>
@@ -491,6 +488,143 @@ export default function HomePage() {
               Launch Texture Studio
               <ArrowRight size={16} />
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* DEV TOOLS SECTION */}
+      <section id="dev-tools" className="py-32 bg-charcoal/5">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-green/10 border border-accent-green/20 text-[10px] font-mono text-accent-green uppercase tracking-wider mb-6">
+              Developer Tools
+            </div>
+            <h2 className="text-4xl md:text-5xl font-sans font-bold text-charcoal mb-4">Dev Tools</h2>
+            <p className="text-text-primary/70 text-lg max-w-2xl mx-auto">
+              CLI, API, and plugins for seamless integration into your development workflow
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 mb-16">
+            {/* CLI Tool */}
+            <div className="p-8 rounded-2xl bg-charcoal border border-charcoal shadow-lg">
+              <div className="flex items-center gap-3 mb-4">
+                <Terminal className="text-accent-green" size={24} />
+                <h3 className="text-xl font-semibold text-white">Command-Line Interface</h3>
+              </div>
+              <p className="text-white/70 mb-4">
+                npm-installable CLI for batch processing and CI/CD integration.
+              </p>
+              <ul className="space-y-2 text-sm text-white/60">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 size={16} className="text-accent-green mt-0.5 flex-shrink-0" />
+                  <span><strong className="text-white/90">Batch Convert:</strong> <code className="text-cta-orange">bisect convert ./assets/*.png</code></span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 size={16} className="text-accent-green mt-0.5 flex-shrink-0" />
+                  <span><strong className="text-white/90">SVG Optimize:</strong> <code className="text-cta-orange">bisect optimize --recursive ./icons</code></span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 size={16} className="text-accent-green mt-0.5 flex-shrink-0" />
+                  <span><strong className="text-white/90">Watch Mode:</strong> Auto-process on file changes</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* REST API */}
+            <div className="p-8 rounded-2xl bg-charcoal border border-charcoal shadow-lg">
+              <div className="flex items-center gap-3 mb-4">
+                <Code className="text-accent-teal" size={24} />
+                <h3 className="text-xl font-semibold text-white">REST API</h3>
+              </div>
+              <p className="text-white/70 mb-4">
+                Vercel-hosted serverless endpoints for on-demand processing.
+              </p>
+              <ul className="space-y-2 text-sm text-white/60">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 size={16} className="text-accent-teal mt-0.5 flex-shrink-0" />
+                  <span><strong className="text-white/90">POST /api/vectorize:</strong> Raster to vector conversion</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 size={16} className="text-accent-teal mt-0.5 flex-shrink-0" />
+                  <span><strong className="text-white/90">POST /api/optimize:</strong> SVG compression and cleanup</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 size={16} className="text-accent-teal mt-0.5 flex-shrink-0" />
+                  <span><strong className="text-white/90">POST /api/texture:</strong> AI texture generation</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Framework Plugins */}
+            <div className="p-8 rounded-2xl bg-charcoal border border-charcoal shadow-lg">
+              <div className="flex items-center gap-3 mb-4">
+                <Plug className="text-accent-purple" size={24} />
+                <h3 className="text-xl font-semibold text-white">Framework Plugins</h3>
+              </div>
+              <p className="text-white/70 mb-4">
+                First-party integrations for popular design and 3D tools.
+              </p>
+              <ul className="space-y-2 text-sm text-white/60">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 size={16} className="text-accent-purple mt-0.5 flex-shrink-0" />
+                  <span><strong className="text-white/90">Blender Add-on:</strong> Import SVG, apply textures directly</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 size={16} className="text-accent-purple mt-0.5 flex-shrink-0" />
+                  <span><strong className="text-white/90">Figma Plugin:</strong> Export optimized SVGs</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 size={16} className="text-accent-purple mt-0.5 flex-shrink-0" />
+                  <span><strong className="text-white/90">VSCode Extension:</strong> Preview and edit SVGs inline</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Developer Exports */}
+            <div className="p-8 rounded-2xl bg-charcoal border border-charcoal shadow-lg">
+              <div className="flex items-center gap-3 mb-4">
+                <FileImage className="text-cta-orange" size={24} />
+                <h3 className="text-xl font-semibold text-white">Developer Exports</h3>
+              </div>
+              <p className="text-white/70 mb-4">
+                Framework-ready code generation for modern web stacks.
+              </p>
+              <ul className="space-y-2 text-sm text-white/60">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 size={16} className="text-cta-orange mt-0.5 flex-shrink-0" />
+                  <span><strong className="text-white/90">React/Vue Components:</strong> TSX/JSX with TypeScript types</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 size={16} className="text-cta-orange mt-0.5 flex-shrink-0" />
+                  <span><strong className="text-white/90">Sprite Sheet:</strong> Combined SVG with symbol references</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 size={16} className="text-cta-orange mt-0.5 flex-shrink-0" />
+                  <span><strong className="text-white/90">Three.js Code:</strong> Copy-paste ready components</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Terminal Demo */}
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-charcoal border border-white/10 rounded-xl p-6 font-mono text-sm text-text-primary/70 shadow-xl">
+              <div className="flex gap-2 mb-4 opacity-50">
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              </div>
+              <div className="space-y-2 text-white/70">
+                <div><span className="text-accent-green">$</span> npm install -g @bisect/cli</div>
+                <div className="text-white/40">✓ Installed @bisect/cli@1.0.0</div>
+                <div className="mt-4"><span className="text-accent-green">$</span> bisect convert ./assets/*.png --output ./svg</div>
+                <div className="text-white/40">Processing 12 files...</div>
+                <div className="text-white/40">✓ logo.png → logo.svg (3.2KB → 1.1KB)</div>
+                <div className="text-white/40">✓ icon-home.png → icon-home.svg (1.8KB → 0.4KB)</div>
+                <div className="text-white/40">✓ Done in 2.3s</div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
