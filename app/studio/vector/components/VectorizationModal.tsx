@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Image as ImageIcon, Layers, Zap } from 'lucide-react';
-import { VectorizeConfig } from '../services/gemini';
+import { VectorizeConfig } from '../lib/services/gemini';
 
 interface VectorizationModalProps {
   isOpen: boolean;

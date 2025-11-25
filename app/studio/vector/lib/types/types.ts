@@ -46,7 +46,7 @@ export enum Tool {
   LASSO = 'LASSO'
 }
 
-export type ShapeType = 'rectangle' | 'circle' | 'triangle' | 'polygon';
+export type ShapeType = 'rectangle' | 'square' | 'ellipse' | 'circle' | 'triangle' | 'star' | 'line' | 'polygon';
 
 export interface Point {
   x: number;
@@ -59,12 +59,16 @@ export interface PathData {
   stroke?: string;
   strokeWidth?: number;
   fill?: string;
+  fillColor?: string;
   closed?: boolean;
   style?: 'solid' | 'crayon';
-  type?: 'text';
+  type?: 'text' | 'path' | 'shape';
   text?: string;
   fontSize?: number;
   fontFamily?: string;
+  color?: string;
+  align?: 'start' | 'middle' | 'end';
+  smoothing?: number;
 }
 
 // ============================================

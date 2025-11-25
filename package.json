@@ -1,8 +1,8 @@
 {
-  "name": "unified-3d-creator",
+  "name": "bisect",
   "version": "0.1.0",
   "private": true,
-  "description": "Unified no-code 3D creation platform - merging VectorCraft AI and Prism",
+  "description": "Bisect - Connecting creative domains, workflows, and 3D tools in one platform",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

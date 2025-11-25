@@ -149,7 +149,9 @@ export class GLTFAdapter implements ISceneAdapter {
 
       // Add model to scene
       this.gltfRoot = gltf.scene;
-      this.scene.add(this.gltfRoot);
+      if (this.gltfRoot) {
+        this.scene.add(this.gltfRoot);
+      }
 
       // Setup default lighting if no lights in scene
       if (this.getLights().length === 0) {
@@ -593,8 +595,8 @@ export class GLTFAdapter implements ISceneAdapter {
         
         // The intersection has face info, which means it hit a mesh child
         // Find the mesh child that was actually hit
-        let foundMesh: THREE.Mesh | null = null;
-        
+        let foundMesh: THREE.Mesh | undefined = undefined;
+
         hit.traverse((child) => {
           if (child instanceof THREE.Mesh && child.visible) {
             // Check if this mesh's geometry was the one hit
@@ -605,10 +607,11 @@ export class GLTFAdapter implements ISceneAdapter {
             }
           }
         });
-        
-        if (foundMesh) {
-          console.info(`✅ Found child mesh: "${foundMesh.name}" (UUID: ${foundMesh.uuid})`);
-          hit = foundMesh;
+
+        if (foundMesh !== undefined) {
+          const mesh = foundMesh as THREE.Mesh;
+          console.info(`✅ Found child mesh: "${mesh.name}" (UUID: ${mesh.uuid})`);
+          hit = mesh;
         } else {
           console.warn(`⚠️ Group "${hit.name}" has no visible mesh children`);
           // Return the group anyway - SelectionOutline will handle it
@@ -622,15 +625,16 @@ export class GLTFAdapter implements ISceneAdapter {
       } else {
         console.warn(`⚠️ Raycast: Hit object "${hit.name}" is not a Mesh (type: ${hit.type})`);
         // Try to find any mesh in the hierarchy
-        let meshFound: THREE.Mesh | null = null;
+        let meshFound: THREE.Mesh | undefined = undefined;
         hit.traverse((child) => {
           if (child instanceof THREE.Mesh && child.visible && !meshFound) {
             meshFound = child;
           }
         });
-        if (meshFound) {
-          console.info(`✅ Using child mesh: "${meshFound.name}"`);
-          return meshFound;
+        if (meshFound !== undefined) {
+          const mesh = meshFound as THREE.Mesh;
+          console.info(`✅ Using child mesh: "${mesh.name}"`);
+          return mesh;
         }
       }
     }

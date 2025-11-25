@@ -7,6 +7,7 @@ import VectorizationModal from './VectorizationModal';
 import CodeExportModal from './CodeExportModal';
 import UrlImportModal from './UrlImportModal';
 import LandingPage from './LandingPage';
+import { Shell } from '@/components/shared/Shell';
 import { Tool, PathData, Point, ShapeType } from '../lib/types/types';
 import {
   pointsToLinedPath,
@@ -106,7 +107,7 @@ export default function VectorEditor() {
 
   // --- Derived State ---
   useEffect(() => {
-    const colors = new Set(paths.map(p => p.color));
+    const colors = new Set(paths.map(p => p.color).filter((c): c is string => c !== undefined));
     // Filter out eraser color/bg color if present
     if (colors.has(CANVAS_BG_COLOR)) colors.delete(CANVAS_BG_COLOR);
     setExtractedColors(Array.from(colors));
@@ -429,7 +430,7 @@ export default function VectorEditor() {
           setFontSize(clickedText.fontSize || 24);
           setFontFamily(clickedText.fontFamily || 'sans-serif');
           setTextAlign(clickedText.align || 'start');
-          setColor(clickedText.color);
+          setColor(clickedText.color || '#000000');
         } else {
            // Create new text
            saveStateToUndo();
@@ -477,13 +478,13 @@ export default function VectorEditor() {
           // Sync Toolbar with Selected Item Properties
           const path = paths.find(p => p.id === hitPathId);
           if (path) {
-             setColor(path.color);
+             setColor(path.color || '#000000');
              if (path.type === 'text') {
                 setFontSize(path.fontSize || 24);
                 setFontFamily(path.fontFamily || 'sans-serif');
                 setTextAlign(path.align || 'start');
              } else {
-                setStrokeWidth(path.strokeWidth);
+                setStrokeWidth(path.strokeWidth || 3);
                 if (path.smoothing !== undefined) setSmoothingLevel(path.smoothing);
              }
           }
@@ -796,13 +797,13 @@ export default function VectorEditor() {
         // Sync toolbar
         const path = paths.find(p => p.id === hitId);
         if (path) {
-          setColor(path.color);
+          setColor(path.color || '#000000');
           if (path.type === 'text') {
              setFontSize(path.fontSize || 24);
              setFontFamily(path.fontFamily || 'sans-serif');
              setTextAlign(path.align || 'start');
           } else {
-             setStrokeWidth(path.strokeWidth);
+             setStrokeWidth(path.strokeWidth || 3);
              if (path.smoothing !== undefined) setSmoothingLevel(path.smoothing);
           }
         }
@@ -1315,7 +1316,7 @@ export default function VectorEditor() {
                transformOrigin: 'top left',
                minWidth: '50px',
                zIndex: 60,
-               textAlign: editingTextObj.align || 'start',
+               textAlign: (editingTextObj.align === 'middle' ? 'center' : editingTextObj.align === 'end' ? 'right' : 'left') as 'left' | 'center' | 'right',
                // Offset based on alignment
                transform: editingTextObj.align === 'middle' ? 'translateX(-50%)' : editingTextObj.align === 'end' ? 'translateX(-100%)' : 'none'
              }}
@@ -1371,7 +1372,7 @@ export default function VectorEditor() {
                     <path
                       d={pointsToSmoothedPath(path.points, path.smoothing !== undefined ? path.smoothing : smoothingLevel)}
                       stroke="#3b82f6"
-                      strokeWidth={path.strokeWidth + 4}
+                      strokeWidth={(path.strokeWidth || 3) + 4}
                       fill="none"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -1380,8 +1381,8 @@ export default function VectorEditor() {
                   )}
                   <path
                     d={pointsToSmoothedPath(path.points, path.smoothing !== undefined ? path.smoothing : smoothingLevel)}
-                    stroke={path.color}
-                    strokeWidth={path.strokeWidth}
+                    stroke={path.color || '#000000'}
+                    strokeWidth={path.strokeWidth || 3}
                     fill={path.fillColor || 'none'}
                     strokeLinecap="round"
                     strokeLinejoin="round"
