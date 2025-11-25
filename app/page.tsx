@@ -43,19 +43,19 @@ export default function HomePage() {
           {/* Right Side - Studio Links */}
           <div className="flex items-center gap-4">
             <Link
-              href="/studio/vector"
+              href="/studio/svg-canvas"
               className="text-sm font-medium text-text-primary/60 hover:text-text-primary transition-colors hidden sm:block"
             >
               Vector Studio
             </Link>
             <Link
-              href="/studio/scene"
+              href="/studio/3d-canvas"
               className="text-sm font-medium text-text-primary/60 hover:text-text-primary transition-colors hidden sm:block"
             >
               3D Studio
             </Link>
             <Link
-              href="/studio/textures"
+              href="/studio/tex-factory"
               className="px-4 py-2 bg-cta-orange text-white rounded-lg text-sm font-medium hover:bg-cta-orange-hover transition-colors"
             >
               Tex Factory
@@ -86,7 +86,7 @@ export default function HomePage() {
 
             <div className="flex flex-wrap items-center gap-4 pt-4">
               <Link
-                href="/studio/vector"
+                href="/studio/svg-canvas"
                 className="group px-8 py-4 bg-cta-orange text-white rounded-xl font-medium hover:bg-cta-orange-hover transition-all flex items-center gap-2 shadow-lg shadow-cta-orange/25"
               >
                 <PenTool size={16} />
@@ -94,7 +94,7 @@ export default function HomePage() {
                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
-                href="/studio/scene"
+                href="/studio/3d-canvas"
                 className="group px-8 py-4 bg-white border border-charcoal/20 text-charcoal rounded-xl font-medium hover:border-cta-orange hover:shadow-lg transition-all flex items-center gap-2"
               >
                 <Cuboid size={16} />
@@ -172,7 +172,7 @@ export default function HomePage() {
           <div className="grid md:grid-cols-3 gap-8">
             {/* Vector Studio Card */}
             <Link
-              href="/studio/vector"
+              href="/studio/svg-canvas"
               className="p-8 rounded-2xl bg-white border border-charcoal/10 hover:border-cta-orange/30 transition-all duration-200 group shadow-sm hover:shadow-lg hover:scale-[1.02] hover:-translate-y-0.5"
             >
               <PenTool className="text-cta-orange mb-6 group-hover:scale-110 transition-transform" size={32} />
@@ -196,7 +196,7 @@ export default function HomePage() {
 
             {/* 3D Studio Card */}
             <Link
-              href="/studio/scene"
+              href="/studio/3d-canvas"
               className="p-8 rounded-2xl bg-white border border-charcoal/10 hover:border-cta-orange/30 transition-all duration-200 group shadow-sm hover:shadow-lg hover:scale-[1.02] hover:-translate-y-0.5"
             >
               <Cuboid className="text-cta-orange mb-6 group-hover:scale-110 transition-transform" size={32} />
@@ -220,7 +220,7 @@ export default function HomePage() {
 
             {/* Texture Studio Card */}
             <Link
-              href="/studio/textures"
+              href="/studio/tex-factory"
               className="p-8 rounded-2xl bg-white border border-charcoal/10 hover:border-accent-teal/30 transition-all duration-200 group shadow-sm hover:shadow-lg hover:scale-[1.02] hover:-translate-y-0.5"
             >
               <Palette className="text-accent-teal mb-6 group-hover:scale-110 transition-transform" size={32} />
@@ -408,21 +408,21 @@ export default function HomePage() {
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4">
           <Link
-            href="/studio/vector"
+            href="/studio/svg-canvas"
             className="px-8 py-4 bg-cta-orange text-white rounded-xl font-medium hover:bg-cta-orange-hover transition-colors shadow-lg shadow-cta-orange/25 flex items-center gap-2"
           >
             <PenTool size={16} />
             Vector Studio
           </Link>
           <Link
-            href="/studio/scene"
+            href="/studio/3d-canvas"
             className="px-8 py-4 bg-cta-orange text-white rounded-xl font-medium hover:bg-cta-orange-hover transition-colors shadow-lg shadow-cta-orange/25 flex items-center gap-2"
           >
             <Cuboid size={16} />
             3D Studio
           </Link>
           <Link
-            href="/studio/textures"
+            href="/studio/tex-factory"
             className="px-8 py-4 bg-white border border-charcoal/20 text-charcoal rounded-xl font-medium hover:border-accent-teal hover:shadow-lg transition-all flex items-center gap-2"
           >
             <Palette size={16} />
@@ -451,17 +451,17 @@ export default function HomePage() {
               <h3 className="font-sans font-semibold text-charcoal mb-4">Studios</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="/studio/vector" className="text-text-primary/60 hover:text-cta-orange transition-colors">
+                  <Link href="/studio/svg-canvas" className="text-text-primary/60 hover:text-cta-orange transition-colors">
                     Vector Studio
                   </Link>
                 </li>
                 <li>
-                  <Link href="/studio/scene" className="text-text-primary/60 hover:text-cta-orange transition-colors">
+                  <Link href="/studio/3d-canvas" className="text-text-primary/60 hover:text-cta-orange transition-colors">
                     3D Studio
                   </Link>
                 </li>
                 <li>
-                  <Link href="/studio/textures" className="text-text-primary/60 hover:text-cta-orange transition-colors">
+                  <Link href="/studio/tex-factory" className="text-text-primary/60 hover:text-cta-orange transition-colors">
                     Texture Studio
                   </Link>
                 </li>

@@ -1,0 +1,213 @@
+import React, { useState, useEffect } from 'react';
+import { TexturePreview3D } from './components/TexturePreview3D';
+import { TextureControlPanel } from './components/TextureControlPanel';
+import { GeneratedTextureSet, GenerationConfig, TextureMode, ModelQuality } from './types';
+import { generateTextureImage } from './services/geminiService';
+import { generateNormalMap, generateRoughnessMap } from './services/imageProcessing';
+import { Palette, ArrowRight, Lock, Sparkles } from 'lucide-react';
+
+// Type declaration for AI Studio API (optional browser extension)
+declare global {
+  interface Window {
+    aistudio?: {
+      hasSelectedApiKey: () => Promise<boolean>;
+      openSelectKey: () => Promise<void>;
+    };
+  }
+}
+
+export default function App() {
+  const [hasApiKey, setHasApiKey] = useState(false);
+
+  // Lifted state for "Live Preview" functionality
+  const [prompt, setPrompt] = useState('');
+  const [mode, setMode] = useState<TextureMode>(TextureMode.MATCAP);
+  const [quality, setQuality] = useState<ModelQuality>(ModelQuality.HIGH);
+  const [geometryType, setGeometryType] = useState<'sphere' | 'box' | 'torus' | 'plane'>('sphere');
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isUpscaling, setIsUpscaling] = useState(false);
+  const [currentTexture, setCurrentTexture] = useState<GeneratedTextureSet | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkKey = async () => {
+      const win = window as Window & { aistudio?: { hasSelectedApiKey: () => Promise<boolean>; openSelectKey: () => Promise<void> } };
+      if (win.aistudio) {
+        const has = await win.aistudio.hasSelectedApiKey();
+        setHasApiKey(has);
+      } else {
+        setHasApiKey(true);
+      }
+    };
+    checkKey();
+  }, []);
+
+  const handleKeySelection = async () => {
+    const win = window as Window & { aistudio?: { hasSelectedApiKey: () => Promise<boolean>; openSelectKey: () => Promise<void> } };
+    if (win.aistudio) {
+      await win.aistudio.openSelectKey();
+      setHasApiKey(true);
+    }
+  };
+
+  const processMaps = async (albedo: string, mode: TextureMode, resolution: '1K' | '2K') => {
+    let normal: string | undefined;
+    let roughness: string | undefined;
+
+    if (mode === TextureMode.PBR) {
+      // Adjust strength slightly based on resolution for better finish
+      const strength = resolution === '2K' ? 3.5 : 2.5;
+      const [nMap, rMap] = await Promise.all([
+        generateNormalMap(albedo, strength),
+        generateRoughnessMap(albedo, true)
+      ]);
+      normal = nMap;
+      roughness = rMap;
+    }
+    return { normal, roughness };
+  };
+
+  const handleGenerate = async () => {
+    if (!prompt.trim()) return;
+
+    setIsGenerating(true);
+    setError(null);
+    try {
+      // Default to 1K for initial generation to be snappy, unless user really wants high quality start
+      // But keeping consistent with user choice.
+      const resolution = '1K';
+      const albedo = await generateTextureImage(prompt, mode, quality, resolution);
+      const { normal, roughness } = await processMaps(albedo, mode, resolution);
+
+      setCurrentTexture({
+        id: crypto.randomUUID(),
+        mode,
+        prompt,
+        albedo,
+        normal,
+        roughness,
+        timestamp: Date.now(),
+        resolution
+      });
+
+    } catch (e: any) {
+      const msg = e.message || "Failed to generate texture.";
+      setError(msg);
+      if (msg.includes("Requested entity was not found") || msg.includes("403")) {
+        setHasApiKey(false);
+      }
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleUpscale = async () => {
+    if (!currentTexture || !prompt) return;
+
+    setIsUpscaling(true);
+    setError(null);
+
+    try {
+      // Force 2K resolution
+      const resolution = '2K';
+      const albedo = await generateTextureImage(prompt, currentTexture.mode, ModelQuality.HIGH, resolution);
+      const { normal, roughness } = await processMaps(albedo, currentTexture.mode, resolution);
+
+      setCurrentTexture({
+        ...currentTexture,
+        id: crypto.randomUUID(),
+        albedo,
+        normal,
+        roughness,
+        resolution,
+        timestamp: Date.now()
+      });
+    } catch (e: any) {
+      setError("Upscale failed: " + e.message);
+    } finally {
+      setIsUpscaling(false);
+    }
+  };
+
+  if (!hasApiKey) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen w-screen bg-[#111319] text-white p-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#0891B2]/20 via-[#111319] to-[#111319] z-0" />
+        <div className="z-10 max-w-lg text-center space-y-8">
+           <div className="flex justify-center mb-6">
+             <div className="relative">
+               <div className="absolute inset-0 blur-xl bg-[#0891B2]/30 rounded-full" />
+               <Palette className="w-20 h-20 text-[#0891B2] relative z-10" />
+             </div>
+           </div>
+
+           <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-neutral-400">
+             Tex Factory
+           </h1>
+           <p className="text-neutral-400 text-lg leading-relaxed">
+             Create professional MatCaps and seamless PBR textures instantly using Gemini.
+           </p>
+
+           <div className="pt-8">
+             <button
+               onClick={handleKeySelection}
+               className="group relative inline-flex items-center justify-center px-8 py-3.5 text-base font-semibold text-white transition-all duration-200 bg-[#0891B2] rounded-full hover:bg-[#0891B2]/80 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0891B2] focus:ring-offset-[#111319]"
+             >
+               <Sparkles className="w-5 h-5 mr-2" />
+               Connect API Key
+               <ArrowRight className="w-4 h-4 ml-2 opacity-50 group-hover:translate-x-1 transition-transform" />
+             </button>
+           </div>
+
+           <p className="text-xs text-neutral-600 pt-4">
+             Requires a valid Google Cloud Project API Key with Gemini enabled.<br/>
+             <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noreferrer" className="underline hover:text-neutral-400">Billing Information</a>
+           </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-screen w-screen bg-[#111319] text-white font-sans overflow-hidden">
+      <TextureControlPanel
+        isGenerating={isGenerating}
+        isUpscaling={isUpscaling}
+        onGenerate={handleGenerate}
+        onUpscale={handleUpscale}
+        geometryType={geometryType}
+        setGeometryType={setGeometryType}
+        currentTexture={currentTexture}
+        // Passed state
+        prompt={prompt}
+        setPrompt={setPrompt}
+        mode={mode}
+        setMode={setMode}
+        quality={quality}
+        setQuality={setQuality}
+      />
+
+      <div className="flex-1 relative h-full">
+        {/* Pass user selected mode if no texture exists yet, to allow previewing lighting setup */}
+        <TexturePreview3D
+          albedo={currentTexture?.albedo}
+          normal={currentTexture?.normal}
+          roughness={currentTexture?.roughness}
+          mode={currentTexture?.mode || mode}
+          geometryType={geometryType}
+        />
+
+        {error && (
+           <div className="absolute bottom-6 left-6 right-6 mx-auto max-w-lg bg-red-900/90 backdrop-blur-sm border border-red-700 text-white p-4 rounded-xl shadow-2xl flex items-center justify-between animate-in slide-in-from-bottom-5 z-50">
+             <div className="flex items-center gap-3">
+               <Lock className="w-5 h-5 text-red-300" />
+               <span className="text-sm font-medium">{error}</span>
+             </div>
+             <button onClick={() => setError(null)} className="text-red-200 hover:text-white hover:bg-red-800/50 p-1 rounded-md transition-colors">&#x2715;</button>
+           </div>
+        )}
+      </div>
+    </div>
+  );
+}

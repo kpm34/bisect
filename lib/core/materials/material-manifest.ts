@@ -314,6 +314,7 @@ const MTL_Gold_Polished: MaterialConfig = {
   "name": "Gold Polished",
   "displayName": "Gold Polished",
   "category": "metal",
+  "thumbnailPath": "/assets/materials/metal/gold-polished.png?v=3",
   "textures": {
     "baseColor": "/assets/materials/metal/gold-polished.png"
   },
@@ -960,6 +961,52 @@ const GLS_Tinted_Smoke: MaterialConfig = {
   "description": "Smoked gray glass great for modern interiors."
 };
 
+// NEW PRESETS (Added manually)
+const MTL_Silver_Polished: MaterialConfig = {
+  "id": "MTL_Silver_Polished",
+  "name": "Silver Polished",
+  "displayName": "Silver Polished",
+  "category": "metal",
+  "properties": {
+    "roughness": 0.1,
+    "metallic": 1.0,
+    "baseColorHex": "#c0c0c0"
+  },
+  "tags": ["metal", "silver", "polished", "featured"],
+  "thumbnailPath": "/assets/materials/metal/silver-polished.png?v=3",
+  "description": "Polished silver with high reflectivity"
+};
+
+const MTL_Copper_Polished: MaterialConfig = {
+  "id": "MTL_Copper_Polished",
+  "name": "Copper Polished",
+  "displayName": "Copper Polished",
+  "category": "metal",
+  "properties": {
+    "roughness": 0.2,
+    "metallic": 1.0,
+    "baseColorHex": "#b87333"
+  },
+  "tags": ["metal", "copper", "polished", "featured"],
+  "thumbnailPath": "/assets/materials/metal/copper-polished.png?v=3",
+  "description": "Polished copper with warm tones"
+};
+
+const MTL_Iron_Rough: MaterialConfig = {
+  "id": "MTL_Iron_Rough",
+  "name": "Iron Rough",
+  "displayName": "Iron Rough",
+  "category": "metal",
+  "properties": {
+    "roughness": 0.7,
+    "metallic": 1.0,
+    "baseColorHex": "#4d4d4d"
+  },
+  "tags": ["metal", "iron", "rough", "featured"],
+  "thumbnailPath": "/assets/materials/metal/iron-rough.png?v=3",
+  "description": "Rough iron with matte finish"
+};
+
 // ─────────────────────────────────────────────────────────────
 // Materials Map
 // ─────────────────────────────────────────────────────────────
@@ -1005,6 +1052,9 @@ export const MATERIALS: Record<string, MaterialConfig> = {
   'GLS_Stained_Red': GLS_Stained_Red,
   'GLS_Textured_Ripple': GLS_Textured_Ripple,
   'GLS_Tinted_Smoke': GLS_Tinted_Smoke,
+  'MTL_Silver_Polished': MTL_Silver_Polished,
+  'MTL_Copper_Polished': MTL_Copper_Polished,
+  'MTL_Iron_Rough': MTL_Iron_Rough,
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -1015,26 +1065,26 @@ export const CATEGORIES: Record<MaterialCategory, CategoryConfig> = {
   fabric: {
     id: 'fabric',
     label: 'Fabric',
-    featured: ["FBR_Canvas_Natural","FBR_Cotton_White","FBR_Denim_Blue","FBR_Leather_Brown","FBR_Linen_Natural"],
-    all: ["FBR_Canvas_Natural","FBR_Cotton_White","FBR_Denim_Blue","FBR_Leather_Brown","FBR_Linen_Natural","FBR_Silk_Lustrous","FBR_Velvet_Red","FBR_Wool_Knit"]
+    featured: ["FBR_Canvas_Natural", "FBR_Cotton_White", "FBR_Denim_Blue", "FBR_Leather_Brown", "FBR_Linen_Natural"],
+    all: ["FBR_Canvas_Natural", "FBR_Cotton_White", "FBR_Denim_Blue", "FBR_Leather_Brown", "FBR_Linen_Natural", "FBR_Silk_Lustrous", "FBR_Velvet_Red", "FBR_Wool_Knit"]
   },
   metal: {
     id: 'metal',
     label: 'Metal',
-    featured: ["MTL_Aluminum_Brushed","MTL_Brass_Aged","MTL_Chrome_Mirror","MTL_Copper_Clean","MTL_Gold_Polished"],
-    all: ["MTL_Aluminum_Brushed","MTL_Brass_Aged","MTL_Chrome_Mirror","MTL_Copper_Clean","MTL_Gold_Polished","MTL_Iron_Rusty","MTL_Steel_Industrial","MTL_Titanium_Anodized"]
+    featured: ["MTL_Aluminum_Brushed", "MTL_Gold_Polished", "MTL_Silver_Polished", "MTL_Copper_Polished", "MTL_Iron_Rough"],
+    all: ["MTL_Aluminum_Brushed", "MTL_Brass_Aged", "MTL_Chrome_Mirror", "MTL_Copper_Clean", "MTL_Gold_Polished", "MTL_Iron_Rusty", "MTL_Steel_Industrial", "MTL_Titanium_Anodized", "MTL_Silver_Polished", "MTL_Copper_Polished", "MTL_Iron_Rough"]
   },
   stone: {
     id: 'stone',
     label: 'Stone',
-    featured: ["STN_Cobblestone_Street","STN_Concrete_Industrial","STN_Granite_Polished","STN_Lava_Volcanic","STN_Limestone_Natural"],
-    all: ["STN_Cobblestone_Street","STN_Concrete_Industrial","STN_Granite_Polished","STN_Lava_Volcanic","STN_Limestone_Natural","STN_Marble_Carrara","STN_Sandstone_Desert","STN_Slate_Dark"]
+    featured: ["STN_Cobblestone_Street", "STN_Concrete_Industrial", "STN_Granite_Polished", "STN_Lava_Volcanic", "STN_Limestone_Natural"],
+    all: ["STN_Cobblestone_Street", "STN_Concrete_Industrial", "STN_Granite_Polished", "STN_Lava_Volcanic", "STN_Limestone_Natural", "STN_Marble_Carrara", "STN_Sandstone_Desert", "STN_Slate_Dark"]
   },
   wood: {
     id: 'wood',
     label: 'Wood',
-    featured: ["WOD_Bamboo_Natural","WOD_Mahogany_Rich","WOD_Oak_Natural","WOD_Pine_Knotty","WOD_Polished_Lacquered"],
-    all: ["WOD_Bamboo_Natural","WOD_Mahogany_Rich","WOD_Oak_Natural","WOD_Pine_Knotty","WOD_Polished_Lacquered","WOD_Reclaimed_Industrial","WOD_Walnut_Dark","WOD_Weathered_Barn"]
+    featured: ["WOD_Bamboo_Natural", "WOD_Mahogany_Rich", "WOD_Oak_Natural", "WOD_Pine_Knotty", "WOD_Polished_Lacquered"],
+    all: ["WOD_Bamboo_Natural", "WOD_Mahogany_Rich", "WOD_Oak_Natural", "WOD_Pine_Knotty", "WOD_Polished_Lacquered", "WOD_Reclaimed_Industrial", "WOD_Walnut_Dark", "WOD_Weathered_Barn"]
   },
   ceramic: {
     id: 'ceramic',
@@ -1045,8 +1095,8 @@ export const CATEGORIES: Record<MaterialCategory, CategoryConfig> = {
   glass: {
     id: 'glass',
     label: 'Glass',
-    featured: ["GLS_Clear_Standard","GLS_Colored_Amber","GLS_Colored_Blue","GLS_Colored_Green","GLS_Frosted_Satin"],
-    all: ["GLS_Clear_Standard","GLS_Colored_Amber","GLS_Colored_Blue","GLS_Colored_Green","GLS_Frosted_Satin","GLS_Stained_Red","GLS_Textured_Ripple","GLS_Tinted_Smoke"]
+    featured: ["GLS_Clear_Standard", "GLS_Colored_Amber", "GLS_Colored_Blue", "GLS_Colored_Green", "GLS_Frosted_Satin"],
+    all: ["GLS_Clear_Standard", "GLS_Colored_Amber", "GLS_Colored_Blue", "GLS_Colored_Green", "GLS_Frosted_Satin", "GLS_Stained_Red", "GLS_Textured_Ripple", "GLS_Tinted_Smoke"]
   },
   plastic: {
     id: 'plastic',

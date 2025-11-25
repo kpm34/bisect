@@ -43,19 +43,19 @@ export default function DocsPage() {
 
           <div className="flex items-center gap-4">
             <Link
-              href="/studio/vector"
+              href="/studio/svg-canvas"
               className="text-sm text-text-primary/60 hover:text-text-primary transition-colors hidden sm:block"
             >
               Vector Studio
             </Link>
             <Link
-              href="/studio/scene"
+              href="/studio/3d-canvas"
               className="text-sm text-text-primary/60 hover:text-text-primary transition-colors hidden sm:block"
             >
               3D Studio
             </Link>
             <Link
-              href="/studio/textures"
+              href="/studio/tex-factory"
               className="px-4 py-2 bg-cta-orange text-white rounded-lg text-sm font-medium hover:bg-cta-orange-hover transition-colors"
             >
               Tex Factory
@@ -589,7 +589,7 @@ export default function DocsPage() {
             <h3 className="text-lg font-semibold text-charcoal mb-6 text-center">Ready to Start?</h3>
             <div className="flex flex-wrap justify-center gap-4">
               <Link
-                href="/studio/vector"
+                href="/studio/svg-canvas"
                 className="px-6 py-3 bg-cta-orange text-white rounded-xl font-medium hover:bg-cta-orange-hover transition-colors flex items-center gap-2"
               >
                 <PenTool size={16} />
@@ -597,7 +597,7 @@ export default function DocsPage() {
                 <ArrowRight size={16} />
               </Link>
               <Link
-                href="/studio/scene"
+                href="/studio/3d-canvas"
                 className="px-6 py-3 bg-accent-purple text-white rounded-xl font-medium hover:bg-purple-600 transition-colors flex items-center gap-2"
               >
                 <Cuboid size={16} />
@@ -605,7 +605,7 @@ export default function DocsPage() {
                 <ArrowRight size={16} />
               </Link>
               <Link
-                href="/studio/textures"
+                href="/studio/tex-factory"
                 className="px-6 py-3 bg-accent-teal text-white rounded-xl font-medium hover:bg-cyan-600 transition-colors flex items-center gap-2"
               >
                 <Palette size={16} />

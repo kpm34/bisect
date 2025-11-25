@@ -25,9 +25,9 @@ export function Shell({
   const pathname = usePathname();
 
   const navItems = [
-    { href: '/studio/vector', label: 'Vector Studio', icon: PenTool },
-    { href: '/studio/textures', label: 'Texture Studio', icon: Image },
-    { href: '/studio/scene', label: '3D Studio', icon: Box },
+    { href: '/studio/svg-canvas', label: 'SVG Canvas', icon: PenTool },
+    { href: '/studio/tex-factory', label: 'Tex Factory', icon: Image },
+    { href: '/studio/3d-canvas', label: '3D Canvas', icon: Box },
   ];
 
   return (
