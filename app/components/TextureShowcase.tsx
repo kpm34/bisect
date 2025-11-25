@@ -7,8 +7,8 @@ const showcaseItems = [
   { category: 'Fashion & Apparel', title: 'Denim Fabric', prompt: 'Blue denim fabric texture', image: '/assets/examples/blue_denim_fabric_texture_albedo.png', type: 'MatCap' },
   { category: 'Architecture', title: 'Mahogany Wood', prompt: 'Polished mahogany wood texture', image: '/assets/examples/polished_mahogany_wood_texture_albedo.png', type: 'MatCap' },
   { category: 'Automotive', title: 'Carbon Fiber', prompt: 'Carbon fiber hexagonal pattern', image: '/assets/examples/carbon_fiber_hexagonal_pattern_albedo.png', type: 'MatCap' },
-  { category: 'Game Design', title: 'Chrome Metal', prompt: 'Polished chrome metal finish', image: '/assets/examples/chrome-texture.png', type: 'MatCap' },
-  { category: 'Abstract Art', title: 'Tiger Pattern', prompt: 'Realistic tiger fur pattern', image: '/assets/examples/tiger-texture.png', type: 'PBR Albedo' }
+  { category: 'Industrial', title: 'Chrome Metal', prompt: 'Polished chrome metal finish', image: '/assets/examples/chrome-texture.png', type: 'MatCap' },
+  { category: 'Nature & Wildlife', title: 'Tiger Pattern', prompt: 'Realistic tiger fur pattern', image: '/assets/examples/tiger-texture.png', type: 'PBR Albedo' }
 ];
 
 export default function TextureShowcase() {
@@ -79,7 +79,6 @@ export default function TextureShowcase() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex gap-2">
                         <span className="px-2 py-1 rounded-md bg-charcoal text-white text-[10px] font-mono uppercase">{showcaseItems[activeShowcaseIndex].type}</span>
-                        <span className="px-2 py-1 rounded-md bg-charcoal/5 text-charcoal text-[10px] font-mono">1K</span>
                       </div>
                       <Download size={16} className="text-charcoal/40 hover:text-cta-orange cursor-pointer transition-colors" />
                     </div>

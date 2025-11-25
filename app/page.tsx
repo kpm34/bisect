@@ -5,7 +5,6 @@ import {
   PenTool,
   CheckCircle2,
   Code,
-  Grid3x3,
   Palette,
   BookOpen,
   ChevronDown,
@@ -108,10 +107,6 @@ export default function HomePage() {
           {/* Hero Graphic: Vector Before/After */}
           <div className="relative h-auto w-full hidden md:flex items-center justify-center">
             <div className="bg-white rounded-2xl border border-charcoal/10 p-8 shadow-lg h-full flex flex-col justify-center relative overflow-hidden w-full max-w-md">
-              <div className="absolute top-0 right-0 p-4 opacity-5">
-                <Grid3x3 size={120} />
-              </div>
-
               <div className="flex flex-col md:flex-row items-center justify-center gap-8 relative z-10">
                 {/* Before */}
                 <div className="text-center group">
@@ -405,38 +400,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Powered by AI Section */}
-      <section className="py-24 bg-charcoal text-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-sans font-bold mb-4">Powered by Multi-Agent AI</h2>
-            <p className="text-white/60 max-w-2xl mx-auto">
-              Best-in-class AI models working together for optimal results
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            <div className="p-6 bg-white/5 rounded-xl border border-white/10 text-center">
-              <div className="text-4xl mb-3">&#x1F916;</div>
-              <h4 className="font-semibold mb-2">GPT-4o</h4>
-              <p className="text-sm text-white/60">Scene understanding with vision</p>
-            </div>
-
-            <div className="p-6 bg-white/5 rounded-xl border border-white/10 text-center">
-              <div className="text-4xl mb-3">&#x2728;</div>
-              <h4 className="font-semibold mb-2">Gemini</h4>
-              <p className="text-sm text-white/60">Fast texture &amp; vector generation</p>
-            </div>
-
-            <div className="p-6 bg-white/5 rounded-xl border border-white/10 text-center">
-              <div className="text-4xl mb-3">&#x1F9E0;</div>
-              <h4 className="font-semibold mb-2">Claude</h4>
-              <p className="text-sm text-white/60">Complex reasoning &amp; planning</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Footer CTA */}
       <section className="py-20 border-t border-charcoal/10 text-center bg-white">
         <h2 className="text-3xl font-sans font-bold text-charcoal mb-4">Ready to Create?</h2>
@@ -532,18 +495,18 @@ export default function HomePage() {
               <h3 className="font-sans font-semibold text-charcoal mb-4">Resources</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="#" className="text-text-primary/60 hover:text-cta-orange transition-colors">
+                  <Link href="/docs" className="text-text-primary/60 hover:text-cta-orange transition-colors">
                     Documentation
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="text-text-primary/60 hover:text-cta-orange transition-colors">
+                  <Link href="/docs#api-reference" className="text-text-primary/60 hover:text-cta-orange transition-colors">
                     API Reference
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="text-text-primary/60 hover:text-cta-orange transition-colors">
-                    Community
+                  <a href="https://github.com" className="text-text-primary/60 hover:text-cta-orange transition-colors">
+                    GitHub
                   </a>
                 </li>
               </ul>
