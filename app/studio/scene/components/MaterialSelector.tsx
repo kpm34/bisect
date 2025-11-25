@@ -12,7 +12,8 @@
  * Now fetches materials from Appwrite database instead of local manifest
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { Grid3X3, ChevronRight } from 'lucide-react';
 import { useSelection } from '../r3f/SelectionContext';
 import {
   MaterialConfig,
@@ -21,6 +22,7 @@ import {
   getCategoryMaterials,
   getFeaturedMaterials,
 } from '@/lib/core/materials';
+import { MaterialDrawer } from './MaterialDrawer';
 
 type MaterialCategoryType = MaterialCategory;
 
@@ -30,6 +32,7 @@ export function MaterialSelector() {
     category: string;
     id: string;
   } | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { setColor, setRoughness, setMetalness, selectedObject } = useSelection();
 
   // Get all materials from local manifest
@@ -149,61 +152,76 @@ export function MaterialSelector() {
                   onMouseEnter={() => setHoveredCategory(categoryId)}
                   onMouseLeave={() => setHoveredCategory(null)}
                 >
-                  {/* Vertical Popup List */}
+                  {/* Vertical Popup List - 2 above, center, 2 below */}
                   <ul
                     style={{
                       ...styles.variationList,
                       ...(hoveredCategory === categoryId ? styles.variationListHovered : {})
                     }}
                   >
-                    {categoryMaterials.slice(0, 5).map((material, index) => {
-                      const isCenter = index === centerIndex;
-                      const isActive = selectedMaterialId?.category === material.category &&
-                                       selectedMaterialId?.id === material.id;
-                      const isVisible = hoveredCategory === categoryId || isCenter;
+                    {/* Reorder: show 2 above center (indices 1,2), center (0), then 2 below (3,4) */}
+                    {(() => {
+                      const orderedMaterials = categoryMaterials.slice(0, 5);
+                      // Reorder: [1, 2, 0, 3, 4] so center (0) is in the middle
+                      const reordered = [
+                        orderedMaterials[1],
+                        orderedMaterials[2],
+                        orderedMaterials[0], // center
+                        orderedMaterials[3],
+                        orderedMaterials[4],
+                      ].filter(Boolean);
 
-                      // Get texture URL from material config
-                      const baseColorUrl = material.textures?.baseColor;
+                      return reordered.map((material, displayIndex) => {
+                        if (!material) return null;
+                        const isCenter = displayIndex === 2; // Middle position (index 2 of 0-4)
+                        const isActive = selectedMaterialId?.category === material.category &&
+                                         selectedMaterialId?.id === material.id;
+                        const isVisible = hoveredCategory === categoryId || isCenter;
 
-                      return (
-                        <li
-                          key={material.id}
-                          style={{
-                            ...styles.variationItem,
-                            opacity: isVisible ? 1 : 0,
-                            ...(isCenter ? styles.variationItemCenter : {})
-                          }}
-                          onClick={() => handleMaterialClick(material)}
-                        >
-                          {/* Material Swatch with Texture */}
-                          <div
+                        // Get texture URL from material config
+                        const baseColorUrl = material.textures?.baseColor;
+
+                        return (
+                          <li
+                            key={material.id}
                             style={{
-                              ...styles.swatch,
-                              backgroundImage: baseColorUrl
-                                ? `url(${baseColorUrl})`
-                                : undefined,
-                              backgroundColor: material.properties.baseColorHex,
-                              backgroundSize: 'cover',
-                              backgroundPosition: 'center',
+                              ...styles.variationItem,
+                              opacity: isVisible ? 1 : 0,
+                              pointerEvents: isVisible ? 'auto' : 'none',
+                              ...(isCenter ? styles.variationItemCenter : {})
                             }}
-                          />
+                            onClick={() => handleMaterialClick(material)}
+                          >
+                            {/* Material Swatch with Texture */}
+                            <div
+                              style={{
+                                ...styles.swatch,
+                                backgroundImage: baseColorUrl
+                                  ? `url(${baseColorUrl})`
+                                  : undefined,
+                                backgroundColor: material.properties.baseColorHex,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                              }}
+                            />
 
-                          {/* Active Indicator */}
-                          {isActive && (
-                            <div style={styles.activeIndicator}>✓</div>
-                          )}
+                            {/* Active Indicator */}
+                            {isActive && (
+                              <div style={styles.activeIndicator}>✓</div>
+                            )}
 
-                          {/* Tooltip */}
-                          <div style={styles.tooltip} className="material-tooltip">
-                            {material.name}
-                            <div style={styles.tooltipDetails}>
-                              M: {material.properties.metallic.toFixed(1)} · R:{' '}
-                              {material.properties.roughness.toFixed(1)}
+                            {/* Tooltip */}
+                            <div style={styles.tooltip} className="material-tooltip">
+                              {material.name}
+                              <div style={styles.tooltipDetails}>
+                                M: {material.properties.metallic.toFixed(1)} · R:{' '}
+                                {material.properties.roughness.toFixed(1)}
+                              </div>
                             </div>
-                          </div>
-                        </li>
-                      );
-                    })}
+                          </li>
+                        );
+                      });
+                    })()}
                   </ul>
 
                   {/* Category Label - inside swatchWrapper */}
@@ -217,12 +235,24 @@ export function MaterialSelector() {
         </div>
       }
 
-      {/* Footer */}
+      {/* Footer with Browse All Button */}
       <div style={styles.footer}>
+        <button
+          onClick={() => setIsDrawerOpen(true)}
+          style={styles.browseButton}
+          className="group"
+        >
+          <Grid3X3 style={{ width: 16, height: 16 }} />
+          <span>Browse All Materials</span>
+          <ChevronRight style={{ width: 14, height: 14, opacity: 0.5 }} className="group-hover:translate-x-0.5 transition-transform" />
+        </button>
         <p style={styles.footerText}>
           Hover over categories · Click to apply
         </p>
       </div>
+
+      {/* Material Library Drawer */}
+      <MaterialDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
     </div>
   );
 }
@@ -287,12 +317,11 @@ const styles: Record<string, React.CSSProperties> = {
   swatchContainer: {
     display: 'flex',
     justifyContent: 'center',
-    gap: '12px',
-    paddingTop: '48px',
-    paddingBottom: '24px',
+    gap: '24px',
+    paddingTop: '120px', // Space for 2 swatches above
+    paddingBottom: '16px',
     flexWrap: 'nowrap',
     maxWidth: '100%',
-    padding: '48px 12px 24px',
   },
 
   // Wrapper for each category (popup + label)
@@ -301,7 +330,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '8px',
+    gap: '0px',
   } as React.CSSProperties,
 
   // Vertical list of material variations (popup)
@@ -312,6 +341,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: 0,
     display: 'flex',
     flexDirection: 'column',
+    alignItems: 'center',
     zIndex: 99,
     transition: 'z-index 0.2s',
   } as React.CSSProperties,
@@ -324,10 +354,10 @@ const styles: Record<string, React.CSSProperties> = {
   variationItem: {
     width: '46px',
     height: '46px',
-    margin: '4px',
+    margin: '3px 0',
     position: 'relative',
     cursor: 'pointer',
-    transition: 'opacity 0.3s ease, transform 0.1s ease',
+    transition: 'opacity 0.2s ease, transform 0.15s ease',
   } as React.CSSProperties,
 
   variationItemCenter: {
@@ -370,7 +400,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 500,
     color: '#6b7280',
     textAlign: 'center',
-    marginTop: '8px',
+    marginTop: '4px',
   } as React.CSSProperties,
 
   // Tooltip on hover
@@ -409,6 +439,24 @@ const styles: Record<string, React.CSSProperties> = {
     borderTop: '1px solid #e5e7eb',
     backgroundColor: '#f9fafb',
   },
+
+  browseButton: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    width: '100%',
+    padding: '10px 16px',
+    marginBottom: '8px',
+    backgroundColor: '#18181b',
+    color: '#ffffff',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '13px',
+    fontWeight: 500,
+    cursor: 'pointer',
+    transition: 'background-color 0.2s',
+  } as React.CSSProperties,
 
   footerText: {
     margin: 0,

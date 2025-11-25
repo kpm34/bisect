@@ -113,17 +113,17 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <div className="relative group">
            <button
             onClick={() => setTool(Tool.SELECT)}
-            className={`p-2 rounded-lg transition-colors ${currentTool === Tool.SELECT || currentTool === Tool.LASSO ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:bg-zinc-800'}`}
+            className={`p-2 rounded-lg transition-colors ${currentTool === Tool.SELECT || currentTool === Tool.LASSO ? 'bg-cta-orange text-white' : 'text-zinc-400 hover:bg-zinc-800'}`}
             title="Selection Tools"
            >
              {currentTool === Tool.LASSO ? <Lasso size={20} /> : <MousePointer2 size={20} />}
            </button>
            <div className="absolute left-full top-0 pl-2 hidden group-hover:block z-50">
              <div className="bg-zinc-900 border border-zinc-800 p-2 rounded-lg grid grid-cols-1 gap-1 w-28 shadow-xl">
-               <button onClick={() => setTool(Tool.SELECT)} className={`p-2 rounded flex items-center gap-2 hover:bg-zinc-800 ${currentTool === Tool.SELECT ? 'text-indigo-400' : 'text-zinc-400'}`}>
+               <button onClick={() => setTool(Tool.SELECT)} className={`p-2 rounded flex items-center gap-2 hover:bg-zinc-800 ${currentTool === Tool.SELECT ? 'text-cta-orange' : 'text-zinc-400'}`}>
                  <MousePointer2 size={16} /> <span className="text-xs">Box</span>
                </button>
-               <button onClick={() => setTool(Tool.LASSO)} className={`p-2 rounded flex items-center gap-2 hover:bg-zinc-800 ${currentTool === Tool.LASSO ? 'text-indigo-400' : 'text-zinc-400'}`}>
+               <button onClick={() => setTool(Tool.LASSO)} className={`p-2 rounded flex items-center gap-2 hover:bg-zinc-800 ${currentTool === Tool.LASSO ? 'text-cta-orange' : 'text-zinc-400'}`}>
                  <Lasso size={16} /> <span className="text-xs">Lasso</span>
                </button>
              </div>
@@ -132,14 +132,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
         <button
           onClick={() => setTool(Tool.HAND)}
-          className={`p-2 rounded-lg transition-colors ${currentTool === Tool.HAND ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:bg-zinc-800'}`}
+          className={`p-2 rounded-lg transition-colors ${currentTool === Tool.HAND ? 'bg-cta-orange text-white' : 'text-zinc-400 hover:bg-zinc-800'}`}
           title="Hand Tool (Pan)"
         >
           <Hand size={20} />
         </button>
         <button
           onClick={() => setTool(Tool.PEN)}
-          className={`p-2 rounded-lg transition-colors ${currentTool === Tool.PEN ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:bg-zinc-800'}`}
+          className={`p-2 rounded-lg transition-colors ${currentTool === Tool.PEN ? 'bg-cta-orange text-white' : 'text-zinc-400 hover:bg-zinc-800'}`}
           title="Pen Tool"
         >
           <Pen size={20} />
@@ -148,7 +148,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         {/* Crayon Tool */}
         <button
           onClick={() => setTool(Tool.CRAYON)}
-          className={`p-2 rounded-lg transition-colors ${currentTool === Tool.CRAYON ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:bg-zinc-800'}`}
+          className={`p-2 rounded-lg transition-colors ${currentTool === Tool.CRAYON ? 'bg-cta-orange text-white' : 'text-zinc-400 hover:bg-zinc-800'}`}
           title="Crayon / Shading Tool"
         >
           <Brush size={20} />
@@ -157,7 +157,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         {/* Fill Tool */}
         <button
           onClick={() => setTool(Tool.FILL)}
-          className={`p-2 rounded-lg transition-colors ${currentTool === Tool.FILL ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:bg-zinc-800'}`}
+          className={`p-2 rounded-lg transition-colors ${currentTool === Tool.FILL ? 'bg-cta-orange text-white' : 'text-zinc-400 hover:bg-zinc-800'}`}
           title="Fill Tool (Bucket)"
         >
           <PaintBucket size={20} />
@@ -166,7 +166,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         {/* Text Tool */}
         <button
           onClick={() => setTool(Tool.TEXT)}
-          className={`p-2 rounded-lg transition-colors ${currentTool === Tool.TEXT ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:bg-zinc-800'}`}
+          className={`p-2 rounded-lg transition-colors ${currentTool === Tool.TEXT ? 'bg-cta-orange text-white' : 'text-zinc-400 hover:bg-zinc-800'}`}
           title="Text Tool"
         >
           <TypeIcon size={20} />
@@ -176,7 +176,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <div className="relative group">
           <button
             onClick={() => setTool(Tool.ERASER)}
-            className={`p-2 rounded-lg transition-colors ${currentTool === Tool.ERASER ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:bg-zinc-800'}`}
+            className={`p-2 rounded-lg transition-colors ${currentTool === Tool.ERASER ? 'bg-cta-orange text-white' : 'text-zinc-400 hover:bg-zinc-800'}`}
             title="Eraser"
           >
             <Eraser size={20} />
@@ -193,7 +193,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                     max="200" 
                     value={eraserSize} 
                     onChange={(e) => setEraserSize(parseInt(e.target.value))}
-                    className="flex-1 accent-indigo-500 h-1 cursor-pointer"
+                    className="flex-1 accent-cta-orange h-1 cursor-pointer"
                   />
                   <div className="w-3 h-3 rounded-full bg-zinc-400"></div>
                 </div>
@@ -206,7 +206,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         <div className="relative group">
           <button
             onClick={() => setTool(Tool.SHAPE)}
-            className={`p-2 rounded-lg transition-colors ${currentTool === Tool.SHAPE ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:bg-zinc-800'}`}
+            className={`p-2 rounded-lg transition-colors ${currentTool === Tool.SHAPE ? 'bg-cta-orange text-white' : 'text-zinc-400 hover:bg-zinc-800'}`}
             title="Shapes"
           >
             <Shapes size={20} />
@@ -221,7 +221,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                       setShapeType(shape.type);
                       setTool(Tool.SHAPE);
                     }}
-                    className={`p-2 rounded hover:bg-zinc-800 flex items-center justify-center ${currentShapeType === shape.type && currentTool === Tool.SHAPE ? 'text-indigo-400 bg-zinc-800' : 'text-zinc-400'}`}
+                    className={`p-2 rounded hover:bg-zinc-800 flex items-center justify-center ${currentShapeType === shape.type && currentTool === Tool.SHAPE ? 'text-cta-orange bg-zinc-800' : 'text-zinc-400'}`}
                     title={shape.label}
                   >
                     {shape.icon}
@@ -277,7 +277,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                         <select 
                           value={fontFamily} 
                           onChange={(e) => setFontFamily(e.target.value)}
-                          className="w-full bg-zinc-800 text-xs text-white p-1.5 rounded border border-zinc-700 focus:outline-none focus:border-indigo-500"
+                          className="w-full bg-zinc-800 text-xs text-white p-1.5 rounded border border-zinc-700 focus:outline-none focus:border-cta-orange"
                         >
                           {fontFamilies.map(f => (
                             <option key={f.value} value={f.value}>{f.label}</option>
@@ -297,7 +297,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                           max="100" 
                           value={fontSize} 
                           onChange={(e) => setFontSize(parseInt(e.target.value))}
-                          className="w-full accent-indigo-500 h-1 cursor-pointer"
+                          className="w-full accent-cta-orange h-1 cursor-pointer"
                         />
                       </div>
 
@@ -305,13 +305,13 @@ const Toolbar: React.FC<ToolbarProps> = ({
                       <div>
                          <p className="text-xs text-zinc-400 mb-1 font-medium">Align</p>
                          <div className="flex bg-zinc-800 rounded p-0.5">
-                            <button onClick={() => setTextAlign('start')} className={`flex-1 p-1 rounded hover:bg-zinc-700 flex justify-center ${textAlign === 'start' ? 'text-indigo-400 bg-zinc-700' : 'text-zinc-500'}`}>
+                            <button onClick={() => setTextAlign('start')} className={`flex-1 p-1 rounded hover:bg-zinc-700 flex justify-center ${textAlign === 'start' ? 'text-cta-orange bg-zinc-700' : 'text-zinc-500'}`}>
                               <AlignLeft size={14} />
                             </button>
-                            <button onClick={() => setTextAlign('middle')} className={`flex-1 p-1 rounded hover:bg-zinc-700 flex justify-center ${textAlign === 'middle' ? 'text-indigo-400 bg-zinc-700' : 'text-zinc-500'}`}>
+                            <button onClick={() => setTextAlign('middle')} className={`flex-1 p-1 rounded hover:bg-zinc-700 flex justify-center ${textAlign === 'middle' ? 'text-cta-orange bg-zinc-700' : 'text-zinc-500'}`}>
                               <AlignCenter size={14} />
                             </button>
-                            <button onClick={() => setTextAlign('end')} className={`flex-1 p-1 rounded hover:bg-zinc-700 flex justify-center ${textAlign === 'end' ? 'text-indigo-400 bg-zinc-700' : 'text-zinc-500'}`}>
+                            <button onClick={() => setTextAlign('end')} className={`flex-1 p-1 rounded hover:bg-zinc-700 flex justify-center ${textAlign === 'end' ? 'text-cta-orange bg-zinc-700' : 'text-zinc-500'}`}>
                               <AlignRight size={14} />
                             </button>
                          </div>
@@ -338,7 +338,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
                         max="50" 
                         value={strokeWidth} 
                         onChange={(e) => setStrokeWidth(parseInt(e.target.value))}
-                        className="flex-1 accent-indigo-500 h-1 cursor-pointer"
+                        className="flex-1 accent-cta-orange h-1 cursor-pointer"
                       />
                       <div className="h-2 w-2 bg-zinc-400 rounded-full"></div>
                     </div>
@@ -365,7 +365,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
               <div className="bg-zinc-900 border border-zinc-800 p-3 rounded-lg shadow-xl w-32">
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-xs text-zinc-400">Smoothness</span>
-                  <span className="text-xs text-indigo-400 font-mono">{smoothingLevel}</span>
+                  <span className="text-xs text-cta-orange font-mono">{smoothingLevel}</span>
                 </div>
                 <input 
                   type="range" 
@@ -383,7 +383,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
          <button 
            onClick={onAiEdit} 
-           className={`p-2 rounded-lg transition-all ${isAiLoading ? 'animate-pulse bg-indigo-900 text-indigo-300' : 'text-indigo-400 hover:bg-zinc-800 hover:text-indigo-300'}`} 
+           className={`p-2 rounded-lg transition-all ${isAiLoading ? 'animate-pulse bg-cta-orange/20 text-cta-orange' : 'text-cta-orange hover:bg-zinc-800 hover:text-cta-orange'}`} 
            title="Smart Edit (Gemini)"
            disabled={isAiLoading}
          >

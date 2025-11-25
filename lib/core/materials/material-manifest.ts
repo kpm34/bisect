@@ -227,19 +227,18 @@ const MTL_Aluminum_Brushed: MaterialConfig = {
   "displayName": "Aluminum Brushed",
   "category": "metal",
   "textures": {
-    "baseColor": "/assets/materials/metal/MTL_Aluminum_Brushed/BaseColor.png",
-    "normal": "/assets/materials/metal/MTL_Aluminum_Brushed/Normal.png",
-    "metallicRoughness": "/assets/materials/metal/MTL_Aluminum_Brushed/MetallicRoughness.png"
+    "baseColor": "/assets/materials/metal/aluminum-brushed.png"
   },
   "properties": {
     "roughness": 0.4,
-    "metallic": 0.85,
-    "baseColorHex": "#d4d4d4"
+    "metallic": 1.0,
+    "baseColorHex": "#e9ebec"
   },
   "tags": [
     "metal",
     "aluminum",
-    "brushed"
+    "brushed",
+    "featured"
   ],
   "description": "Brushed aluminum material with directional finish for 3D scenes"
 };
@@ -250,21 +249,20 @@ const MTL_Brass_Aged: MaterialConfig = {
   "displayName": "Brass Aged",
   "category": "metal",
   "textures": {
-    "baseColor": "/assets/materials/metal/MTL_Brass_Aged/BaseColor.png",
-    "normal": "/assets/materials/metal/MTL_Brass_Aged/Normal.png",
-    "metallicRoughness": "/assets/materials/metal/MTL_Brass_Aged/MetallicRoughness.png"
+    "baseColor": "/assets/materials/metal/brass-aged.png"
   },
   "properties": {
-    "roughness": 0.3,
-    "metallic": 0.9,
-    "baseColorHex": "#c0c0c0"
+    "roughness": 0.35,
+    "metallic": 1.0,
+    "baseColorHex": "#c7911c"
   },
   "tags": [
     "metal",
     "brass",
-    "aged"
+    "aged",
+    "featured"
   ],
-  "description": "Brass Aged material for 3D scenes with PBR textures"
+  "description": "Aged brass with patina and warm golden tones"
 };
 
 const MTL_Chrome_Mirror: MaterialConfig = {
@@ -273,21 +271,20 @@ const MTL_Chrome_Mirror: MaterialConfig = {
   "displayName": "Chrome Mirror",
   "category": "metal",
   "textures": {
-    "baseColor": "/assets/materials/metal/MTL_Chrome_Mirror/BaseColor.png",
-    "normal": "/assets/materials/metal/MTL_Chrome_Mirror/Normal.png",
-    "metallicRoughness": "/assets/materials/metal/MTL_Chrome_Mirror/MetallicRoughness.png"
+    "baseColor": "/assets/materials/metal/chrome-mirror.png"
   },
   "properties": {
-    "roughness": 0.3,
-    "metallic": 0.9,
-    "baseColorHex": "#c0c0c0"
+    "roughness": 0.05,
+    "metallic": 1.0,
+    "baseColorHex": "#e6e6e6"
   },
   "tags": [
     "metal",
     "chrome",
-    "mirror"
+    "mirror",
+    "featured"
   ],
-  "description": "Chrome Mirror material for 3D scenes with PBR textures"
+  "description": "Highly reflective mirror-finish chrome"
 };
 
 const MTL_Copper_Clean: MaterialConfig = {
@@ -296,21 +293,20 @@ const MTL_Copper_Clean: MaterialConfig = {
   "displayName": "Copper Clean",
   "category": "metal",
   "textures": {
-    "baseColor": "/assets/materials/metal/MTL_Copper_Clean/BaseColor.png",
-    "normal": "/assets/materials/metal/MTL_Copper_Clean/Normal.png",
-    "metallicRoughness": "/assets/materials/metal/MTL_Copper_Clean/MetallicRoughness.png"
+    "baseColor": "/assets/materials/metal/copper-clean.png"
   },
   "properties": {
-    "roughness": 0.3,
-    "metallic": 0.9,
-    "baseColorHex": "#c0c0c0"
+    "roughness": 0.15,
+    "metallic": 1.0,
+    "baseColorHex": "#f4a389"
   },
   "tags": [
     "metal",
     "copper",
-    "clean"
+    "clean",
+    "featured"
   ],
-  "description": "Copper Clean material for 3D scenes with PBR textures"
+  "description": "Clean polished copper with warm reddish-orange tones"
 };
 
 const MTL_Gold_Polished: MaterialConfig = {
@@ -319,21 +315,20 @@ const MTL_Gold_Polished: MaterialConfig = {
   "displayName": "Gold Polished",
   "category": "metal",
   "textures": {
-    "baseColor": "/assets/materials/metal/MTL_Gold_Polished/BaseColor.png",
-    "normal": "/assets/materials/metal/MTL_Gold_Polished/Normal.png",
-    "metallicRoughness": "/assets/materials/metal/MTL_Gold_Polished/MetallicRoughness.png"
+    "baseColor": "/assets/materials/metal/gold-polished.png"
   },
   "properties": {
-    "roughness": 0.3,
-    "metallic": 0.9,
-    "baseColorHex": "#c0c0c0"
+    "roughness": 0.1,
+    "metallic": 1.0,
+    "baseColorHex": "#ffc356"
   },
   "tags": [
     "metal",
     "gold",
-    "polished"
+    "polished",
+    "featured"
   ],
-  "description": "Gold Polished material for 3D scenes with PBR textures"
+  "description": "Luxurious polished gold with warm reflective finish"
 };
 
 const MTL_Iron_Rusty: MaterialConfig = {
@@ -342,21 +337,20 @@ const MTL_Iron_Rusty: MaterialConfig = {
   "displayName": "Iron Rusty",
   "category": "metal",
   "textures": {
-    "baseColor": "/assets/materials/metal/MTL_Iron_Rusty/BaseColor.png",
-    "normal": "/assets/materials/metal/MTL_Iron_Rusty/Normal.png",
-    "metallicRoughness": "/assets/materials/metal/MTL_Iron_Rusty/MetallicRoughness.png"
+    "baseColor": "/assets/materials/metal/iron-rusty.png"
   },
   "properties": {
-    "roughness": 0.3,
-    "metallic": 0.9,
-    "baseColorHex": "#c0c0c0"
+    "roughness": 0.7,
+    "metallic": 0.85,
+    "baseColorHex": "#734026"
   },
   "tags": [
     "metal",
     "iron",
-    "rusty"
+    "rusty",
+    "weathered"
   ],
-  "description": "Iron Rusty material for 3D scenes with PBR textures"
+  "description": "Weathered rusty iron with oxidized patina"
 };
 
 const MTL_Steel_Industrial: MaterialConfig = {
@@ -365,21 +359,20 @@ const MTL_Steel_Industrial: MaterialConfig = {
   "displayName": "Steel Industrial",
   "category": "metal",
   "textures": {
-    "baseColor": "/assets/materials/metal/MTL_Steel_Industrial/BaseColor.png",
-    "normal": "/assets/materials/metal/MTL_Steel_Industrial/Normal.png",
-    "metallicRoughness": "/assets/materials/metal/MTL_Steel_Industrial/MetallicRoughness.png"
+    "baseColor": "/assets/materials/metal/steel-industrial.png"
   },
   "properties": {
-    "roughness": 0.3,
-    "metallic": 0.9,
-    "baseColorHex": "#c0c0c0"
+    "roughness": 0.5,
+    "metallic": 1.0,
+    "baseColorHex": "#8c8c8c"
   },
   "tags": [
     "metal",
     "steel",
-    "industrial"
+    "industrial",
+    "featured"
   ],
-  "description": "Steel Industrial material for 3D scenes with PBR textures"
+  "description": "Industrial steel with semi-rough matte finish"
 };
 
 const MTL_Titanium_Anodized: MaterialConfig = {
@@ -388,21 +381,20 @@ const MTL_Titanium_Anodized: MaterialConfig = {
   "displayName": "Titanium Anodized",
   "category": "metal",
   "textures": {
-    "baseColor": "/assets/materials/metal/MTL_Titanium_Anodized/BaseColor.png",
-    "normal": "/assets/materials/metal/MTL_Titanium_Anodized/Normal.png",
-    "metallicRoughness": "/assets/materials/metal/MTL_Titanium_Anodized/MetallicRoughness.png"
+    "baseColor": "/assets/materials/metal/titanium-anodized.png"
   },
   "properties": {
-    "roughness": 0.3,
-    "metallic": 0.9,
-    "baseColorHex": "#c0c0c0"
+    "roughness": 0.25,
+    "metallic": 1.0,
+    "baseColorHex": "#6673a6"
   },
   "tags": [
     "metal",
     "titanium",
-    "anodized"
+    "anodized",
+    "featured"
   ],
-  "description": "Titanium Anodized material for 3D scenes with PBR textures"
+  "description": "Anodized titanium with blue-purple iridescent tones"
 };
 
 // STONE (8 materials)

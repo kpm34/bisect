@@ -36,10 +36,8 @@ export function Shell({
       <nav className="h-14 border-b border-neutral-800 flex items-center px-4 justify-between bg-neutral-900/50 backdrop-blur-sm z-50 shrink-0">
         <div className="flex items-center gap-4">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg text-white hover:opacity-80 transition-opacity">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-              <Layers size={20} />
-            </div>
-            <span>Unified 3D</span>
+            <div className="w-3 h-3 bg-cta-orange rounded-sm rotate-45"></div>
+            <span>Bisect</span>
           </Link>
 
           <div className="h-6 w-px bg-neutral-800 mx-2" />

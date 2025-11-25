@@ -20,7 +20,7 @@ interface ControlPanelProps {
   setQuality: (q: ModelQuality) => void;
 }
 
-export const ControlPanel: React.FC<ControlPanelProps> = ({
+export function ControlPanel({
   isGenerating,
   isUpscaling = false,
   onGenerate,
@@ -34,7 +34,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   setMode,
   quality,
   setQuality
-}) => {
+}: ControlPanelProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -191,4 +191,4 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       </div>
     </div>
   );
-};
+}

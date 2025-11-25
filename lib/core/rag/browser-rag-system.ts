@@ -39,6 +39,7 @@ export class BrowserRAGSystem {
   private similarityThreshold: number;
   private maxResults: number;
   private initialized = false;
+  private shortTermMemory: Array<{ id: string, text: string, embedding: number[], metadata: any }> = [];
 
   constructor(config: BrowserRAGConfig = {}) {
     this.chromaClient = new BrowserChromaClient(config.chromaConfig);
@@ -220,5 +221,65 @@ export class BrowserRAGSystem {
       console.error('❌ Error getting stats:', error);
       return { totalPatterns: 0, collectionName: 'error' };
     }
+  }
+  /**
+   * Ingests the Material Knowledge Base
+   */
+  async ingestKnowledgeBase(markdownContent: string): Promise<void> {
+    if (!this.initialized) await this.initialize();
+
+    console.log('📚 Ingesting Material Knowledge Base...');
+
+    // Simple chunking by header
+    const sections = markdownContent.split(/^## /gm);
+
+    for (const section of sections) {
+      if (!section.trim()) continue;
+
+      const lines = section.split('\n');
+      const title = lines[0].trim();
+      const content = lines.slice(1).join('\n').trim();
+
+      if (!title || !content) continue;
+
+      const id = `kb-${title.toLowerCase().replace(/\s+/g, '-')}`;
+      const embedding = await this.generateEmbedding(`Material: ${title}\n${content}`);
+
+      // Store in our local "memory" for this session
+      this.shortTermMemory.push({
+        id,
+        text: `[Knowledge Base] ${title}\n${content}`,
+        embedding,
+        metadata: { type: 'knowledge-base', category: title }
+      });
+      console.log(`   - Indexed: ${title}`);
+    }
+  }
+
+  /**
+   * Retrieves relevant knowledge for a query
+   */
+  async retrieveKnowledge(query: string, limit: number = 2): Promise<string[]> {
+    if (!this.initialized) await this.initialize();
+
+    const queryEmbedding = await this.generateEmbedding(query);
+
+    // Simple cosine similarity search against shortTermMemory
+    const matches = this.shortTermMemory
+      .map(item => ({
+        item,
+        score: this._cosineSimilarity(queryEmbedding, item.embedding)
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
+
+    return matches.map(m => m.item.text);
+  }
+
+  private _cosineSimilarity(vecA: number[], vecB: number[]): number {
+    const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
+    const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
+    const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
+    return dotProduct / (magnitudeA * magnitudeB);
   }
 }

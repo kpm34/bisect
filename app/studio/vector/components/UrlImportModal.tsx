@@ -86,8 +86,8 @@ function UrlImportModal({ isOpen, onClose, onImport }: UrlImportModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-zinc-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center">
-              <Globe size={20} className="text-indigo-400" />
+            <div className="w-10 h-10 bg-cta-orange/10 rounded-xl flex items-center justify-center">
+              <Globe size={20} className="text-cta-orange" />
             </div>
             <div>
               <h3 className="text-xl font-bold text-white">Import from URL</h3>
@@ -115,7 +115,7 @@ function UrlImportModal({ isOpen, onClose, onImport }: UrlImportModalProps) {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://example.com"
-              className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-cta-orange"
               disabled={isLoading}
             />
           </div>
@@ -150,7 +150,7 @@ function UrlImportModal({ isOpen, onClose, onImport }: UrlImportModalProps) {
                 type="number"
                 value={width}
                 onChange={(e) => setWidth(parseInt(e.target.value))}
-                className="w-full px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cta-orange"
                 disabled={isLoading}
               />
             </div>
@@ -162,7 +162,7 @@ function UrlImportModal({ isOpen, onClose, onImport }: UrlImportModalProps) {
                 type="number"
                 value={height}
                 onChange={(e) => setHeight(parseInt(e.target.value))}
-                className="w-full px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cta-orange"
                 disabled={isLoading}
               />
             </div>
@@ -174,7 +174,7 @@ function UrlImportModal({ isOpen, onClose, onImport }: UrlImportModalProps) {
               id="fullPage"
               checked={fullPage}
               onChange={(e) => setFullPage(e.target.checked)}
-              className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-indigo-500 focus:ring-2 focus:ring-indigo-500"
+              className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-cta-orange focus:ring-2 focus:ring-cta-orange"
               disabled={isLoading}
             />
             <label htmlFor="fullPage" className="text-sm text-zinc-300">
@@ -190,8 +190,8 @@ function UrlImportModal({ isOpen, onClose, onImport }: UrlImportModalProps) {
           )}
 
           {/* Info Box */}
-          <div className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
-            <p className="text-sm text-indigo-300">
+          <div className="p-4 bg-cta-orange/10 border border-cta-orange/20 rounded-lg">
+            <p className="text-sm text-cta-orange">
               <strong>💡 Tip:</strong> The screenshot will be imported as a locked background layer.
               You can trace over it, or use the crop tool to vectorize specific sections like logos and icons.
             </p>
@@ -209,7 +209,7 @@ function UrlImportModal({ isOpen, onClose, onImport }: UrlImportModalProps) {
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-cta-orange hover:bg-cta-orange-hover text-white rounded-lg font-semibold transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isLoading}
             >
               {isLoading ? (

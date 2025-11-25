@@ -1198,7 +1198,7 @@ export default function VectorEditor() {
       }
     >
       <div
-        className="w-full h-full bg-grey-bg-900 overflow-hidden flex flex-col relative"
+        className="w-full h-full bg-zinc-900 overflow-hidden flex flex-col relative"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -1208,11 +1208,11 @@ export default function VectorEditor() {
         
         {/* Drag Overlay */}
         {isDragging && (
-           <div className="absolute inset-0 z-[100] bg-indigo-900/80 backdrop-blur-md flex items-center justify-center border-4 border-indigo-500 border-dashed m-6 rounded-3xl pointer-events-none animate-in fade-in duration-200">
-              <div className="text-center text-indigo-100">
-                <Upload size={80} className="mx-auto mb-6 text-indigo-400 animate-bounce" />
+           <div className="absolute inset-0 z-[100] bg-cta-orange/20 backdrop-blur-md flex items-center justify-center border-4 border-cta-orange border-dashed m-6 rounded-3xl pointer-events-none animate-in fade-in duration-200">
+              <div className="text-center text-white">
+                <Upload size={80} className="mx-auto mb-6 text-cta-orange animate-bounce" />
                 <h2 className="text-4xl font-bold mb-3">Drop File Here</h2>
-                <p className="text-indigo-300 text-lg">SVG, PNG, or JPG supported</p>
+                <p className="text-cta-orange text-lg">SVG, PNG, or JPG supported</p>
               </div>
            </div>
         )}
@@ -1239,26 +1239,26 @@ export default function VectorEditor() {
         {/* Context Menu */}
         {contextMenu && (
           <div
-            className="fixed bg-grey-bg-800 border border-grey-bg-700 rounded-lg shadow-xl py-1 z-[60] min-w-[160px] animate-in fade-in zoom-in-95 duration-100"
+            className="fixed bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl py-1 z-[60] min-w-[160px] animate-in fade-in zoom-in-95 duration-100"
             style={{ top: contextMenu.y, left: contextMenu.x }}
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => duplicateSelected()}
-              className="w-full text-left px-4 py-2 text-sm text-bone-200 hover:bg-grey-bg-700 hover:text-bone-50 flex items-center justify-between group"
+              className="w-full text-left px-4 py-2 text-sm text-zinc-200 hover:bg-zinc-700 hover:text-zinc-50 flex items-center justify-between group"
             >
               <span className="flex items-center gap-2"><Copy size={14} /> Duplicate</span>
-              <span className="text-bone-400 text-xs font-mono group-hover:text-bone-300">Ctrl+D</span>
+              <span className="text-zinc-400 text-xs font-mono group-hover:text-zinc-300">Ctrl+D</span>
             </button>
 
             <button
               onClick={() => flipSelected()}
-              className="w-full text-left px-4 py-2 text-sm text-bone-200 hover:bg-grey-bg-700 hover:text-bone-50 flex items-center gap-2 group"
+              className="w-full text-left px-4 py-2 text-sm text-zinc-200 hover:bg-zinc-700 hover:text-zinc-50 flex items-center gap-2 group"
             >
               <FlipHorizontal size={14} /> Flip Horizontal
             </button>
 
-            <div className="h-px bg-grey-bg-700 my-1"></div>
+            <div className="h-px bg-zinc-700 my-1"></div>
 
             <button
               onClick={() => {
@@ -1270,13 +1270,13 @@ export default function VectorEditor() {
               className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-900/30 flex items-center justify-between group"
             >
                <span className="flex items-center gap-2"><Trash2 size={14} /> Delete</span>
-               <span className="text-bone-400 text-xs font-mono group-hover:text-red-300/50">Del</span>
+               <span className="text-zinc-400 text-xs font-mono group-hover:text-red-300/50">Del</span>
             </button>
           </div>
         )}
 
         {/* Canvas Area */}
-        <div className="flex-1 relative bg-bone-50 overflow-hidden">
+        <div className="flex-1 relative bg-gray-100 overflow-hidden">
         
         {/* Custom Eraser Cursor */}
         {tool === Tool.ERASER && (
@@ -1482,8 +1482,8 @@ export default function VectorEditor() {
       {isAiProcessing && (
         <div className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm">
           <div className="flex flex-col items-center gap-4">
-            <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-indigo-400 font-mono animate-pulse">{loadingText}</p>
+            <div className="w-16 h-16 border-4 border-cta-orange border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-cta-orange font-mono animate-pulse">{loadingText}</p>
           </div>
         </div>
       )}

@@ -33,6 +33,11 @@ const SceneHierarchyPanel = dynamic(() => import('./r3f/SceneHierarchyPanel'), {
   ssr: false,
 });
 
+// Disable SSR for Material Preview Panel (dev mode)
+const MaterialPreviewPanel = dynamic(() => import('./components/MaterialPreviewPanel'), {
+  ssr: false,
+});
+
 /**
  * Universal Scene Editor Page (with Suspense wrapper)
  */
@@ -74,6 +79,7 @@ function EditorContent() {
   const [panelWidth, setPanelWidth] = useState(440);
   const [isResizing, setIsResizing] = useState(false);
   const [isRestoringScene, setIsRestoringScene] = useState(!!projectId); // Only restore if project ID present
+  const [showMaterialPreview, setShowMaterialPreview] = useState(false); // Dev mode material preview
 
   // Load project if ID is provided in URL (only on initial mount or when projectId actually changes)
   useEffect(() => {
@@ -277,6 +283,22 @@ function EditorContent() {
                 <span>Hierarchy</span>
               </button>
             )}
+
+            {/* Material Preview Button (temporarily visible for review) */}
+            <button
+              onClick={() => setShowMaterialPreview(true)}
+              className="absolute top-4 right-4 z-40 px-3 py-2 bg-amber-600/90 hover:bg-amber-500/90 backdrop-blur-sm text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+              title="Material Preview"
+            >
+              <span className="text-lg">🎨</span>
+              <span>Material Preview</span>
+            </button>
+
+            {/* Material Preview Panel (Dev Mode) */}
+            <MaterialPreviewPanel
+              isOpen={showMaterialPreview}
+              onClose={() => setShowMaterialPreview(false)}
+            />
 
             {/* Loading indicator while restoring scene */}
             {isRestoringScene && (

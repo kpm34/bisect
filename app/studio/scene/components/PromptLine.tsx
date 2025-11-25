@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSelection } from '../r3f/SelectionContext';
 import { parseCommand } from '../utils/commandParser';
+import { useAIMaterialEditor } from '../hooks/useAIMaterialEditor';
 
 interface PromptLineProps {
   sceneLoaded: boolean;
@@ -31,6 +32,9 @@ export default function PromptLine({ sceneLoaded, activeTab }: PromptLineProps) 
     setRotation,
     setScale,
   } = useSelection();
+
+  // AI Material Editor hook
+  const { executeMaterialCommand, isProcessing: aiProcessing } = useAIMaterialEditor();
 
   const handleCommand = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,7 +108,21 @@ export default function PromptLine({ sceneLoaded, activeTab }: PromptLineProps) 
           break;
 
         default:
-          setFeedback('❌ Command not recognized. Try "select cube" or "make it red"');
+          // AI fallback for material tab when rule-based parsing fails
+          if (activeTab === 'material' && selectedObject) {
+            setFeedback('🤖 Thinking...');
+            const result = await executeMaterialCommand(command);
+
+            if (result.success) {
+              setFeedback(`✅ ${result.reasoning || 'Material updated'}`);
+            } else {
+              setFeedback(`❌ ${result.error || 'Could not process. Try being more specific.'}`);
+            }
+          } else if (!selectedObject) {
+            setFeedback('❌ Select an object first, then try material commands like "make it more brushed"');
+          } else {
+            setFeedback('❌ Command not recognized. Try "select cube" or "make it red"');
+          }
       }
 
       setCommand('');
@@ -122,7 +140,7 @@ export default function PromptLine({ sceneLoaded, activeTab }: PromptLineProps) 
 
     switch (activeTab) {
       case 'material':
-        return 'Try: "make it red" or "roughness 0.5"';
+        return 'Try: "more brushed", "golden tint", "polished chrome"';
       case 'object':
         return 'Try: "move to 0 5 0" or "rotate 45 0 0 degrees"';
       case 'animation':
@@ -164,10 +182,10 @@ export default function PromptLine({ sceneLoaded, activeTab }: PromptLineProps) 
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={!command.trim() || !sceneLoaded || isProcessing}
-            className="absolute bottom-4 right-4 w-10 h-10 bg-cyan-700 hover:bg-cyan-600 disabled:bg-gray-600 disabled:opacity-50 rounded-full flex items-center justify-center transition-all shadow-lg hover:shadow-xl"
+            disabled={!command.trim() || !sceneLoaded || isProcessing || aiProcessing}
+            className="absolute bottom-4 right-4 w-10 h-10 bg-cta-orange hover:bg-cta-orange-hover disabled:bg-gray-600 disabled:opacity-50 rounded-full flex items-center justify-center transition-all shadow-lg hover:shadow-xl"
           >
-            {isProcessing ? (
+            {isProcessing || aiProcessing ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <svg

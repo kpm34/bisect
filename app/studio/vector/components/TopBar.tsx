@@ -22,7 +22,7 @@ const TopBar: React.FC<TopBarProps> = ({
     <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-zinc-900/90 backdrop-blur-md border border-zinc-800 p-2 rounded-xl shadow-2xl flex items-center gap-2 z-50">
       <button
         onClick={onUrlImport}
-        className="p-2 rounded-lg text-zinc-400 hover:bg-indigo-900/30 hover:text-indigo-400 transition-colors"
+        className="p-2 rounded-lg text-zinc-400 hover:bg-cta-orange/10 hover:text-cta-orange transition-colors"
         title="Import from URL"
       >
         <Globe size={20} />

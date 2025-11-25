@@ -67,7 +67,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="pt-32 pb-24 px-6 max-w-7xl mx-auto relative">
         <div className="absolute top-20 right-0 w-[500px] h-[500px] bg-cta-orange/10 blur-[120px] rounded-full pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent-purple/10 blur-[100px] rounded-full pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-cta-orange/10 blur-[100px] rounded-full pointer-events-none" />
 
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-8 z-10">
@@ -95,7 +95,7 @@ export default function HomePage() {
               </Link>
               <Link
                 href="/studio/scene"
-                className="group px-8 py-4 bg-white border border-charcoal/20 text-charcoal rounded-xl font-medium hover:border-accent-purple hover:shadow-lg transition-all flex items-center gap-2"
+                className="group px-8 py-4 bg-white border border-charcoal/20 text-charcoal rounded-xl font-medium hover:border-cta-orange hover:shadow-lg transition-all flex items-center gap-2"
               >
                 <Cuboid size={16} />
                 3D Studio
@@ -129,7 +129,7 @@ export default function HomePage() {
 
                 {/* After */}
                 <div className="text-center group">
-                  <div className="w-32 h-32 bg-indigo-50/50 rounded-xl flex items-center justify-center mb-4 border border-indigo-100 relative overflow-hidden">
+                  <div className="w-32 h-32 bg-cta-orange/5 rounded-xl flex items-center justify-center mb-4 border border-cta-orange/20 relative overflow-hidden">
                     {/* Vector Image */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -137,7 +137,7 @@ export default function HomePage() {
                       alt="Vector Output"
                       className="w-full h-full object-contain p-2 drop-shadow-md group-hover:scale-110 transition-transform duration-500"
                     />
-                    <div className="absolute inset-0 border-2 border-indigo-500/10 rounded-xl pointer-events-none"></div>
+                    <div className="absolute inset-0 border-2 border-cta-orange/10 rounded-xl pointer-events-none"></div>
                   </div>
                   <p className="font-mono text-xs text-accent-teal uppercase tracking-widest font-bold">Vector SVG</p>
                 </div>
@@ -197,22 +197,22 @@ export default function HomePage() {
             {/* 3D Studio Card */}
             <Link
               href="/studio/scene"
-              className="p-8 rounded-2xl bg-white border border-charcoal/10 hover:border-accent-purple/30 transition-all duration-200 group shadow-sm hover:shadow-lg hover:scale-[1.02] hover:-translate-y-0.5"
+              className="p-8 rounded-2xl bg-white border border-charcoal/10 hover:border-cta-orange/30 transition-all duration-200 group shadow-sm hover:shadow-lg hover:scale-[1.02] hover:-translate-y-0.5"
             >
-              <Cuboid className="text-accent-purple mb-6 group-hover:scale-110 transition-transform" size={32} />
+              <Cuboid className="text-cta-orange mb-6 group-hover:scale-110 transition-transform" size={32} />
               <h3 className="text-xl font-sans font-semibold text-charcoal mb-2">3D Studio</h3>
               <p className="text-text-primary/60 text-sm mb-4">Edit 3D scenes with AI, apply materials, export to any format.</p>
               <ul className="space-y-2 text-sm text-text-primary/50">
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 size={14} className="text-accent-purple" />
+                  <CheckCircle2 size={14} className="text-cta-orange" />
                   Universal format support
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 size={14} className="text-accent-purple" />
+                  <CheckCircle2 size={14} className="text-cta-orange" />
                   AI scene editing
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle2 size={14} className="text-accent-purple" />
+                  <CheckCircle2 size={14} className="text-cta-orange" />
                   600+ material presets
                 </li>
               </ul>
@@ -330,7 +330,7 @@ export default function HomePage() {
             {/* Framework Plugins */}
             <div className="p-8 rounded-2xl bg-charcoal border border-charcoal shadow-lg">
               <div className="flex items-center gap-3 mb-4">
-                <Plug className="text-accent-purple" size={24} />
+                <Plug className="text-cta-orange" size={24} />
                 <h3 className="text-xl font-semibold text-white">Framework Plugins</h3>
               </div>
               <p className="text-white/70 mb-4">
@@ -338,15 +338,15 @@ export default function HomePage() {
               </p>
               <ul className="space-y-2 text-sm text-white/60">
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-accent-purple mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 size={16} className="text-cta-orange mt-0.5 flex-shrink-0" />
                   <span><strong className="text-white/90">Blender Add-on:</strong> Import SVG, apply textures directly</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-accent-purple mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 size={16} className="text-cta-orange mt-0.5 flex-shrink-0" />
                   <span><strong className="text-white/90">Figma Plugin:</strong> Export optimized SVGs</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-accent-purple mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 size={16} className="text-cta-orange mt-0.5 flex-shrink-0" />
                   <span><strong className="text-white/90">VSCode Extension:</strong> Preview and edit SVGs inline</span>
                 </li>
               </ul>
@@ -416,7 +416,7 @@ export default function HomePage() {
           </Link>
           <Link
             href="/studio/scene"
-            className="px-8 py-4 bg-accent-purple text-white rounded-xl font-medium hover:bg-purple-600 transition-colors shadow-lg shadow-accent-purple/25 flex items-center gap-2"
+            className="px-8 py-4 bg-cta-orange text-white rounded-xl font-medium hover:bg-cta-orange-hover transition-colors shadow-lg shadow-cta-orange/25 flex items-center gap-2"
           >
             <Cuboid size={16} />
             3D Studio

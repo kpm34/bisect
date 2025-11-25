@@ -249,7 +249,7 @@ function ThreeDExportModal({ isOpen, onClose, svgContent }: ThreeDExportModalPro
 
           {/* Curves Options */}
           {(exportMode === 'curves' || exportMode === 'both') && (
-            <div className="p-4 bg-indigo-500/5 border border-indigo-500/20 rounded-lg space-y-3">
+            <div className="p-4 bg-cta-orange/5 border border-cta-orange/20 rounded-lg space-y-3">
               <h4 className="font-semibold text-white flex items-center gap-2">
                 <Settings size={16} />
                 Blender Curves Options
@@ -261,7 +261,7 @@ function ThreeDExportModal({ isOpen, onClose, svgContent }: ThreeDExportModalPro
                     type="checkbox"
                     checked={optimizeCurves}
                     onChange={(e) => setOptimizeCurves(e.target.checked)}
-                    className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-indigo-500"
+                    className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-cta-orange"
                   />
                   <span>Optimize & merge paths (reduces curve count)</span>
                 </label>
@@ -271,12 +271,12 @@ function ThreeDExportModal({ isOpen, onClose, svgContent }: ThreeDExportModalPro
                     type="checkbox"
                     checked={mergeSmallArtifacts}
                     onChange={(e) => setMergeSmallArtifacts(e.target.checked)}
-                    className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-indigo-500"
+                    className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-cta-orange"
                   />
                   <span>Merge small artifacts (cleaner import)</span>
                 </label>
 
-                <div className="mt-2 p-3 bg-indigo-500/10 rounded text-xs text-indigo-300">
+                <div className="mt-2 p-3 bg-cta-orange/10 rounded text-xs text-cta-orange">
                   <strong>Note:</strong> Optimized SVG will have no self-intersections and joined paths where possible.
                   Perfect for Blender curve import and extrusion.
                 </div>

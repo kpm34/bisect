@@ -520,10 +520,10 @@ ${previewHTML}
   };
 
   const tabClass = (tab: TabType) =>
-    `flex-1 pb-3 px-2 text-sm font-medium transition-colors relative ${activeTab === tab ? 'text-indigo-400' : 'text-zinc-500 hover:text-zinc-300'}`;
+    `flex-1 pb-3 px-2 text-sm font-medium transition-colors relative ${activeTab === tab ? 'text-cta-orange' : 'text-zinc-500 hover:text-zinc-300'}`;
 
   const activeBar = (
-    <div className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-500 rounded-full" />
+    <div className="absolute bottom-0 left-0 w-full h-0.5 bg-cta-orange rounded-full" />
   );
 
   return (
@@ -652,7 +652,7 @@ ${previewHTML}
           <div className="absolute top-4 right-4">
              <button
               onClick={handleCopy}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 transition-all shadow-lg text-xs font-medium"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-cta-orange text-white hover:bg-cta-orange-hover transition-all shadow-lg text-xs font-medium"
              >
                {copied ? <Check size={14} /> : <Copy size={14} />}
                {copied ? 'Copied!' : 'Copy Code'}

@@ -57,8 +57,8 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   return (
     <div className="w-96 bg-neutral-950 border-r border-neutral-800 flex flex-col h-full overflow-y-auto shrink-0 z-20">
       <div className="p-6 border-b border-neutral-800">
-        <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 flex items-center gap-2">
-          <Aperture className="text-purple-500" />
+        <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cta-orange to-cta-orange/80 flex items-center gap-2">
+          <Aperture className="text-cta-orange" />
           TextureGen AI
         </h1>
         <p className="text-neutral-400 text-xs mt-1">MatCap & Procedural PBR Generator</p>
@@ -93,7 +93,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder={mode === TextureMode.MATCAP ? "e.g., iridescent beetle shell, brushed copper..." : "e.g., cracked desert mud, sci-fi metal plating..."}
-              className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-sm text-white placeholder-neutral-500 focus:ring-2 focus:ring-purple-500 focus:outline-none min-h-[100px] resize-none"
+              className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-3 text-sm text-white placeholder-neutral-500 focus:ring-2 focus:ring-cta-orange focus:outline-none min-h-[100px] resize-none"
             />
           </div>
 
@@ -102,7 +102,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
              <select 
                value={quality} 
                onChange={(e) => setQuality(e.target.value as ModelQuality)}
-               className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+               className="w-full bg-neutral-900 border border-neutral-800 rounded-lg p-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cta-orange"
              >
                 <option value={ModelQuality.HIGH}>Gemini 3 Pro (High Quality)</option>
                 <option value={ModelQuality.FAST}>Gemini 2.5 Flash (Fast)</option>
@@ -112,7 +112,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           <button
             type="submit"
             disabled={isGenerating || isUpscaling || !prompt.trim()}
-            className="w-full bg-purple-600 hover:bg-purple-500 disabled:bg-neutral-800 disabled:text-neutral-500 text-white font-medium py-3 rounded-lg transition-all flex items-center justify-center gap-2"
+            className="w-full bg-cta-orange hover:bg-cta-orange-hover disabled:bg-neutral-800 disabled:text-neutral-500 text-white font-medium py-3 rounded-lg transition-all flex items-center justify-center gap-2"
           >
             {isGenerating ? <Loader2 className="animate-spin w-4 h-4" /> : <Wand2 className="w-4 h-4" />}
             {isGenerating ? "Dreaming..." : "Generate Texture"}
@@ -132,7 +132,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 <button
                   key={item.id}
                   onClick={() => setGeometryType(item.id as any)}
-                  className={`p-3 rounded-lg flex items-center justify-center transition-colors ${geometryType === item.id ? 'bg-purple-600/20 text-purple-400 border border-purple-500/50' : 'bg-neutral-900 text-neutral-500 hover:bg-neutral-800'}`}
+                  className={`p-3 rounded-lg flex items-center justify-center transition-colors ${geometryType === item.id ? 'bg-cta-orange/20 text-cta-orange border border-cta-orange/50' : 'bg-neutral-900 text-neutral-500 hover:bg-neutral-800'}`}
                 >
                   <item.icon className="w-5 h-5" />
                 </button>
@@ -155,7 +155,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 <button
                   onClick={onUpscale}
                   disabled={isUpscaling}
-                  className="w-full bg-gradient-to-r from-pink-900/50 to-purple-900/50 hover:from-pink-900/70 hover:to-purple-900/70 border border-purple-500/30 text-purple-100 p-3 rounded-lg flex items-center justify-center gap-2 transition-all"
+                  className="w-full bg-gradient-to-r from-cta-orange/20 to-cta-orange/10 hover:from-cta-orange/30 hover:to-cta-orange/20 border border-cta-orange/30 text-cta-orange p-3 rounded-lg flex items-center justify-center gap-2 transition-all"
                 >
                    {isUpscaling ? <Loader2 className="animate-spin w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
                    {isUpscaling ? "Upscaling to 2K..." : "Enhance Material (Upscale to 2K)"}

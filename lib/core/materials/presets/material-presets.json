@@ -241,6 +241,126 @@
       "description": "Weathered Barn, non-metallic, semi-gloss, textured, PBR, color #ffffff, opaque",
       "tier": "featured",
       "sortOrder": 4
+    },
+    {
+      "id": "gold-polished",
+      "name": "Gold Polished",
+      "category": "metal",
+      "uniforms": {
+        "nodeU0": {
+          "r": 1,
+          "g": 0.84,
+          "b": 0
+        },
+        "nodeU1": 1,
+        "nodeU5": 0.1,
+        "nodeU6": 1
+      },
+      "textures": {
+        "thumbnail": {
+          "data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAIAAABMXPacAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAyUlEQVR42u3RQQ0AAAjEsPMfPGEDOciAR5MpWDNdOiwWAAAgAAAEAIAAABAAAAIAQAAACAAAAQAgAAAEAIAAABAAAAIAQAAACAAAAQAgAAAEAIAAABAAAAIAQAAACAAAAQAgAAAEAIAAABAAAAIAQAAACAAAAC4AACAAAAQAgAAAEAAAAgBAAAAIAAABACAAAAQAgAAAEAAAAgBAAAAIAAABACAAAAQAgAAAEAAAAgBAAAAIAAABACAAAAQAgAAAEAAAAgBAAD4ALCepx/mZjdhbAAAAAElFTkSuQmCC",
+          "resolution": {
+            "width": 128,
+            "height": 128
+          },
+          "format": "png",
+          "size": 279
+        }
+      },
+      "source": "manual",
+      "description": "Gold Polished, metallic, shiny, PBR, color #ffd700, opaque",
+      "tier": "featured",
+      "sortOrder": 10
+    },
+    {
+      "id": "silver-polished",
+      "name": "Silver Polished",
+      "category": "metal",
+      "uniforms": {
+        "nodeU0": {
+          "r": 0.75,
+          "g": 0.75,
+          "b": 0.75
+        },
+        "nodeU1": 1,
+        "nodeU5": 0.1,
+        "nodeU6": 1
+      },
+      "textures": {
+        "thumbnail": {
+          "data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAIAAABMXPacAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAyUlEQVR42u3RQQ0AAAjEsPMfPGEDOciAR5MpWDNdOiwWAAAgAAAEAIAAABAAAAIAQAAACAAAAQAgAAAEAIAAABAAAAIAQAAACAAAAQAgAAAEAIAAABAAAAIAQAAACAAAAQAgAAAEAIAAABAAAAIAQAAACAAAAC4AACAAAAQAgAAAEAAAAgBAAAAIAAABACAAAAQAgAAAEAAAAgBAAAAIAAABACAAAAQAgAAAEAAAAgBAAAAIAAABACAAAAQAgAAAEAAAAgBAAD4ALCepx/mZjdhbAAAAAElFTkSuQmCC",
+          "resolution": {
+            "width": 128,
+            "height": 128
+          },
+          "format": "png",
+          "size": 279
+        }
+      },
+      "source": "manual",
+      "description": "Silver Polished, metallic, shiny, PBR, color #c0c0c0, opaque",
+      "tier": "featured",
+      "sortOrder": 11
+    },
+    {
+      "id": "copper-polished",
+      "name": "Copper Polished",
+      "category": "metal",
+      "uniforms": {
+        "nodeU0": {
+          "r": 0.72,
+          "g": 0.45,
+          "b": 0.2
+        },
+        "nodeU1": 1,
+        "nodeU5": 0.2,
+        "nodeU6": 1
+      },
+      "textures": {
+        "thumbnail": {
+          "data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAIAAABMXPacAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAyUlEQVR42u3RQQ0AAAjEsPMfPGEDOciAR5MpWDNdOiwWAAAgAAAEAIAAABAAAAIAQAAACAAAAQAgAAAEAIAAABAAAAIAQAAACAAAAQAgAAAEAIAAABAAAAIAQAAACAAAAQAgAAAEAIAAABAAAAIAQAAACAAAAC4AACAAAAQAgAAAEAAAAgBAAAAIAAABACAAAAQAgAAAEAAAAgBAAAAIAAABACAAAAQAgAAAEAAAAgBAAAAIAAABACAAAAQAgAAAEAAAAgBAAD4ALCepx/mZjdhbAAAAAElFTkSuQmCC",
+          "resolution": {
+            "width": 128,
+            "height": 128
+          },
+          "format": "png",
+          "size": 279
+        }
+      },
+      "source": "manual",
+      "description": "Copper Polished, metallic, shiny, PBR, color #b87333, opaque",
+      "tier": "featured",
+      "sortOrder": 12
+    },
+    {
+      "id": "iron-rough",
+      "name": "Iron Rough",
+      "category": "metal",
+      "uniforms": {
+        "nodeU0": {
+          "r": 0.3,
+          "g": 0.3,
+          "b": 0.3
+        },
+        "nodeU1": 1,
+        "nodeU5": 0.7,
+        "nodeU6": 1
+      },
+      "textures": {
+        "thumbnail": {
+          "data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAIAAABMXPacAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAyUlEQVR42u3RQQ0AAAjEsPMfPGEDOciAR5MpWDNdOiwWAAAgAAAEAIAAABAAAAIAQAAACAAAAQAgAAAEAIAAABAAAAIAQAAACAAAAQAgAAAEAIAAABAAAAIAQAAACAAAAQAgAAAEAIAAABAAAAIAQAAACAAAAC4AACAAAAQAgAAAEAAAAgBAAAAIAAABACAAAAQAgAAAEAAAAgBAAAAIAAABACAAAAQAgAAAEAAAAgBAAAAIAAABACAAAAQAgAAAEAAAAgBAAD4ALCepx/mZjdhbAAAAAElFTkSuQmCC",
+          "resolution": {
+            "width": 128,
+            "height": 128
+          },
+          "format": "png",
+          "size": 279
+        }
+      },
+      "source": "manual",
+      "description": "Iron Rough, metallic, matte, PBR, color #4d4d4d, opaque",
+      "tier": "featured",
+      "sortOrder": 13
     }
   ]
 }

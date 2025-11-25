@@ -16,7 +16,7 @@ interface Viewer3DProps {
 // 1x1 Transparent Pixel Base64
 const EMPTY_TEXTURE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
-const GeometrySelector: React.FC<{ type: string }> = ({ type }) => {
+function GeometrySelector({ type }: { type: string }) {
   switch (type) {
     case 'box': return <boxGeometry args={[1.5, 1.5, 1.5]} />;
     case 'torus': return <torusGeometry args={[1, 0.4, 64, 128]} />;
@@ -24,10 +24,10 @@ const GeometrySelector: React.FC<{ type: string }> = ({ type }) => {
     case 'sphere':
     default: return <sphereGeometry args={[1, 128, 128]} />;
   }
-};
+}
 
 // Separate component to handle texture loading via Suspense
-const TexturedMesh: React.FC<Viewer3DProps> = ({ albedo, normal, roughness, mode, geometryType }) => {
+function TexturedMesh({ albedo, normal, roughness, mode, geometryType }: Viewer3DProps) {
   // Fix: Provide fallback EMPTY_TEXTURE instead of empty string to prevent loader crash
   const textures = useTexture({
     map: albedo || EMPTY_TEXTURE,
@@ -84,10 +84,10 @@ const TexturedMesh: React.FC<Viewer3DProps> = ({ albedo, normal, roughness, mode
       )}
     </mesh>
   );
-};
+}
 
 // Fallback mesh when no texture is loaded yet
-const PlaceholderMesh: React.FC<{ geometryType: string; mode: TextureMode }> = ({ geometryType, mode }) => {
+function PlaceholderMesh({ geometryType, mode }: { geometryType: string; mode: TextureMode }) {
   return (
     <mesh>
        <GeometrySelector type={geometryType} />
@@ -98,9 +98,9 @@ const PlaceholderMesh: React.FC<{ geometryType: string; mode: TextureMode }> = (
        )}
     </mesh>
   );
-};
+}
 
-export const Viewer3D: React.FC<Viewer3DProps> = (props) => {
+export function Viewer3D(props: Viewer3DProps) {
   return (
     <div className="w-full h-full bg-neutral-900 relative">
       <Canvas shadows dpr={[1, 2]} camera={{ fov: 45, position: [0, 0, 4] }}>
@@ -131,4 +131,4 @@ export const Viewer3D: React.FC<Viewer3DProps> = (props) => {
       </div>
     </div>
   );
-};
+}

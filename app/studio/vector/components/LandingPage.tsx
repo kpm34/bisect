@@ -197,7 +197,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
                     {/* After */}
                     <div className="text-center group">
-                       <div className="w-32 h-32 bg-indigo-50/50 rounded-xl flex items-center justify-center mb-4 border border-indigo-100 relative overflow-hidden">
+                       <div className="w-32 h-32 bg-cta-orange/5 rounded-xl flex items-center justify-center mb-4 border border-cta-orange/20 relative overflow-hidden">
                           {/* Vector Image */}
                           <img 
                              src="/assets/examples/bear-vector.svg" 
@@ -214,7 +214,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
                              <path d="M30 50 L45 65 L70 35" className="stroke-white stroke-[8] fill-none stroke-linecap-round stroke-linejoin-round" />
                           </svg>
                           
-                          <div className="absolute inset-0 border-2 border-indigo-500/10 rounded-xl pointer-events-none"></div>
+                          <div className="absolute inset-0 border-2 border-cta-orange/10 rounded-xl pointer-events-none"></div>
                        </div>
                        <p className="font-mono text-xs text-accent-teal uppercase tracking-widest font-bold">Vector SVG</p>
                     </div>

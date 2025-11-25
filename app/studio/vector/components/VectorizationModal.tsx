@@ -24,7 +24,7 @@ const VectorizationModal: React.FC<VectorizationModalProps> = ({
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
       <div className="bg-zinc-900 border border-zinc-700 rounded-xl w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
         <div className="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
-          <div className="flex items-center gap-2 text-indigo-400 font-medium">
+          <div className="flex items-center gap-2 text-cta-orange font-medium">
             <ImageIcon size={18} />
             <span>Vectorize Image</span>
           </div>
@@ -47,21 +47,21 @@ const VectorizationModal: React.FC<VectorizationModalProps> = ({
             <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => setComplexity('low')}
-                className={`p-3 rounded-lg border text-sm transition-all ${complexity === 'low' ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300' : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-750'}`}
+                className={`p-3 rounded-lg border text-sm transition-all ${complexity === 'low' ? 'bg-cta-orange/20 border-cta-orange text-cta-orange' : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-750'}`}
               >
                 <div className="font-medium mb-1">Icon</div>
                 <div className="text-[10px] opacity-70">Simple shapes, flat colors</div>
               </button>
               <button
                 onClick={() => setComplexity('medium')}
-                className={`p-3 rounded-lg border text-sm transition-all ${complexity === 'medium' ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300' : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-750'}`}
+                className={`p-3 rounded-lg border text-sm transition-all ${complexity === 'medium' ? 'bg-cta-orange/20 border-cta-orange text-cta-orange' : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-750'}`}
               >
                 <div className="font-medium mb-1">Art</div>
                 <div className="text-[10px] opacity-70">Balanced detail</div>
               </button>
               <button
                 onClick={() => setComplexity('high')}
-                className={`p-3 rounded-lg border text-sm transition-all ${complexity === 'high' ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300' : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-750'}`}
+                className={`p-3 rounded-lg border text-sm transition-all ${complexity === 'high' ? 'bg-cta-orange/20 border-cta-orange text-cta-orange' : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-750'}`}
               >
                 <div className="font-medium mb-1">Detailed</div>
                 <div className="text-[10px] opacity-70">Rich paths & strokes</div>
@@ -73,7 +73,7 @@ const VectorizationModal: React.FC<VectorizationModalProps> = ({
           <div className="space-y-3">
             <label className="flex items-center justify-between p-3 rounded-lg bg-zinc-800/50 border border-zinc-800 cursor-pointer hover:bg-zinc-800 transition-colors">
               <div className="flex items-center gap-3">
-                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${removeBackground ? 'bg-indigo-500 border-indigo-500' : 'border-zinc-600'}`}>
+                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${removeBackground ? 'bg-cta-orange border-cta-orange' : 'border-zinc-600'}`}>
                   {removeBackground && <Zap size={12} className="text-white" />}
                 </div>
                 <div className="text-sm text-zinc-300">Remove Background</div>
@@ -96,7 +96,7 @@ const VectorizationModal: React.FC<VectorizationModalProps> = ({
             </button>
             <button 
               onClick={() => onConfirm({ complexity, removeBackground })}
-              className="flex-1 py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-900/20"
+              className="flex-1 py-2.5 rounded-lg bg-cta-orange text-white font-medium hover:bg-cta-orange-hover transition-colors shadow-lg shadow-cta-orange/20"
             >
               Start Vectorizing
             </button>
