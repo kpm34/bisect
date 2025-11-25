@@ -4,19 +4,12 @@ import {
   Terminal,
   PenTool,
   CheckCircle2,
-  Layers,
-  Wand2,
-  Download,
   Code,
-  Zap,
   Grid3x3,
   Palette,
   BookOpen,
   ChevronDown,
   Cuboid,
-  Sparkles,
-  Brain,
-  Globe,
   Plug,
   FileImage
 } from 'lucide-react';
@@ -112,36 +105,53 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Hero Graphic */}
+          {/* Hero Graphic: Vector Before/After */}
           <div className="relative h-auto w-full hidden md:flex items-center justify-center">
             <div className="bg-white rounded-2xl border border-charcoal/10 p-8 shadow-lg h-full flex flex-col justify-center relative overflow-hidden w-full max-w-md">
               <div className="absolute top-0 right-0 p-4 opacity-5">
                 <Grid3x3 size={120} />
               </div>
 
-              <div className="flex flex-col items-center justify-center gap-6 relative z-10">
-                {/* Three interconnected circles representing the studios */}
-                <div className="relative w-48 h-48">
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-20 rounded-full bg-gradient-to-br from-cta-orange to-cta-orange-hover flex items-center justify-center shadow-lg">
-                    <PenTool size={28} className="text-white" />
+              <div className="flex flex-col md:flex-row items-center justify-center gap-8 relative z-10">
+                {/* Before */}
+                <div className="text-center group">
+                  <div className="w-32 h-32 bg-gray-50 rounded-xl flex items-center justify-center mb-4 border border-charcoal/5 relative overflow-hidden">
+                    {/* Raster Image */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/assets/examples/bear-raster.png"
+                      alt="Raster Input"
+                      className="w-full h-full object-contain opacity-80 group-hover:opacity-100 transition-opacity grayscale contrast-125"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 backdrop-blur-sm">
+                      <span className="text-xs font-mono text-red-500 font-bold">RASTER PNG</span>
+                    </div>
                   </div>
-                  <div className="absolute bottom-0 left-4 w-20 h-20 rounded-full bg-gradient-to-br from-accent-purple to-purple-600 flex items-center justify-center shadow-lg">
-                    <Cuboid size={28} className="text-white" />
-                  </div>
-                  <div className="absolute bottom-0 right-4 w-20 h-20 rounded-full bg-gradient-to-br from-accent-teal to-cyan-600 flex items-center justify-center shadow-lg">
-                    <Palette size={28} className="text-white" />
-                  </div>
-                  {/* Center connection */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-charcoal flex items-center justify-center shadow-xl">
-                    <Sparkles size={20} className="text-white" />
-                  </div>
+                  <p className="font-mono text-xs text-charcoal/40 uppercase tracking-widest">Original Sketch</p>
                 </div>
 
-                <div className="text-center">
-                  <p className="text-text-primary/60 text-sm italic">
-                    &ldquo;Where creative domains intersect&rdquo;
-                  </p>
+                <ArrowRight className="text-charcoal/20 rotate-90 md:rotate-0" size={32} />
+
+                {/* After */}
+                <div className="text-center group">
+                  <div className="w-32 h-32 bg-indigo-50/50 rounded-xl flex items-center justify-center mb-4 border border-indigo-100 relative overflow-hidden">
+                    {/* Vector Image */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/assets/examples/bear-vector.svg"
+                      alt="Vector Output"
+                      className="w-full h-full object-contain p-2 drop-shadow-md group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 border-2 border-indigo-500/10 rounded-xl pointer-events-none"></div>
+                  </div>
+                  <p className="font-mono text-xs text-accent-teal uppercase tracking-widest font-bold">Vector SVG</p>
                 </div>
+              </div>
+
+              <div className="mt-8 text-center">
+                <p className="text-text-primary/60 mx-auto text-sm italic">
+                  &ldquo;Hand-drawn sketch to clean SVG in seconds.&rdquo;
+                </p>
               </div>
             </div>
           </div>
@@ -257,240 +267,6 @@ export default function HomePage() {
 
       {/* Texture Showcase - See It In Action */}
       <TextureShowcase />
-
-      {/* CHAPTER 1: VECTOR STUDIO */}
-      <section id="vector-studio" className="py-32 border-y border-charcoal/10 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cta-orange/10 border border-cta-orange/20 text-[10px] font-mono text-cta-orange uppercase tracking-wider mb-6">
-              Chapter 1
-            </div>
-            <h2 className="text-4xl md:text-5xl font-sans font-bold text-charcoal mb-4">Vector Studio</h2>
-            <p className="text-text-primary/70 text-lg max-w-2xl mx-auto">
-              Production-ready SVG editing with AI-powered optimization
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8 mb-16">
-            {/* Drawing Engine */}
-            <div className="p-8 rounded-2xl bg-charcoal border border-charcoal shadow-lg">
-              <div className="flex items-center gap-3 mb-4">
-                <PenTool className="text-cta-orange" size={24} />
-                <h3 className="text-xl font-sans font-semibold text-white">Canvas Drawing Engine</h3>
-              </div>
-              <p className="text-white/70 mb-4">
-                Browser-native HTML5 Canvas rendering with sub-pixel precision.
-              </p>
-              <ul className="space-y-2 text-sm text-white/60">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-cta-orange mt-0.5 flex-shrink-0" />
-                  <span><strong className="text-white/90">Pen Tool:</strong> B&eacute;zier curve support with node manipulation</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-cta-orange mt-0.5 flex-shrink-0" />
-                  <span><strong className="text-white/90">Shape Tools:</strong> Rectangle, circle, polygon primitives</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-cta-orange mt-0.5 flex-shrink-0" />
-                  <span><strong className="text-white/90">Live Preview:</strong> Real-time SVG path generation</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* AI Vectorization */}
-            <div className="p-8 rounded-2xl bg-charcoal border border-charcoal shadow-lg">
-              <div className="flex items-center gap-3 mb-4">
-                <Wand2 className="text-accent-teal" size={24} />
-                <h3 className="text-xl font-semibold text-white">AI Vectorization</h3>
-              </div>
-              <p className="text-white/70 mb-4">
-                Gemini-powered raster-to-vector conversion with intelligent tracing.
-              </p>
-              <ul className="space-y-2 text-sm text-white/60">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-accent-teal mt-0.5 flex-shrink-0" />
-                  <span><strong className="text-white/90">Smart Tracing:</strong> Edge detection with color quantization</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-accent-teal mt-0.5 flex-shrink-0" />
-                  <span><strong className="text-white/90">Path Simplification:</strong> Reduces nodes by up to 70%</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-accent-teal mt-0.5 flex-shrink-0" />
-                  <span><strong className="text-white/90">Logo Mode:</strong> Optimized for clean, geometric shapes</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="text-center">
-            <Link
-              href="/studio/vector"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-cta-orange text-white rounded-xl font-medium hover:bg-cta-orange-hover transition-colors shadow-lg shadow-cta-orange/25"
-            >
-              <PenTool size={16} />
-              Launch Vector Studio
-              <ArrowRight size={16} />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* CHAPTER 2: 3D STUDIO */}
-      <section id="3d-studio" className="py-32 bg-charcoal/5">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-purple/10 border border-accent-purple/20 text-[10px] font-mono text-accent-purple uppercase tracking-wider mb-6">
-              Chapter 2
-            </div>
-            <h2 className="text-4xl md:text-5xl font-sans font-bold text-charcoal mb-4">3D Studio</h2>
-            <p className="text-text-primary/70 text-lg max-w-2xl mx-auto">
-              AI-powered 3D scene editing with universal format support
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8 mb-16">
-            {/* AI Scene Editing */}
-            <div className="p-8 rounded-2xl bg-charcoal border border-charcoal shadow-lg">
-              <div className="flex items-center gap-3 mb-4">
-                <Brain className="text-accent-purple" size={24} />
-                <h3 className="text-xl font-semibold text-white">AI Scene Editing</h3>
-              </div>
-              <p className="text-white/70 mb-4">
-                GPT-4o powered scene understanding and natural language editing.
-              </p>
-              <ul className="space-y-2 text-sm text-white/60">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-accent-purple mt-0.5 flex-shrink-0" />
-                  <span><strong className="text-white/90">Natural Language:</strong> &ldquo;Make the sphere red&rdquo;</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-accent-purple mt-0.5 flex-shrink-0" />
-                  <span><strong className="text-white/90">Scene Understanding:</strong> Vision-based object detection</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-accent-purple mt-0.5 flex-shrink-0" />
-                  <span><strong className="text-white/90">Multi-Model:</strong> GPT-4o, Gemini, Claude orchestration</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Format Support */}
-            <div className="p-8 rounded-2xl bg-charcoal border border-charcoal shadow-lg">
-              <div className="flex items-center gap-3 mb-4">
-                <Globe className="text-accent-green" size={24} />
-                <h3 className="text-xl font-semibold text-white">Universal Formats</h3>
-              </div>
-              <p className="text-white/70 mb-4">
-                Import and export to any 3D format with material preservation.
-              </p>
-              <ul className="space-y-2 text-sm text-white/60">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-accent-green mt-0.5 flex-shrink-0" />
-                  <span><strong className="text-white/90">Import:</strong> GLTF, GLB, OBJ, FBX, Spline</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-accent-green mt-0.5 flex-shrink-0" />
-                  <span><strong className="text-white/90">Export:</strong> GLTF, GLB, OBJ with textures</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-accent-green mt-0.5 flex-shrink-0" />
-                  <span><strong className="text-white/90">Materials:</strong> 600+ built-in presets</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="text-center">
-            <Link
-              href="/studio/scene"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-accent-purple text-white rounded-xl font-medium hover:bg-purple-600 transition-colors shadow-lg shadow-accent-purple/25"
-            >
-              <Cuboid size={16} />
-              Launch 3D Studio
-              <ArrowRight size={16} />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* CHAPTER 3: TEXTURE STUDIO */}
-      <section id="texture-studio" className="py-32 border-y border-charcoal/10 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-teal/10 border border-accent-teal/20 text-[10px] font-mono text-accent-teal uppercase tracking-wider mb-6">
-              Chapter 3
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-charcoal font-sans mb-4">Texture Studio</h2>
-            <p className="text-text-primary/70 text-lg max-w-2xl mx-auto">
-              AI-powered MatCap and PBR texture generation for 3D workflows
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8 mb-16">
-            {/* MatCap Generation */}
-            <div className="p-8 rounded-2xl bg-charcoal border border-charcoal shadow-lg">
-              <div className="flex items-center gap-3 mb-4">
-                <Palette className="text-accent-teal" size={24} />
-                <h3 className="text-xl font-semibold text-white">MatCap Generator</h3>
-              </div>
-              <p className="text-white/70 mb-4">
-                Gemini-powered material capture textures for real-time 3D rendering.
-              </p>
-              <ul className="space-y-2 text-sm text-white/60">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-accent-teal mt-0.5 flex-shrink-0" />
-                  <span><strong className="text-white/90">Prompt-Based:</strong> &ldquo;Chrome&rdquo;, &ldquo;Clay&rdquo;, &ldquo;Velvet&rdquo; - instant results</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-accent-teal mt-0.5 flex-shrink-0" />
-                  <span><strong className="text-white/90">1K/2K Resolution:</strong> Fast generation, upscale on demand</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-accent-teal mt-0.5 flex-shrink-0" />
-                  <span><strong className="text-white/90">Live Preview:</strong> Real-time 3D sphere preview</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* PBR Generation */}
-            <div className="p-8 rounded-2xl bg-charcoal border border-charcoal shadow-lg">
-              <div className="flex items-center gap-3 mb-4">
-                <Layers className="text-cta-orange" size={24} />
-                <h3 className="text-xl font-semibold text-white">PBR Texture Maps</h3>
-              </div>
-              <p className="text-white/70 mb-4">
-                Complete physically-based rendering texture sets from a single prompt.
-              </p>
-              <ul className="space-y-2 text-sm text-white/60">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-cta-orange mt-0.5 flex-shrink-0" />
-                  <span><strong className="text-white/90">Albedo:</strong> Base color map via Gemini</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-cta-orange mt-0.5 flex-shrink-0" />
-                  <span><strong className="text-white/90">Normal Map:</strong> Auto-generated with Sobel filtering</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-cta-orange mt-0.5 flex-shrink-0" />
-                  <span><strong className="text-white/90">Roughness:</strong> Luminance-based extraction</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="text-center">
-            <Link
-              href="/studio/textures"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-accent-teal text-white rounded-xl font-medium hover:bg-cyan-600 transition-colors shadow-lg shadow-accent-teal/25"
-            >
-              <Palette size={16} />
-              Launch Texture Studio
-              <ArrowRight size={16} />
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* DEV TOOLS SECTION */}
       <section id="dev-tools" className="py-32 bg-charcoal/5">
@@ -734,19 +510,19 @@ export default function HomePage() {
               <h3 className="font-sans font-semibold text-charcoal mb-4">Features</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="#vector-studio" className="text-text-primary/60 hover:text-cta-orange transition-colors">
+                  <a href="#features" className="text-text-primary/60 hover:text-cta-orange transition-colors">
                     AI Vectorization
                   </a>
                 </li>
                 <li>
-                  <a href="#3d-studio" className="text-text-primary/60 hover:text-cta-orange transition-colors">
-                    Scene Editing
+                  <a href="#dev-tools" className="text-text-primary/60 hover:text-cta-orange transition-colors">
+                    Developer Tools
                   </a>
                 </li>
                 <li>
-                  <a href="#texture-studio" className="text-text-primary/60 hover:text-cta-orange transition-colors">
-                    Texture Generation
-                  </a>
+                  <Link href="/docs" className="text-text-primary/60 hover:text-cta-orange transition-colors">
+                    Documentation
+                  </Link>
                 </li>
               </ul>
             </div>
