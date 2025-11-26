@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Copper Material Preview</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a1a;
+      color: #fff;
+      padding: 40px;
+    }
+    h1 { text-align: center; margin-bottom: 10px; color: #f5a97f; }
+    h2 { color: #888; font-size: 14px; text-align: center; margin-bottom: 40px; }
+    h3 { color: #f5a97f; margin: 30px 0 20px; padding-bottom: 10px; border-bottom: 1px solid #333; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #2a2a2a;
+      border-radius: 12px;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 30px rgba(245, 169, 127, 0.3);
+    }
+    .card img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      background: #111;
+    }
+    .card .label {
+      padding: 12px;
+      text-align: center;
+    }
+    .card .name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .card .id {
+      font-size: 11px;
+      color: #666;
+      margin-top: 4px;
+    }
+    .section { margin-bottom: 40px; }
+  </style>
+</head>
+<body>
+  <h1>Copper Material Variations</h1>
+  <h2>15 Blender-rendered previews (512x512)</h2>
+
+  <div class="section">
+    <h3>Finishes</h3>
+    <div class="grid">
+      <div class="card">
+        <img src="copper-mirror.png" alt="Mirror Copper">
+        <div class="label"><div class="name">Mirror</div><div class="id">copper-mirror</div></div>
+      </div>
+      <div class="card">
+        <img src="copper-polished.png" alt="Polished Copper">
+        <div class="label"><div class="name">Polished</div><div class="id">copper-polished</div></div>
+      </div>
+      <div class="card">
+        <img src="copper-satin.png" alt="Satin Copper">
+        <div class="label"><div class="name">Satin</div><div class="id">copper-satin</div></div>
+      </div>
+      <div class="card">
+        <img src="copper-brushed.png" alt="Brushed Copper">
+        <div class="label"><div class="name">Brushed</div><div class="id">copper-brushed</div></div>
+      </div>
+      <div class="card">
+        <img src="copper-matte.png" alt="Matte Copper">
+        <div class="label"><div class="name">Matte</div><div class="id">copper-matte</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Tints</h3>
+    <div class="grid">
+      <div class="card">
+        <img src="copper-rose.png" alt="Rose Copper">
+        <div class="label"><div class="name">Rose Copper</div><div class="id">copper-rose</div></div>
+      </div>
+      <div class="card">
+        <img src="copper-penny.png" alt="Penny">
+        <div class="label"><div class="name">Penny</div><div class="id">copper-penny</div></div>
+      </div>
+      <div class="card">
+        <img src="copper-bronze.png" alt="Bronze">
+        <div class="label"><div class="name">Bronze</div><div class="id">copper-bronze</div></div>
+      </div>
+      <div class="card">
+        <img src="copper-red.png" alt="Red Copper">
+        <div class="label"><div class="name">Red Copper</div><div class="id">copper-red</div></div>
+      </div>
+      <div class="card">
+        <img src="copper-warm.png" alt="Warm Copper">
+        <div class="label"><div class="name">Warm Copper</div><div class="id">copper-warm</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Aged & Special</h3>
+    <div class="grid">
+      <div class="card">
+        <img src="copper-oxidized.png" alt="Oxidized">
+        <div class="label"><div class="name">Oxidized</div><div class="id">copper-oxidized</div></div>
+      </div>
+      <div class="card">
+        <img src="copper-patina.png" alt="Green Patina">
+        <div class="label"><div class="name">Green Patina</div><div class="id">copper-patina</div></div>
+      </div>
+      <div class="card">
+        <img src="copper-verdigris.png" alt="Verdigris">
+        <div class="label"><div class="name">Verdigris</div><div class="id">copper-verdigris</div></div>
+      </div>
+      <div class="card">
+        <img src="copper-weathered.png" alt="Weathered">
+        <div class="label"><div class="name">Weathered</div><div class="id">copper-weathered</div></div>
+      </div>
+      <div class="card">
+        <img src="copper-antique.png" alt="Antique Copper">
+        <div class="label"><div class="name">Antique Copper</div><div class="id">copper-antique</div></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

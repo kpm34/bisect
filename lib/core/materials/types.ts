@@ -54,7 +54,7 @@ export interface TextureMap {
   /** Base64 encoded texture data or URL */
   data: string;
 
-  /** External URL for on-demand loading (Appwrite, CDN, source) */
+  /** External URL for on-demand loading (Supabase Storage, CDN, source) */
   url?: string;
 
   /** Original texture resolution */
@@ -100,8 +100,8 @@ export interface MaterialTextures {
 
   /** External storage references for full-resolution textures */
   external?: {
-    /** Appwrite file IDs for full-res textures */
-    appwrite?: {
+    /** Supabase Storage paths for full-res textures */
+    supabase?: {
       baseColor?: string;
       normal?: string;
       metallicRoughness?: string;
@@ -195,6 +195,83 @@ export interface R3FGlassConfig {
 }
 
 /**
+ * Advanced physical material properties (MeshPhysicalMaterial)
+ * These extend beyond basic PBR for premium material effects
+ */
+export interface PhysicalMaterialProperties {
+  // === Clearcoat (car paint, lacquered surfaces) ===
+  /** Clearcoat intensity 0-1 */
+  clearcoat?: number;
+  /** Clearcoat roughness 0-1 */
+  clearcoatRoughness?: number;
+
+  // === Sheen (fabric, velvet) ===
+  /** Sheen intensity 0-1 */
+  sheen?: number;
+  /** Sheen roughness 0-1 (0.3=silk, 0.8=velvet) */
+  sheenRoughness?: number;
+  /** Sheen tint color (hex) */
+  sheenColor?: string;
+
+  // === Transmission (glass, plastic) ===
+  /** Transmission 0-1 (0=opaque, 1=fully transmissive) */
+  transmission?: number;
+  /** Material thickness for attenuation */
+  thickness?: number;
+  /** Index of refraction (default 1.5 for glass) */
+  ior?: number;
+  /** Attenuation color for colored glass */
+  attenuationColor?: string;
+  /** Attenuation distance */
+  attenuationDistance?: number;
+
+  // === Iridescence (soap bubbles, oil slicks) ===
+  /** Iridescence intensity 0-1 */
+  iridescence?: number;
+  /** Iridescence IOR */
+  iridescenceIOR?: number;
+  /** Iridescence thickness range [min, max] in nm */
+  iridescenceThicknessRange?: [number, number];
+
+  // === Anisotropy (brushed metal) ===
+  /** Anisotropy strength 0-1 */
+  anisotropy?: number;
+  /** Anisotropy rotation in radians */
+  anisotropyRotation?: number;
+}
+
+/**
+ * Environment/HDRI presets available in the editor
+ */
+export type EnvironmentPreset =
+  | 'apartment'
+  | 'city'
+  | 'dawn'
+  | 'forest'
+  | 'lobby'
+  | 'night'
+  | 'park'
+  | 'studio'
+  | 'sunset'
+  | 'warehouse';
+
+/**
+ * Scene environment configuration
+ */
+export interface SceneEnvironment {
+  /** Environment preset or custom HDRI URL */
+  preset?: EnvironmentPreset;
+  /** Custom HDRI file URL */
+  hdriUrl?: string;
+  /** Show environment as background */
+  background?: boolean;
+  /** Background blur amount 0-1 */
+  blur?: number;
+  /** Environment map intensity multiplier */
+  intensity?: number;
+}
+
+/**
  * Material preset with special effects
  */
 export interface MaterialPresetWithEffects extends MaterialPreset {
@@ -202,4 +279,6 @@ export interface MaterialPresetWithEffects extends MaterialPreset {
   effects?: {
     glass?: R3FGlassConfig;
   };
+  /** Advanced physical material properties */
+  physical?: PhysicalMaterialProperties;
 }

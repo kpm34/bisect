@@ -1,6 +1,6 @@
 import React from 'react';
 import { TextureMode, ModelQuality, GeneratedTextureSet } from '../types';
-import { Wand2, Download, Layers, Circle, Box as BoxIcon, Palette, Loader2, Sparkles, CheckCircle2, Donut } from 'lucide-react';
+import { Wand2, Download, Layers, Circle, Box as BoxIcon, Palette, Loader2, Sparkles, CheckCircle2, Donut, Clock, Zap } from 'lucide-react';
 
 interface TextureControlPanelProps {
   isGenerating: boolean;
@@ -18,6 +18,10 @@ interface TextureControlPanelProps {
   setMode: (m: TextureMode) => void;
   quality: ModelQuality;
   setQuality: (q: ModelQuality) => void;
+
+  // Rate limiting
+  cooldownRemaining?: number;
+  fromCache?: boolean;
 }
 
 export function TextureControlPanel({
@@ -33,8 +37,12 @@ export function TextureControlPanel({
   mode,
   setMode,
   quality,
-  setQuality
+  setQuality,
+  cooldownRemaining = 0,
+  fromCache = false
 }: TextureControlPanelProps) {
+  const isOnCooldown = cooldownRemaining > 0;
+  const cooldownSeconds = Math.ceil(cooldownRemaining / 1000);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,12 +119,38 @@ export function TextureControlPanel({
 
           <button
             type="submit"
-            disabled={isGenerating || isUpscaling || !prompt.trim()}
-            className="w-full bg-[#0891B2] hover:bg-[#0891B2]/80 disabled:bg-[#1a1d24] disabled:text-neutral-500 text-white font-medium py-3 rounded-lg transition-all flex items-center justify-center gap-2"
+            disabled={isGenerating || isUpscaling || !prompt.trim() || isOnCooldown}
+            className={`w-full font-medium py-3 rounded-lg transition-all flex items-center justify-center gap-2 ${
+              isOnCooldown
+                ? 'bg-amber-600/20 text-amber-400 border border-amber-600/30'
+                : 'bg-[#0891B2] hover:bg-[#0891B2]/80 disabled:bg-[#1a1d24] disabled:text-neutral-500 text-white'
+            }`}
           >
-            {isGenerating ? <Loader2 className="animate-spin w-4 h-4" /> : <Wand2 className="w-4 h-4" />}
-            {isGenerating ? "Generating..." : "Generate Texture"}
+            {isGenerating ? (
+              <>
+                <Loader2 className="animate-spin w-4 h-4" />
+                Generating...
+              </>
+            ) : isOnCooldown ? (
+              <>
+                <Clock className="w-4 h-4" />
+                Wait {cooldownSeconds}s
+              </>
+            ) : (
+              <>
+                <Wand2 className="w-4 h-4" />
+                Generate Texture
+              </>
+            )}
           </button>
+
+          {/* Cache indicator */}
+          {fromCache && currentTexture && (
+            <div className="flex items-center justify-center gap-2 text-xs text-emerald-400 mt-2">
+              <Zap className="w-3 h-3" />
+              Loaded from cache (instant)
+            </div>
+          )}
         </form>
 
         {/* View Settings */}
@@ -154,11 +188,29 @@ export function TextureControlPanel({
              {onUpscale && currentTexture.resolution !== '2K' && (
                 <button
                   onClick={onUpscale}
-                  disabled={isUpscaling}
-                  className="w-full bg-gradient-to-r from-[#FF6B35]/20 to-[#0891B2]/20 hover:from-[#FF6B35]/30 hover:to-[#0891B2]/30 border border-[#0891B2]/30 text-[#0891B2] p-3 rounded-lg flex items-center justify-center gap-2 transition-all"
+                  disabled={isUpscaling || isOnCooldown}
+                  className={`w-full p-3 rounded-lg flex items-center justify-center gap-2 transition-all ${
+                    isOnCooldown
+                      ? 'bg-amber-600/20 text-amber-400 border border-amber-600/30'
+                      : 'bg-gradient-to-r from-[#FF6B35]/20 to-[#0891B2]/20 hover:from-[#FF6B35]/30 hover:to-[#0891B2]/30 border border-[#0891B2]/30 text-[#0891B2]'
+                  }`}
                 >
-                   {isUpscaling ? <Loader2 className="animate-spin w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-                   {isUpscaling ? "Upscaling to 2K..." : "Enhance Material (Upscale to 2K)"}
+                   {isUpscaling ? (
+                     <>
+                       <Loader2 className="animate-spin w-4 h-4" />
+                       Upscaling to 2K...
+                     </>
+                   ) : isOnCooldown ? (
+                     <>
+                       <Clock className="w-4 h-4" />
+                       Wait {cooldownSeconds}s
+                     </>
+                   ) : (
+                     <>
+                       <Sparkles className="w-4 h-4" />
+                       Enhance Material (Upscale to 2K)
+                     </>
+                   )}
                 </button>
              )}
 

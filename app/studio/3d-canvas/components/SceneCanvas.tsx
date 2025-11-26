@@ -10,7 +10,8 @@ import { ErrorBoundary } from './ErrorBoundary';
 import GlitchLoader from './GlitchLoader';
 import { GoldVariations } from './GoldVariations';
 import { IconGenerator } from './IconGenerator';
-
+import { MaterialPreviewOverlay } from './MaterialPreviewOverlay';
+import { SceneEnvironment } from '@/lib/core/materials/types';
 
 interface R3FCanvasProps {
   sceneFile: File | null;
@@ -18,7 +19,15 @@ interface R3FCanvasProps {
   showFileUpload?: boolean;
   setIsSceneReady?: (ready: boolean) => void;
   setIsLoading?: (loading: boolean) => void;
+  environment?: SceneEnvironment;
 }
+
+const defaultEnvironment: SceneEnvironment = {
+  preset: 'city',
+  background: true,
+  blur: 0.8,
+  intensity: 1.0,
+};
 
 /**
  * R3FCanvas - Universal 3D Editor Canvas (React Three Fiber)
@@ -33,7 +42,8 @@ export default function R3FCanvas({
   onFileUpload,
   showFileUpload = true,
   setIsSceneReady,
-  setIsLoading
+  setIsLoading,
+  environment = defaultEnvironment
 }: R3FCanvasProps) {
   const [cameraPosition] = useState<[number, number, number]>([0, 5, 10]);
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -125,8 +135,13 @@ export default function R3FCanvas({
           </Suspense>
         </ErrorBoundary>
 
-        {/* Environment & Background */}
-        <Environment preset="city" background blur={0.8} />
+        {/* Environment & Background - Dynamic based on inspector settings */}
+        <Environment
+          preset={environment.preset || 'city'}
+          background={environment.background ?? true}
+          blur={environment.blur ?? 0.8}
+          environmentIntensity={environment.intensity ?? 1.0}
+        />
 
         {/* Grid Helper */}
         <Grid
@@ -141,9 +156,6 @@ export default function R3FCanvas({
         />
 
 
-
-        {/* Gold Variations Overlay for Review */}
-        {showGoldPreview && <IconGenerator index={0} />}
 
         {/* Camera Controls - Option+Drag to orbit, MMB to pan, Scroll to zoom */}
         <ConditionalOrbitControls />
@@ -165,6 +177,13 @@ export default function R3FCanvas({
       <EditorUIOverlay
         showPreview={showGoldPreview}
         onTogglePreview={() => setShowGoldPreview(!showGoldPreview)}
+      />
+
+      {/* Material Preview Overlay Modal */}
+      <MaterialPreviewOverlay
+        isOpen={showGoldPreview}
+        onClose={() => setShowGoldPreview(false)}
+        materialType="gold"
       />
     </div>
   );
@@ -193,7 +212,7 @@ function EditorUIOverlay({
             : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
             }`}
         >
-          {showPreview ? 'Close Preview' : 'Preview Gold'}
+          {showPreview ? 'Close Preview' : 'Gold Variations'}
         </button>
       </div>
 

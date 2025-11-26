@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { MaterialSelector } from './MaterialSelector';
 import ObjectTransformControls from './ObjectTransformControls';
+import EnvironmentControls from './EnvironmentControls';
+import { SceneEnvironment, EnvironmentPreset } from '@/lib/core/materials/types';
 
 /**
  * SceneInspector - 3D Canvas Control Panel
@@ -27,10 +29,22 @@ const tabs: TabConfig[] = [
 
 interface SceneInspectorProps {
   onTabChange?: (tab: TabId) => void;
+  environment: SceneEnvironment;
+  onEnvironmentChange: (env: SceneEnvironment) => void;
 }
 
-export default function SceneInspector({ onTabChange }: SceneInspectorProps) {
+export default function SceneInspector({ onTabChange, environment, onEnvironmentChange }: SceneInspectorProps) {
   const [activeTab, setActiveTab] = useState<TabId>('material');
+
+  // Environment setter helpers
+  const setPreset = (preset: EnvironmentPreset) =>
+    onEnvironmentChange({ ...environment, preset, hdriUrl: undefined });
+  const setBackground = (background: boolean) =>
+    onEnvironmentChange({ ...environment, background });
+  const setBlur = (blur: number) =>
+    onEnvironmentChange({ ...environment, blur });
+  const setIntensity = (intensity: number) =>
+    onEnvironmentChange({ ...environment, intensity });
 
   const handleTabChange = (tab: TabId) => {
     setActiveTab(tab);
@@ -85,10 +99,17 @@ export default function SceneInspector({ onTabChange }: SceneInspectorProps) {
 
         {activeTab === 'scene' && (
           <>
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Scene Settings</h3>
-            <p className="text-sm text-gray-600">
-              Scene settings (lighting, camera, environment) will appear here.
-            </p>
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">Environment & Lighting</h3>
+            <EnvironmentControls
+              currentPreset={environment.preset || 'city'}
+              onPresetChange={setPreset}
+              showBackground={environment.background ?? true}
+              onBackgroundChange={setBackground}
+              blur={environment.blur ?? 0.8}
+              onBlurChange={setBlur}
+              intensity={environment.intensity ?? 1.0}
+              onIntensityChange={setIntensity}
+            />
           </>
         )}
       </div>

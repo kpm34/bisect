@@ -25,6 +25,33 @@ export interface MaterialConfig {
     metallic: number;
     baseColorHex: string;
   };
+  /** Physical material properties for advanced effects (glass, fabric, car paint) */
+  physical?: {
+    /** Transmission 0-1 for glass/transparent materials */
+    transmission?: number;
+    /** Material thickness for refraction effects */
+    thickness?: number;
+    /** Index of refraction (1.5 for glass, 1.33 for water) */
+    ior?: number;
+    /** Attenuation color for tinted glass (hex) */
+    attenuationColor?: string;
+    /** Attenuation distance */
+    attenuationDistance?: number;
+    /** Clearcoat 0-1 for car paint, lacquered surfaces */
+    clearcoat?: number;
+    /** Clearcoat roughness 0-1 */
+    clearcoatRoughness?: number;
+    /** Sheen 0-1 for fabric effects */
+    sheen?: number;
+    /** Sheen roughness (0.3 silk, 0.8 velvet) */
+    sheenRoughness?: number;
+    /** Sheen color (hex) */
+    sheenColor?: string;
+    /** Iridescence 0-1 for soap bubbles, oil slicks */
+    iridescence?: number;
+    /** Iridescence IOR */
+    iridescenceIOR?: number;
+  };
   tags: string[];
   description: string;
 }
@@ -162,9 +189,14 @@ const FBR_Silk_Lustrous: MaterialConfig = {
     "metallicRoughness": "/assets/materials/fabric/FBR_Silk_Lustrous/MetallicRoughness.png"
   },
   "properties": {
-    "roughness": 0.8,
+    "roughness": 0.4,
     "metallic": 0,
     "baseColorHex": "#e0e0e0"
+  },
+  "physical": {
+    "sheen": 0.8,
+    "sheenRoughness": 0.3,
+    "sheenColor": "#ffffff"
   },
   "tags": [
     "fabric",
@@ -185,9 +217,14 @@ const FBR_Velvet_Red: MaterialConfig = {
     "metallicRoughness": "/assets/materials/fabric/FBR_Velvet_Red/MetallicRoughness.png"
   },
   "properties": {
-    "roughness": 0.8,
+    "roughness": 0.6,
     "metallic": 0,
-    "baseColorHex": "#e0e0e0"
+    "baseColorHex": "#8B0000"
+  },
+  "physical": {
+    "sheen": 1.0,
+    "sheenRoughness": 0.8,
+    "sheenColor": "#cc4444"
   },
   "tags": [
     "fabric",
@@ -277,6 +314,10 @@ const MTL_Chrome_Mirror: MaterialConfig = {
     "roughness": 0.05,
     "metallic": 1.0,
     "baseColorHex": "#e6e6e6"
+  },
+  "physical": {
+    "clearcoat": 1.0,
+    "clearcoatRoughness": 0.0
   },
   "tags": [
     "metal",
@@ -388,6 +429,10 @@ const MTL_Titanium_Anodized: MaterialConfig = {
     "roughness": 0.25,
     "metallic": 1.0,
     "baseColorHex": "#6673a6"
+  },
+  "physical": {
+    "iridescence": 0.5,
+    "iridescenceIOR": 1.3
   },
   "tags": [
     "metal",
@@ -687,9 +732,13 @@ const WOD_Polished_Lacquered: MaterialConfig = {
     "metallicRoughness": "/assets/materials/wood/WOD_Polished_Lacquered/MetallicRoughness.png"
   },
   "properties": {
-    "roughness": 0.15000000596046448,
+    "roughness": 0.15,
     "metallic": 0,
     "baseColorHex": "#cccccc"
+  },
+  "physical": {
+    "clearcoat": 0.8,
+    "clearcoatRoughness": 0.1
   },
   "tags": [
     "wood",
@@ -784,6 +833,11 @@ const GLS_Clear_Standard: MaterialConfig = {
     "metallic": 0,
     "baseColorHex": "#f4fbff"
   },
+  "physical": {
+    "transmission": 0.95,
+    "thickness": 0.5,
+    "ior": 1.5
+  },
   "tags": [
     "glass",
     "clear",
@@ -807,6 +861,13 @@ const GLS_Colored_Amber: MaterialConfig = {
     "roughness": 0.12,
     "metallic": 0,
     "baseColorHex": "#f8d4a5"
+  },
+  "physical": {
+    "transmission": 0.85,
+    "thickness": 0.5,
+    "ior": 1.5,
+    "attenuationColor": "#f8a540",
+    "attenuationDistance": 0.5
   },
   "tags": [
     "glass",
@@ -832,6 +893,13 @@ const GLS_Colored_Blue: MaterialConfig = {
     "metallic": 0,
     "baseColorHex": "#c3e4ff"
   },
+  "physical": {
+    "transmission": 0.88,
+    "thickness": 0.5,
+    "ior": 1.5,
+    "attenuationColor": "#4080ff",
+    "attenuationDistance": 0.5
+  },
   "tags": [
     "glass",
     "blue",
@@ -855,6 +923,13 @@ const GLS_Colored_Green: MaterialConfig = {
     "roughness": 0.08,
     "metallic": 0,
     "baseColorHex": "#a8e6a1"
+  },
+  "physical": {
+    "transmission": 0.88,
+    "thickness": 0.5,
+    "ior": 1.5,
+    "attenuationColor": "#40a040",
+    "attenuationDistance": 0.5
   },
   "tags": [
     "glass",
@@ -880,6 +955,11 @@ const GLS_Frosted_Satin: MaterialConfig = {
     "metallic": 0,
     "baseColorHex": "#dfe7ee"
   },
+  "physical": {
+    "transmission": 0.7,
+    "thickness": 0.5,
+    "ior": 1.5
+  },
   "tags": [
     "glass",
     "frosted",
@@ -903,6 +983,13 @@ const GLS_Stained_Red: MaterialConfig = {
     "roughness": 0.12,
     "metallic": 0,
     "baseColorHex": "#d94848"
+  },
+  "physical": {
+    "transmission": 0.8,
+    "thickness": 0.5,
+    "ior": 1.5,
+    "attenuationColor": "#c02020",
+    "attenuationDistance": 0.3
   },
   "tags": [
     "glass",
@@ -928,6 +1015,11 @@ const GLS_Textured_Ripple: MaterialConfig = {
     "metallic": 0,
     "baseColorHex": "#e8f4f8"
   },
+  "physical": {
+    "transmission": 0.75,
+    "thickness": 0.6,
+    "ior": 1.5
+  },
   "tags": [
     "glass",
     "textured",
@@ -951,6 +1043,13 @@ const GLS_Tinted_Smoke: MaterialConfig = {
     "roughness": 0.15,
     "metallic": 0,
     "baseColorHex": "#b0c4cc"
+  },
+  "physical": {
+    "transmission": 0.85,
+    "thickness": 0.5,
+    "ior": 1.5,
+    "attenuationColor": "#404040",
+    "attenuationDistance": 0.4
   },
   "tags": [
     "glass",

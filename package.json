@@ -20,6 +20,7 @@
     "@react-three/postprocessing": "^2.16.5",
     "@splinetool/r3f-spline": "^1.0.2",
     "@splinetool/runtime": "^1.10.99",
+    "@supabase/supabase-js": "^2.84.0",
     "@tanstack/react-query": "^5.0.0",
     "@types/node": "^20",
     "@types/react": "^18",
@@ -46,8 +47,10 @@
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
+    "dotenv": "^17.2.3",
     "eslint": "^8",
-    "eslint-config-next": "14.2.33"
+    "eslint-config-next": "14.2.33",
+    "tsx": "^4.20.6"
   },
   "packageManager": "pnpm@10.14.0"
 }

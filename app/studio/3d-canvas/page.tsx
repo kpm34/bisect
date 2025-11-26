@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Shell } from '@/components/shared/Shell';
 import { SelectionProvider } from './r3f/SceneSelectionContext';
 import { scenePersistence } from './utils/scenePersistence';
+import { SceneEnvironment } from '@/lib/core/materials/types';
 
 // Disable SSR for SceneCanvas (requires WebGL/browser APIs)
 // Using React Three Fiber for declarative 3D scene management
@@ -76,6 +77,14 @@ function EditorContent() {
   const [panelWidth, setPanelWidth] = useState(440);
   const [isResizing, setIsResizing] = useState(false);
   const [isRestoringScene, setIsRestoringScene] = useState(!!projectId); // Only restore if project ID present
+
+  // Environment state - shared between SceneCanvas and SceneInspector
+  const [environment, setEnvironment] = useState<SceneEnvironment>({
+    preset: 'city',
+    background: true,
+    blur: 0.8,
+    intensity: 1.0,
+  });
 
 
   // Load project if ID is provided in URL (only on initial mount or when projectId actually changes)
@@ -260,7 +269,11 @@ function EditorContent() {
               onMouseDown={() => setIsResizing(true)}
               title="Drag to resize panel"
             />
-            <SceneInspector onTabChange={setActiveTab} />
+            <SceneInspector
+              onTabChange={setActiveTab}
+              environment={environment}
+              onEnvironmentChange={setEnvironment}
+            />
           </div>
         }
       >
@@ -299,6 +312,7 @@ function EditorContent() {
                 showFileUpload={!isRestoringScene && !sceneFile}
                 setIsSceneReady={setIsSceneReady}
                 setIsLoading={setIsLoading}
+                environment={environment}
               />
 
               {/* Scene Hierarchy Panel - Only render when scene is ready */}

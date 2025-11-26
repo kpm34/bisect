@@ -3,26 +3,50 @@
 /**
  * MaterialSelector - Circular Material Swatches with Vertical Popup
  *
- * Matches Spline AI Extension UI exactly:
- * - Horizontal row of circular material swatches
- * - Each category shows center variation by default
- * - Hover reveals 5 variations in vertical popup
- * - Click to apply PBR material with textures
+ * Features:
+ * - Horizontal row of circular swatches for main categories (Metal, Glass, Fabric, Wood, Stone)
+ * - Hover reveals 5 quick-access variations in vertical popup
+ * - For Metal: shows Gold, Silver, Copper, Iron, Titanium as the 5 variations
+ * - Click to apply immediately
+ * - "Browse All Materials" opens full MaterialPreviewOverlay with detailed presets
  *
- * Now fetches materials from Appwrite database instead of local manifest
+ * Uses local manifest for main categories, Supabase for detailed metal presets
  */
 
-import React, { useState, useMemo } from 'react';
-import { Grid3X3, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Grid3X3, ChevronRight, Loader2 } from 'lucide-react';
 import { useSelection } from '../r3f/SceneSelectionContext';
+import { MaterialPreviewOverlay } from './MaterialPreviewOverlay';
 import {
   MaterialConfig,
   MaterialCategory,
   CATEGORIES,
   getCategoryMaterials,
   getFeaturedMaterials,
+  MATERIALS,
 } from '@/lib/core/materials';
-import { MaterialDrawer } from './MaterialDrawer';
+import type { MaterialPreset } from '@/lib/services/supabase/types';
+
+// Metal subcategories with their default presets from Supabase
+const METAL_SUBCATEGORIES = ['gold', 'silver', 'copper', 'iron', 'titanium'] as const;
+
+// Preview URLs for metal subcategories (polished variants as defaults)
+const METAL_PREVIEW_URLS: Record<string, string> = {
+  gold: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/metal/gold-variations/gold-polished.png',
+  silver: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/metal/silver-variations/silver-polished.png',
+  copper: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/metal/copper-variations/copper-polished.png',
+  iron: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/metal/iron-variations/iron-polished.png',
+  titanium: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/metal/titanium-variations/titanium-polished.png',
+};
+
+// Default material properties for metal subcategories
+const METAL_DEFAULTS: Record<string, { color: string; roughness: number; metalness: number }> = {
+  gold: { color: '#FFD700', roughness: 0.15, metalness: 1.0 },
+  silver: { color: '#C0C0C0', roughness: 0.15, metalness: 1.0 },
+  copper: { color: '#B87333', roughness: 0.2, metalness: 1.0 },
+  iron: { color: '#434343', roughness: 0.4, metalness: 1.0 },
+  titanium: { color: '#878681', roughness: 0.25, metalness: 1.0 },
+};
 
 type MaterialCategoryType = MaterialCategory;
 
@@ -32,35 +56,45 @@ export function MaterialSelector() {
     category: string;
     id: string;
   } | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+  const [overlayCategory, setOverlayCategory] = useState<string>('gold');
   const { setColor, setRoughness, setMetalness, selectedObject } = useSelection();
 
-  // Get all materials from local manifest
-  const materials = useMemo(() => {
-    const allMaterials: MaterialConfig[] = [];
-    Object.values(CATEGORIES).forEach(category => {
-      allMaterials.push(...getCategoryMaterials(category.id));
+  // Get materials from local manifest, grouped by category
+  const materialsByCategory = useMemo(() => {
+    const result: Record<MaterialCategoryType, MaterialConfig[]> = {} as any;
+
+    // Get active categories with materials
+    const activeCategories: MaterialCategoryType[] = ['metal', 'glass', 'fabric', 'wood', 'stone'];
+
+    activeCategories.forEach(category => {
+      const featured = getFeaturedMaterials(category);
+      if (featured.length > 0) {
+        result[category] = featured.slice(0, 5); // Max 5 for hover popup
+      }
     });
-    return allMaterials;
+
+    return result;
   }, []);
 
-  // Group materials by category
-  const materialsByCategory = useMemo(() => {
-    return materials.reduce((acc, material) => {
-      if (!acc[material.category]) {
-        acc[material.category] = [];
-      }
-      acc[material.category].push(material);
-      return acc;
-    }, {} as Record<MaterialCategoryType, MaterialConfig[]>);
-  }, [materials]);
+  // For metal category, we'll show the 5 subcategories (gold, silver, copper, iron, titanium)
+  // instead of the local manifest materials
+  const metalSubcategoryItems = useMemo(() => {
+    return METAL_SUBCATEGORIES.map(slug => ({
+      id: `metal-${slug}`,
+      slug,
+      name: slug.charAt(0).toUpperCase() + slug.slice(1),
+      previewUrl: METAL_PREVIEW_URLS[slug],
+      ...METAL_DEFAULTS[slug],
+    }));
+  }, []);
 
   const activeCategories = Object.keys(materialsByCategory) as MaterialCategoryType[];
 
-  // Handler for applying material
+  // Handler for applying local manifest material
   const handleMaterialClick = async (material: MaterialConfig) => {
     if (!selectedObject) {
-      console.warn('⚠️  No object selected');
+      console.warn('⚠️ No object selected');
       return;
     }
 
@@ -75,44 +109,114 @@ export function MaterialSelector() {
     setRoughness(material.properties.roughness);
     setMetalness(material.properties.metallic);
 
-    // Apply textures if available
-    if (material.textures?.baseColor) {
-      const textureUrl = material.textures.baseColor;
-      console.log(`🖼️ Loading texture: ${textureUrl}`);
+    // Import Three.js modules
+    const THREE = await import('three');
 
-      // Load texture and apply to selected object's material
-      try {
-        const { TextureLoader } = await import('three');
-        const loader = new TextureLoader();
+    // Check if material has physical properties
+    const hasPhysical = material.physical && (
+      material.physical.transmission !== undefined ||
+      material.physical.clearcoat !== undefined ||
+      material.physical.sheen !== undefined
+    );
 
-        loader.load(
-          textureUrl,
-          (texture) => {
-            // Apply texture to all meshes in selected object
-            selectedObject.traverse((child: any) => {
-              if (child.isMesh && child.material) {
-                const materials = Array.isArray(child.material) ? child.material : [child.material];
-                materials.forEach((mat: any) => {
-                  if (mat.map !== undefined) {
-                    mat.map = texture;
-                    mat.needsUpdate = true;
-                  }
-                });
-              }
-            });
-            console.log(`✅ Applied texture to "${selectedObject.name}"`);
-          },
-          undefined,
-          (error) => {
-            console.error('❌ Failed to load texture:', error);
+    // Apply material to all meshes in selected object
+    selectedObject.traverse((child: any) => {
+      if (child.isMesh && child.material) {
+        const isGlass = material.category === 'glass' && material.physical?.transmission;
+
+        if (isGlass) {
+          const glassMaterial = new THREE.MeshPhysicalMaterial({
+            color: colorHex,
+            metalness: material.properties.metallic,
+            roughness: material.properties.roughness,
+            transmission: material.physical?.transmission ?? 0.95,
+            thickness: material.physical?.thickness ?? 0.5,
+            ior: material.physical?.ior ?? 1.5,
+            transparent: true,
+          });
+          if (material.physical?.attenuationColor) {
+            glassMaterial.attenuationColor = new THREE.Color(material.physical.attenuationColor);
+            glassMaterial.attenuationDistance = material.physical.attenuationDistance ?? 0.5;
           }
-        );
-      } catch (error) {
-        console.error('❌ Failed to import TextureLoader:', error);
+          child.material = glassMaterial;
+        } else if (hasPhysical) {
+          const physicalMaterial = new THREE.MeshPhysicalMaterial({
+            color: colorHex,
+            metalness: material.properties.metallic,
+            roughness: material.properties.roughness,
+          });
+          if (material.physical?.clearcoat !== undefined) {
+            physicalMaterial.clearcoat = material.physical.clearcoat;
+            physicalMaterial.clearcoatRoughness = material.physical.clearcoatRoughness ?? 0.1;
+          }
+          if (material.physical?.sheen !== undefined) {
+            physicalMaterial.sheen = material.physical.sheen;
+            physicalMaterial.sheenRoughness = material.physical.sheenRoughness ?? 0.5;
+            if (material.physical.sheenColor) {
+              physicalMaterial.sheenColor = new THREE.Color(material.physical.sheenColor);
+            }
+          }
+          child.material = physicalMaterial;
+        } else {
+          const materials = Array.isArray(child.material) ? child.material : [child.material];
+          materials.forEach((mat: any) => {
+            if (mat.color) mat.color.setHex(colorHex);
+            if (mat.roughness !== undefined) mat.roughness = material.properties.roughness;
+            if (mat.metalness !== undefined) mat.metalness = material.properties.metallic;
+            mat.needsUpdate = true;
+          });
+        }
       }
-    }
+    });
 
     console.log(`✅ Applied "${material.name}" to "${selectedObject.name}"`);
+  };
+
+  // Handler for applying metal subcategory (gold, silver, etc.)
+  const handleMetalSubcategoryClick = async (item: typeof metalSubcategoryItems[0]) => {
+    if (!selectedObject) {
+      console.warn('⚠️ No object selected');
+      return;
+    }
+
+    setSelectedMaterialId({
+      category: 'metal',
+      id: item.id
+    });
+
+    const colorHex = parseInt(item.color.replace('#', ''), 16);
+    setColor(colorHex);
+    setRoughness(item.roughness);
+    setMetalness(item.metalness);
+
+    const THREE = await import('three');
+
+    selectedObject.traverse((child: any) => {
+      if (child.isMesh && child.material) {
+        const material = new THREE.MeshPhysicalMaterial({
+          color: colorHex,
+          metalness: item.metalness,
+          roughness: item.roughness,
+          clearcoat: item.roughness < 0.2 ? 0.5 : 0,
+          clearcoatRoughness: 0.1,
+          envMapIntensity: 1.5,
+        });
+        child.material = material;
+      }
+    });
+
+    console.log(`✅ Applied "${item.name}" to "${selectedObject.name}"`);
+  };
+
+  // Handler for opening full overlay
+  const handleBrowseCategory = (categorySlug: string) => {
+    setOverlayCategory(categorySlug);
+    setIsOverlayOpen(true);
+  };
+
+  // Handler for closing overlay
+  const handleCloseOverlay = () => {
+    setIsOverlayOpen(false);
   };
 
   return (
@@ -134,112 +238,137 @@ export function MaterialSelector() {
       <div style={styles.divider} />
 
       {/* Material Swatches - Horizontal Row */}
-      {
-        <div style={styles.section}>
-          <h4 style={styles.sectionTitle}>SELECT MATERIAL</h4>
-          <div style={styles.swatchContainer}>
-            {activeCategories.map((categoryId) => {
-              const categoryMaterials = materialsByCategory[categoryId];
-              if (!categoryMaterials || categoryMaterials.length === 0) return null;
+      <div style={styles.section}>
+        <h4 style={styles.sectionTitle}>SELECT MATERIAL</h4>
+        <div style={styles.swatchContainer}>
+          {activeCategories.map((categoryId) => {
+            const isMetalCategory = categoryId === 'metal';
+            const categoryMaterials = materialsByCategory[categoryId];
 
-              // Use first material as center (default visible)
-              const centerIndex = 0;
+            if (!isMetalCategory && (!categoryMaterials || categoryMaterials.length === 0)) return null;
 
-              return (
-                <div
-                  key={categoryId}
-                  style={styles.swatchWrapper}
-                  onMouseEnter={() => setHoveredCategory(categoryId)}
-                  onMouseLeave={() => setHoveredCategory(null)}
+            // For metal, use the 5 subcategories; for others, use local manifest
+            const items = isMetalCategory ? metalSubcategoryItems : categoryMaterials;
+
+            // Reorder: [1, 2, 0, 3, 4] so center (0) is in the middle
+            const reordered = [
+              items[1],
+              items[2],
+              items[0], // center
+              items[3],
+              items[4],
+            ].filter(Boolean);
+
+            return (
+              <div
+                key={categoryId}
+                style={styles.swatchWrapper}
+                onMouseEnter={() => setHoveredCategory(categoryId)}
+                onMouseLeave={() => setHoveredCategory(null)}
+              >
+                {/* Vertical Popup List - 2 above, center, 2 below */}
+                <ul
+                  style={{
+                    ...styles.variationList,
+                    ...(hoveredCategory === categoryId ? styles.variationListHovered : {})
+                  }}
                 >
-                  {/* Vertical Popup List - 2 above, center, 2 below */}
-                  <ul
-                    style={{
-                      ...styles.variationList,
-                      ...(hoveredCategory === categoryId ? styles.variationListHovered : {})
+                  {reordered.map((item, displayIndex) => {
+                    if (!item) return null;
+                    const isCenter = displayIndex === 2;
+                    const itemId = isMetalCategory ? (item as any).id : (item as MaterialConfig).id;
+                    const isActive = selectedMaterialId?.category === categoryId &&
+                      selectedMaterialId?.id === itemId;
+                    const isVisible = hoveredCategory === categoryId || isCenter;
+
+                    // Get preview URL
+                    const previewUrl = isMetalCategory
+                      ? (item as any).previewUrl
+                      : ((item as MaterialConfig).thumbnailPath || (item as MaterialConfig).textures?.baseColor);
+
+                    const itemName = isMetalCategory ? (item as any).name : (item as MaterialConfig).name;
+                    const itemRoughness = isMetalCategory ? (item as any).roughness : (item as MaterialConfig).properties.roughness;
+                    const itemMetalness = isMetalCategory ? (item as any).metalness : (item as MaterialConfig).properties.metallic;
+
+                    return (
+                      <li
+                        key={itemId}
+                        style={{
+                          ...styles.variationItem,
+                          opacity: isVisible ? 1 : 0,
+                          pointerEvents: isVisible ? 'auto' : 'none',
+                          ...(isCenter ? styles.variationItemCenter : {})
+                        }}
+                        onClick={() => {
+                          if (isMetalCategory) {
+                            handleMetalSubcategoryClick(item as any);
+                          } else {
+                            handleMaterialClick(item as MaterialConfig);
+                          }
+                        }}
+                      >
+                        {/* Material Swatch with Texture */}
+                        <div
+                          style={{
+                            ...styles.swatch,
+                            backgroundImage: previewUrl ? `url(${previewUrl})` : undefined,
+                            backgroundColor: isMetalCategory ? (item as any).color : (item as MaterialConfig).properties.baseColorHex,
+                            backgroundSize: 'cover',
+                            backgroundRepeat: 'no-repeat',
+                            backgroundPosition: 'center',
+                            cursor: selectedObject ? 'pointer' : 'not-allowed',
+                            opacity: selectedObject ? 1 : 0.5,
+                          }}
+                        />
+
+                        {/* Active Indicator */}
+                        {isActive && (
+                          <div style={styles.activeIndicator}>✓</div>
+                        )}
+
+                        {/* Tooltip */}
+                        <div style={styles.tooltip} className="material-tooltip">
+                          {itemName}
+                          <div style={styles.tooltipDetails}>
+                            M: {itemMetalness.toFixed(1)} · R: {itemRoughness.toFixed(1)}
+                          </div>
+                          {isMetalCategory && (
+                            <div style={styles.tooltipHint}>Click for more →</div>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+
+                {/* Category Label */}
+                <span style={styles.swatchLabel}>
+                  {CATEGORIES[categoryId]?.label || categoryId}
+                </span>
+
+                {/* Browse more link on hover for metal */}
+                {hoveredCategory === categoryId && isMetalCategory && (
+                  <button
+                    style={styles.browseMoreButton}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Open with the center item's category (gold by default)
+                      handleBrowseCategory('gold');
                     }}
                   >
-                    {/* Reorder: show 2 above center (indices 1,2), center (0), then 2 below (3,4) */}
-                    {(() => {
-                      const orderedMaterials = categoryMaterials.slice(0, 5);
-                      // Reorder: [1, 2, 0, 3, 4] so center (0) is in the middle
-                      const reordered = [
-                        orderedMaterials[1],
-                        orderedMaterials[2],
-                        orderedMaterials[0], // center
-                        orderedMaterials[3],
-                        orderedMaterials[4],
-                      ].filter(Boolean);
-
-                      return reordered.map((material, displayIndex) => {
-                        if (!material) return null;
-                        const isCenter = displayIndex === 2; // Middle position (index 2 of 0-4)
-                        const isActive = selectedMaterialId?.category === material.category &&
-                          selectedMaterialId?.id === material.id;
-                        const isVisible = hoveredCategory === categoryId || isCenter;
-
-                        // Get texture URL from material config
-                        const previewUrl = material.thumbnailPath || material.textures?.baseColor;
-
-                        return (
-                          <li
-                            key={material.id}
-                            style={{
-                              ...styles.variationItem,
-                              opacity: isVisible ? 1 : 0,
-                              pointerEvents: isVisible ? 'auto' : 'none',
-                              ...(isCenter ? styles.variationItemCenter : {})
-                            }}
-                            onClick={() => handleMaterialClick(material)}
-                          >
-                            {/* Material Swatch with Texture */}
-                            <div
-                              style={{
-                                ...styles.swatch,
-                                backgroundImage: previewUrl
-                                  ? `url(${previewUrl})`
-                                  : undefined,
-                                backgroundColor: '#f3f4f6',
-                                backgroundSize: 'cover',
-                                backgroundRepeat: 'no-repeat',
-                                backgroundPosition: 'center',
-                              }}
-                            />
-
-                            {/* Active Indicator */}
-                            {isActive && (
-                              <div style={styles.activeIndicator}>✓</div>
-                            )}
-
-                            {/* Tooltip */}
-                            <div style={styles.tooltip} className="material-tooltip">
-                              {material.name}
-                              <div style={styles.tooltipDetails}>
-                                M: {material.properties.metallic.toFixed(1)} · R:{' '}
-                                {material.properties.roughness.toFixed(1)}
-                              </div>
-                            </div>
-                          </li>
-                        );
-                      });
-                    })()}
-                  </ul>
-
-                  {/* Category Label - inside swatchWrapper */}
-                  <span style={styles.swatchLabel}>
-                    {categoryId.charAt(0).toUpperCase() + categoryId.slice(1)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+                    Browse all
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
-      }
+      </div>
 
       {/* Footer with Browse All Button */}
       <div style={styles.footer}>
         <button
-          onClick={() => setIsDrawerOpen(true)}
+          onClick={() => handleBrowseCategory('gold')}
           style={styles.browseButton}
           className="group"
         >
@@ -252,8 +381,12 @@ export function MaterialSelector() {
         </p>
       </div>
 
-      {/* Material Library Drawer */}
-      <MaterialDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
+      {/* Material Preview Overlay */}
+      <MaterialPreviewOverlay
+        isOpen={isOverlayOpen}
+        onClose={handleCloseOverlay}
+        materialType={overlayCategory}
+      />
     </div>
   );
 }
@@ -404,6 +537,20 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: '4px',
   } as React.CSSProperties,
 
+  // Browse more button
+  browseMoreButton: {
+    marginTop: '4px',
+    padding: '2px 8px',
+    fontSize: '10px',
+    fontWeight: 500,
+    color: '#f59e0b',
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    border: '1px solid rgba(245, 158, 11, 0.3)',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+  } as React.CSSProperties,
+
   // Tooltip on hover
   tooltip: {
     position: 'absolute',
@@ -428,12 +575,11 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: '2px',
   },
 
-  loadingText: {
-    fontSize: '13px',
-    color: '#6b7280',
-    textAlign: 'center',
-    padding: '48px 24px',
-  } as React.CSSProperties,
+  tooltipHint: {
+    fontSize: '9px',
+    color: '#f59e0b',
+    marginTop: '4px',
+  },
 
   footer: {
     padding: '12px 24px',

@@ -30,7 +30,41 @@ This will retrieve:
 Bisect is an interactive canvas/editor application with:
 - Drag and drop functionality
 - React-based UI
-- Potential 3D visualization components
+- 3D scene editor (React Three Fiber)
+- Material system with Blender-rendered previews stored in Supabase
+
+---
+
+## Material System Architecture
+
+### Two-Tier Selection Flow
+```
+Select Object → Open Material Panel → Choose Preset (applied immediately)
+                                              ↓
+                                    Click "Browse" in footer
+                                              ↓
+                              Fine-tuned variations of selected preset
+```
+
+### Supabase Storage Structure
+```
+Database: PostgreSQL (vmawsauglaejrwfajnht)
+├── material_categories    (Gold, Silver, Copper, Iron, Titanium)
+├── material_presets       (finishes, tints, aged tabs per category)
+└── material_variations    (Browse variations for each preset)
+
+Storage Bucket: material-previews
+└── {category}/{preset}/{variation}.png (512x512 Blender renders)
+```
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `app/studio/3d-canvas/components/MaterialPreviewOverlay.tsx` | Modal UI |
+| `scripts/render-gold-variations.py` | Blender headless render |
+| `docs/material-system-flow.md` | Full documentation |
+
+---
 
 ## Key Directories
 

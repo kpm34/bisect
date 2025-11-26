@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { Shell } from '@/components/shared/Shell';
 
 // Type declaration for AI Studio API (optional browser extension)
@@ -12,16 +13,67 @@ declare global {
     };
   }
 }
-import { TexturePreview3D } from './matcap-&-pbr-genai/components/TexturePreview3D';
-import { TextureControlPanel } from './matcap-&-pbr-genai/components/TextureControlPanel';
+
+// Dynamic imports for WebGL/R3F components to avoid SSR issues
+const TexturePreview3D = dynamic(
+  () => import('./matcap-&-pbr-genai/components/TexturePreview3D').then(mod => ({ default: mod.TexturePreview3D })),
+  { ssr: false, loading: () => <div className="w-full h-full bg-neutral-900 flex items-center justify-center text-neutral-500">Loading 3D Preview...</div> }
+);
+const TextureControlPanel = dynamic(
+  () => import('./matcap-&-pbr-genai/components/TextureControlPanel').then(mod => ({ default: mod.TextureControlPanel })),
+  { ssr: false }
+);
+
 import { GeneratedTextureSet, GenerationConfig, TextureMode, ModelQuality } from './matcap-&-pbr-genai/types';
 import { generateTextureImage } from './matcap-&-pbr-genai/services/geminiService';
 import { generateNormalMap, generateRoughnessMap } from './matcap-&-pbr-genai/services/imageProcessing';
 import { Aperture, ArrowRight, Lock, Sparkles } from 'lucide-react';
 
+// Rate limiting constants
+const COOLDOWN_DURATION_MS = 10000; // 10 second cooldown between generations
+const CACHE_KEY = 'bisect-texture-cache';
+const MAX_CACHE_ENTRIES = 20;
+
+// Simple in-memory + localStorage cache for generated textures
+interface CacheEntry {
+  texture: GeneratedTextureSet;
+  timestamp: number;
+}
+
+const getCache = (): Map<string, CacheEntry> => {
+  if (typeof window === 'undefined') return new Map();
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const entries = JSON.parse(cached) as [string, CacheEntry][];
+      return new Map(entries);
+    }
+  } catch (e) {
+    console.warn('Failed to load texture cache:', e);
+  }
+  return new Map();
+};
+
+const saveCache = (cache: Map<string, CacheEntry>) => {
+  if (typeof window === 'undefined') return;
+  try {
+    // Limit cache size
+    const entries = Array.from(cache.entries())
+      .sort((a, b) => b[1].timestamp - a[1].timestamp)
+      .slice(0, MAX_CACHE_ENTRIES);
+    localStorage.setItem(CACHE_KEY, JSON.stringify(entries));
+  } catch (e) {
+    console.warn('Failed to save texture cache:', e);
+  }
+};
+
+const getCacheKey = (prompt: string, mode: TextureMode, quality: ModelQuality, resolution: '1K' | '2K') => {
+  return `${prompt.trim().toLowerCase()}|${mode}|${quality}|${resolution}`;
+};
+
 export default function App() {
   const [hasApiKey, setHasApiKey] = useState(false);
-  
+
   // Lifted state for "Live Preview" functionality
   const [prompt, setPrompt] = useState('');
   const [mode, setMode] = useState<TextureMode>(TextureMode.MATCAP);
@@ -32,6 +84,40 @@ export default function App() {
   const [isUpscaling, setIsUpscaling] = useState(false);
   const [currentTexture, setCurrentTexture] = useState<GeneratedTextureSet | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Rate limiting state
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
+  const [fromCache, setFromCache] = useState(false);
+  const lastGenerationTime = useRef<number>(0);
+  const cooldownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const textureCache = useRef<Map<string, CacheEntry>>(new Map());
+
+  // Load cache on mount
+  useEffect(() => {
+    textureCache.current = getCache();
+  }, []);
+
+  // Cooldown timer effect
+  useEffect(() => {
+    if (cooldownRemaining > 0) {
+      cooldownIntervalRef.current = setInterval(() => {
+        setCooldownRemaining(prev => {
+          if (prev <= 1000) {
+            if (cooldownIntervalRef.current) {
+              clearInterval(cooldownIntervalRef.current);
+            }
+            return 0;
+          }
+          return prev - 1000;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (cooldownIntervalRef.current) {
+        clearInterval(cooldownIntervalRef.current);
+      }
+    };
+  }, [cooldownRemaining > 0]);
 
   useEffect(() => {
     const checkKey = async () => {
@@ -71,19 +157,46 @@ export default function App() {
     return { normal, roughness };
   };
 
+  const startCooldown = useCallback(() => {
+    lastGenerationTime.current = Date.now();
+    setCooldownRemaining(COOLDOWN_DURATION_MS);
+  }, []);
+
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
 
+    // Check cooldown (skip if using cache)
+    const resolution = '1K';
+    const cacheKey = getCacheKey(prompt, mode, quality, resolution);
+    const cachedEntry = textureCache.current.get(cacheKey);
+
+    // If we have a cached result, use it immediately (no cooldown needed)
+    if (cachedEntry) {
+      setFromCache(true);
+      setCurrentTexture({
+        ...cachedEntry.texture,
+        id: crypto.randomUUID(), // New ID for React key
+        timestamp: Date.now()
+      });
+      return;
+    }
+
+    // Check if still in cooldown
+    const timeSinceLastGen = Date.now() - lastGenerationTime.current;
+    if (timeSinceLastGen < COOLDOWN_DURATION_MS && lastGenerationTime.current > 0) {
+      setError(`Please wait ${Math.ceil((COOLDOWN_DURATION_MS - timeSinceLastGen) / 1000)}s before generating again`);
+      return;
+    }
+
+    setFromCache(false);
     setIsGenerating(true);
     setError(null);
+
     try {
-      // Default to 1K for initial generation to be snappy, unless user really wants high quality start
-      // But keeping consistent with user choice.
-      const resolution = '1K'; 
       const albedo = await generateTextureImage(prompt, mode, quality, resolution);
       const { normal, roughness } = await processMaps(albedo, mode, resolution);
 
-      setCurrentTexture({
+      const newTexture: GeneratedTextureSet = {
         id: crypto.randomUUID(),
         mode,
         prompt,
@@ -92,13 +205,31 @@ export default function App() {
         roughness,
         timestamp: Date.now(),
         resolution
+      };
+
+      setCurrentTexture(newTexture);
+
+      // Cache the result
+      textureCache.current.set(cacheKey, {
+        texture: newTexture,
+        timestamp: Date.now()
       });
+      saveCache(textureCache.current);
+
+      // Start cooldown after successful generation
+      startCooldown();
 
     } catch (e: any) {
       const msg = e.message || "Failed to generate texture.";
-      setError(msg);
-      if (msg.includes("Requested entity was not found") || msg.includes("403")) {
-        setHasApiKey(false);
+      // Check for rate limit errors specifically
+      if (msg.includes("429") || msg.includes("rate") || msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED")) {
+        setError("Rate limit hit. Please wait a moment before trying again.");
+        startCooldown(); // Force cooldown on rate limit
+      } else {
+        setError(msg);
+        if (msg.includes("Requested entity was not found") || msg.includes("403")) {
+          setHasApiKey(false);
+        }
       }
     } finally {
       setIsGenerating(false);
@@ -107,17 +238,38 @@ export default function App() {
 
   const handleUpscale = async () => {
     if (!currentTexture || !prompt) return;
-    
+
+    // Check cooldown for upscale too
+    const timeSinceLastGen = Date.now() - lastGenerationTime.current;
+    if (timeSinceLastGen < COOLDOWN_DURATION_MS && lastGenerationTime.current > 0) {
+      setError(`Please wait ${Math.ceil((COOLDOWN_DURATION_MS - timeSinceLastGen) / 1000)}s before upscaling`);
+      return;
+    }
+
+    // Check cache for 2K version
+    const resolution = '2K';
+    const cacheKey = getCacheKey(prompt, currentTexture.mode, ModelQuality.HIGH, resolution);
+    const cachedEntry = textureCache.current.get(cacheKey);
+
+    if (cachedEntry) {
+      setFromCache(true);
+      setCurrentTexture({
+        ...cachedEntry.texture,
+        id: crypto.randomUUID(),
+        timestamp: Date.now()
+      });
+      return;
+    }
+
+    setFromCache(false);
     setIsUpscaling(true);
     setError(null);
 
     try {
-      // Force 2K resolution
-      const resolution = '2K';
       const albedo = await generateTextureImage(prompt, currentTexture.mode, ModelQuality.HIGH, resolution);
       const { normal, roughness } = await processMaps(albedo, currentTexture.mode, resolution);
 
-      setCurrentTexture({
+      const newTexture: GeneratedTextureSet = {
         ...currentTexture,
         id: crypto.randomUUID(),
         albedo,
@@ -125,9 +277,28 @@ export default function App() {
         roughness,
         resolution,
         timestamp: Date.now()
+      };
+
+      setCurrentTexture(newTexture);
+
+      // Cache the 2K result
+      textureCache.current.set(cacheKey, {
+        texture: newTexture,
+        timestamp: Date.now()
       });
+      saveCache(textureCache.current);
+
+      // Start cooldown
+      startCooldown();
+
     } catch (e: any) {
-      setError("Upscale failed: " + e.message);
+      const msg = e.message || "Upscale failed";
+      if (msg.includes("429") || msg.includes("rate") || msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED")) {
+        setError("Rate limit hit. Please wait a moment before trying again.");
+        startCooldown();
+      } else {
+        setError("Upscale failed: " + msg);
+      }
     } finally {
       setIsUpscaling(false);
     }
@@ -190,6 +361,9 @@ export default function App() {
           setMode={setMode}
           quality={quality}
           setQuality={setQuality}
+          // Rate limiting
+          cooldownRemaining={cooldownRemaining}
+          fromCache={fromCache}
         />
       }
     >
@@ -204,17 +378,6 @@ export default function App() {
             geometryType={geometryType}
           />
 
-          {!currentTexture && !isGenerating && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="bg-neutral-900/80 backdrop-blur-md border border-neutral-800 p-8 rounded-2xl text-center max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-500">
-                <Sparkles className="w-10 h-10 text-purple-500 mx-auto mb-4 opacity-80" />
-                <h2 className="text-2xl font-bold text-white mb-2">Ready to Imagine</h2>
-                <p className="text-neutral-400">
-                  Enter a prompt in the sidebar to generate custom PBR textures or MatCaps.
-                </p>
-              </div>
-            </div>
-          )}
 
           {error && (
             <div className="absolute bottom-6 left-6 right-6 mx-auto max-w-lg bg-red-900/90 backdrop-blur-sm border border-red-700 text-white p-4 rounded-xl shadow-2xl flex items-center justify-between animate-in slide-in-from-bottom-5 z-50">

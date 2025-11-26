@@ -112,7 +112,7 @@ unified-3d-creator/
 - **3D Rendering:** Three.js, React Three Fiber
 - **AI:** OpenAI GPT-4o, Google Gemini, Anthropic Claude
 - **State:** Zustand
-- **Storage:** IndexedDB (browser), Appwrite (optional cloud)
+- **Storage:** IndexedDB (browser), Supabase (cloud database & storage)
 
 ## 📚 Documentation
 

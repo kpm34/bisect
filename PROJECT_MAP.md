@@ -116,7 +116,7 @@ This document provides navigation paths to related projects for seamless context
   "@gltf-transform/core": "^4.2.1",
   "openai": "^4.67.0",
   "chromadb": "^1.8.0",
-  "appwrite": "^21.4.0"
+  "@supabase/supabase-js": "^2.x"
 }
 ```
 
@@ -325,7 +325,7 @@ prism/
 ├── Shared core library (~9.5K lines)
 ├── Adapter pattern for formats
 ├── OpenAI GPT-4o + RAG
-├── IndexedDB + Appwrite persistence
+├── IndexedDB + Supabase persistence
 └── Context API state management
 ```
 
