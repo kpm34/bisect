@@ -48,6 +48,44 @@ const METAL_DEFAULTS: Record<string, { color: string; roughness: number; metalne
   titanium: { color: '#878681', roughness: 0.25, metalness: 1.0 },
 };
 
+// Stone subcategories
+const STONE_SUBCATEGORIES = ['marble', 'granite', 'concrete', 'sandstone', 'slate'] as const;
+
+const STONE_PREVIEW_URLS: Record<string, string> = {
+  marble: '/assets/generated/stone_marble.png',
+  granite: '/assets/generated/stone_granite.png',
+  concrete: '/assets/generated/stone_concrete.png',
+  sandstone: '/assets/generated/stone_sandstone.png',
+  slate: '/assets/generated/stone_slate.png',
+};
+
+const STONE_DEFAULTS: Record<string, { color: string; roughness: number; metalness: number }> = {
+  marble: { color: '#F5F5F5', roughness: 0.1, metalness: 0.0 },
+  granite: { color: '#9E9E9E', roughness: 0.4, metalness: 0.0 },
+  concrete: { color: '#808080', roughness: 0.8, metalness: 0.0 },
+  sandstone: { color: '#D2B48C', roughness: 0.9, metalness: 0.0 },
+  slate: { color: '#4A4A4A', roughness: 0.6, metalness: 0.0 },
+};
+
+// Fabric subcategories
+const FABRIC_SUBCATEGORIES = ['cotton', 'silk', 'denim', 'leather', 'velvet'] as const;
+
+const FABRIC_PREVIEW_URLS: Record<string, string> = {
+  cotton: '/assets/generated/fabric_cotton.png',
+  silk: '/assets/generated/fabric_silk.png',
+  denim: '/assets/materials/fabric/FBR_Denim_Blue/BaseColor.png', // Fallback to existing
+  leather: '/assets/materials/fabric/FBR_Leather_Brown/BaseColor.png', // Fallback to existing
+  velvet: '/assets/materials/fabric/FBR_Velvet_Red/BaseColor.png', // Fallback to existing
+};
+
+const FABRIC_DEFAULTS: Record<string, { color: string; roughness: number; metalness: number }> = {
+  cotton: { color: '#FFFFFF', roughness: 0.9, metalness: 0.0 },
+  silk: { color: '#8B0000', roughness: 0.4, metalness: 0.0 },
+  denim: { color: '#1E3A8A', roughness: 0.8, metalness: 0.0 },
+  leather: { color: '#8B4513', roughness: 0.6, metalness: 0.0 },
+  velvet: { color: '#800080', roughness: 0.7, metalness: 0.0 },
+};
+
 type MaterialCategoryType = MaterialCategory;
 
 export function MaterialSelector() {
@@ -58,6 +96,9 @@ export function MaterialSelector() {
   } | null>(null);
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const [overlayCategory, setOverlayCategory] = useState<string>('gold');
+  const [footerPresets, setFooterPresets] = useState<MaterialPreset[]>([]);
+  const [isLoadingFooter, setIsLoadingFooter] = useState(false);
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
   const { setColor, setRoughness, setMetalness, selectedObject } = useSelection();
 
   // Get materials from local manifest, grouped by category
@@ -86,6 +127,26 @@ export function MaterialSelector() {
       name: slug.charAt(0).toUpperCase() + slug.slice(1),
       previewUrl: METAL_PREVIEW_URLS[slug],
       ...METAL_DEFAULTS[slug],
+    }));
+  }, []);
+
+  const stoneSubcategoryItems = useMemo(() => {
+    return STONE_SUBCATEGORIES.map(slug => ({
+      id: `stone-${slug}`,
+      slug,
+      name: slug.charAt(0).toUpperCase() + slug.slice(1),
+      previewUrl: STONE_PREVIEW_URLS[slug],
+      ...STONE_DEFAULTS[slug],
+    }));
+  }, []);
+
+  const fabricSubcategoryItems = useMemo(() => {
+    return FABRIC_SUBCATEGORIES.map(slug => ({
+      id: `fabric-${slug}`,
+      slug,
+      name: slug.charAt(0).toUpperCase() + slug.slice(1),
+      previewUrl: FABRIC_PREVIEW_URLS[slug],
+      ...FABRIC_DEFAULTS[slug],
     }));
   }, []);
 
@@ -170,17 +231,53 @@ export function MaterialSelector() {
     });
 
     console.log(`✅ Applied "${material.name}" to "${selectedObject.name}"`);
+
+    // Clear footer presets for non-metal materials for now
+    setFooterPresets([]);
+    setSelectedPresetId(null);
   };
 
-  // Handler for applying metal subcategory (gold, silver, etc.)
-  const handleMetalSubcategoryClick = async (item: typeof metalSubcategoryItems[0]) => {
+  // Handler for applying preset from footer
+  const handlePresetClick = async (preset: MaterialPreset) => {
+    if (!selectedObject) return;
+
+    setSelectedPresetId(preset.id);
+
+    // Apply PBR properties
+    const colorHex = parseInt(preset.color.replace('#', ''), 16);
+    setColor(colorHex);
+    setRoughness(preset.roughness);
+    setMetalness(preset.metalness);
+
+    const THREE = await import('three');
+    const physicalProps = preset.physical_props as Record<string, number | string> | null;
+
+    selectedObject.traverse((child: any) => {
+      if (child.isMesh && child.material) {
+        const material = new THREE.MeshPhysicalMaterial({
+          color: colorHex,
+          metalness: preset.metalness,
+          roughness: preset.roughness,
+          clearcoat: preset.clearcoat ?? (preset.metalness > 0.5 && preset.roughness < 0.2 ? 0.5 : 0),
+          clearcoatRoughness: (physicalProps?.clearcoatRoughness as number) ?? 0.1,
+          envMapIntensity: (physicalProps?.envMapIntensity as number) ?? (preset.metalness > 0.5 ? 1.5 : 1.0),
+        });
+        child.material = material;
+      }
+    });
+
+    console.log(`Applied preset ${preset.name}`);
+  };
+
+  // Handler for applying subcategory (Metal, Stone, Fabric)
+  const handleSubcategoryClick = async (item: any, category: string) => {
     if (!selectedObject) {
       console.warn('⚠️ No object selected');
       return;
     }
 
     setSelectedMaterialId({
-      category: 'metal',
+      category: category,
       id: item.id
     });
 
@@ -206,6 +303,26 @@ export function MaterialSelector() {
     });
 
     console.log(`✅ Applied "${item.name}" to "${selectedObject.name}"`);
+
+    // Fetch presets for this subcategory
+    setIsLoadingFooter(true);
+    setOverlayCategory(item.slug);
+
+    try {
+      const { getCategoryWithPresets } = await import('@/lib/services/supabase/materials');
+      const result = await getCategoryWithPresets(item.slug);
+
+      if (result && result.presets) {
+        setFooterPresets(result.presets);
+      } else {
+        setFooterPresets([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch presets:', error);
+      setFooterPresets([]);
+    } finally {
+      setIsLoadingFooter(false);
+    }
   };
 
   // Handler for opening full overlay
@@ -243,12 +360,17 @@ export function MaterialSelector() {
         <div style={styles.swatchContainer}>
           {activeCategories.map((categoryId) => {
             const isMetalCategory = categoryId === 'metal';
+            const isStoneCategory = categoryId === 'stone';
+            const isFabricCategory = categoryId === 'fabric';
             const categoryMaterials = materialsByCategory[categoryId];
 
-            if (!isMetalCategory && (!categoryMaterials || categoryMaterials.length === 0)) return null;
+            if (!isMetalCategory && !isStoneCategory && !isFabricCategory && (!categoryMaterials || categoryMaterials.length === 0)) return null;
 
-            // For metal, use the 5 subcategories; for others, use local manifest
-            const items = isMetalCategory ? metalSubcategoryItems : categoryMaterials;
+            // Use subcategories for Metal, Stone, Fabric; local manifest for others
+            let items: any[] = categoryMaterials;
+            if (isMetalCategory) items = metalSubcategoryItems;
+            if (isStoneCategory) items = stoneSubcategoryItems;
+            if (isFabricCategory) items = fabricSubcategoryItems;
 
             // Reorder: [1, 2, 0, 3, 4] so center (0) is in the middle
             const reordered = [
@@ -276,19 +398,20 @@ export function MaterialSelector() {
                   {reordered.map((item, displayIndex) => {
                     if (!item) return null;
                     const isCenter = displayIndex === 2;
-                    const itemId = isMetalCategory ? (item as any).id : (item as MaterialConfig).id;
+                    const isSubcategory = isMetalCategory || isStoneCategory || isFabricCategory;
+                    const itemId = isSubcategory ? (item as any).id : (item as MaterialConfig).id;
                     const isActive = selectedMaterialId?.category === categoryId &&
                       selectedMaterialId?.id === itemId;
                     const isVisible = hoveredCategory === categoryId || isCenter;
 
                     // Get preview URL
-                    const previewUrl = isMetalCategory
+                    const previewUrl = isSubcategory
                       ? (item as any).previewUrl
                       : ((item as MaterialConfig).thumbnailPath || (item as MaterialConfig).textures?.baseColor);
 
-                    const itemName = isMetalCategory ? (item as any).name : (item as MaterialConfig).name;
-                    const itemRoughness = isMetalCategory ? (item as any).roughness : (item as MaterialConfig).properties.roughness;
-                    const itemMetalness = isMetalCategory ? (item as any).metalness : (item as MaterialConfig).properties.metallic;
+                    const itemName = isSubcategory ? (item as any).name : (item as MaterialConfig).name;
+                    const itemRoughness = isSubcategory ? (item as any).roughness : (item as MaterialConfig).properties.roughness;
+                    const itemMetalness = isSubcategory ? (item as any).metalness : (item as MaterialConfig).properties.metallic;
 
                     return (
                       <li
@@ -300,8 +423,8 @@ export function MaterialSelector() {
                           ...(isCenter ? styles.variationItemCenter : {})
                         }}
                         onClick={() => {
-                          if (isMetalCategory) {
-                            handleMetalSubcategoryClick(item as any);
+                          if (isSubcategory) {
+                            handleSubcategoryClick(item, categoryId);
                           } else {
                             handleMaterialClick(item as MaterialConfig);
                           }
@@ -346,14 +469,15 @@ export function MaterialSelector() {
                   {CATEGORIES[categoryId]?.label || categoryId}
                 </span>
 
-                {/* Browse more link on hover for metal */}
-                {hoveredCategory === categoryId && isMetalCategory && (
+                {/* Browse more link on hover for subcategories */}
+                {hoveredCategory === categoryId && (isMetalCategory || isStoneCategory || isFabricCategory) && (
                   <button
                     style={styles.browseMoreButton}
                     onClick={(e) => {
                       e.stopPropagation();
-                      // Open with the center item's category (gold by default)
-                      handleBrowseCategory('gold');
+                      // Open with the center item's category (gold/marble/cotton by default)
+                      const defaultSub = isMetalCategory ? 'gold' : isStoneCategory ? 'marble' : 'cotton';
+                      handleBrowseCategory(defaultSub);
                     }}
                   >
                     Browse all
@@ -365,20 +489,66 @@ export function MaterialSelector() {
         </div>
       </div>
 
-      {/* Footer with Browse All Button */}
+      {/* Footer with Presets or Browse All Button */}
       <div style={styles.footer}>
-        <button
-          onClick={() => handleBrowseCategory('gold')}
-          style={styles.browseButton}
-          className="group"
-        >
-          <Grid3X3 style={{ width: 16, height: 16 }} />
-          <span>Browse All Materials</span>
-          <ChevronRight style={{ width: 14, height: 14, opacity: 0.5 }} className="group-hover:translate-x-0.5 transition-transform" />
-        </button>
-        <p style={styles.footerText}>
-          Hover over categories · Click to apply
-        </p>
+        {isLoadingFooter ? (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="w-5 h-5 text-zinc-400 animate-spin" />
+          </div>
+        ) : footerPresets.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                {selectedMaterialId?.category === 'metal' || selectedMaterialId?.category === 'stone' || selectedMaterialId?.category === 'fabric'
+                  ? `${selectedMaterialId.id.replace(selectedMaterialId.category + '-', '')} Variations`
+                  : 'Variations'}
+              </p>
+              <button
+                onClick={() => handleBrowseCategory(overlayCategory)}
+                className="text-xs text-cta-orange hover:text-amber-400 transition-colors flex items-center gap-1"
+              >
+                View All <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
+
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
+              {footerPresets.map((preset) => (
+                <button
+                  key={preset.id}
+                  onClick={() => handlePresetClick(preset)}
+                  className="group relative flex-shrink-0 w-12 h-12 rounded-full overflow-hidden border border-zinc-200 hover:border-cta-orange transition-all focus:outline-none focus:ring-2 focus:ring-cta-orange/50"
+                  title={preset.name}
+                >
+                  <img
+                    src={preset.preview_url || ''}
+                    alt={preset.name}
+                    className="w-full h-full object-cover"
+                  />
+                  {selectedPresetId === preset.id && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                      <div className="w-2 h-2 bg-white rounded-full shadow-sm" />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <>
+            <button
+              onClick={() => handleBrowseCategory('gold')}
+              style={styles.browseButton}
+              className="group"
+            >
+              <Grid3X3 style={{ width: 16, height: 16 }} />
+              <span>Browse All Materials</span>
+              <ChevronRight style={{ width: 14, height: 14, opacity: 0.5 }} className="group-hover:translate-x-0.5 transition-transform" />
+            </button>
+            <p style={styles.footerText}>
+              Hover over categories · Click to apply
+            </p>
+          </>
+        )}
       </div>
 
       {/* Material Preview Overlay */}
@@ -498,13 +668,11 @@ const styles: Record<string, React.CSSProperties> = {
     // Center variation always visible
   },
 
-  // The circular swatch itself
+  // The circular swatch itself - flat sticker style
   swatch: {
     width: '100%',
     height: '100%',
     borderRadius: '50%',
-    border: '2px solid rgba(0,0,0,0.1)',
-    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2), 0 1px 5px rgba(0, 0, 0, 0.3)',
     overflow: 'hidden',
   },
 

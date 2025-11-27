@@ -27,6 +27,8 @@ import {
 import { processSvgWithAi, bitmapToSvg, VectorizeConfig } from '../lib/services/gemini';
 import { traceBitmap } from '../lib/services/tracer';
 import { Upload, Copy, Trash2, RotateCw, FlipHorizontal } from 'lucide-react';
+import { useDragDrop, DragDropBridge, DropTarget, StudioType } from '../../../../lib/drag-drop/bridge';
+import { Asset } from '../../../../lib/store/unified-store';
 
 export default function VectorEditor() {
   // View State
@@ -39,35 +41,35 @@ export default function VectorEditor() {
   const [strokeWidth, setStrokeWidth] = useState<number>(3);
   const [eraserSize, setEraserSize] = useState<number>(40); // Default eraser size (increased for better visibility)
   const [smoothingLevel, setSmoothingLevel] = useState<number>(3); // Default smoothing intensity
-  
+
   // Text Properties
   const [fontSize, setFontSize] = useState<number>(24);
   const [fontFamily, setFontFamily] = useState<string>('sans-serif');
   const [textAlign, setTextAlign] = useState<'start' | 'middle' | 'end'>('start');
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
-  
+
   const [paths, setPaths] = useState<PathData[]>([]);
   const [undoStack, setUndoStack] = useState<PathData[][]>([]);
   const [redoStack, setRedoStack] = useState<PathData[][]>([]);
   const [backgroundSvg, setBackgroundSvg] = useState<string>('');
   const [extractedColors, setExtractedColors] = useState<string[]>([]);
-  
+
   // Drawing State
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentPoints, setCurrentPoints] = useState<Point[]>([]);
   const shapeStartRef = useRef<Point | null>(null);
-  
+
   // Selection & Transform State
   const [selectedPathIds, setSelectedPathIds] = useState<Set<string>>(new Set());
   const [selectionRect, setSelectionRect] = useState<{ start: Point; current: Point } | null>(null);
   const [lassoPoints, setLassoPoints] = useState<Point[]>([]);
-  
+
   // Transformation Logic
   const [transformMode, setTransformMode] = useState<'translate' | 'rotate' | 'scale' | 'none'>('none');
   const [activeHandle, setActiveHandle] = useState<string | null>(null);
   const transformStartRef = useRef<Point | null>(null); // Mouse start position
   const originalPathsRef = useRef<PathData[]>([]); // Snapshot of paths at start of drag
-  const selectionBoundsRef = useRef<{x:number, y:number, w:number, h:number} | null>(null);
+  const selectionBoundsRef = useRef<{ x: number, y: number, w: number, h: number } | null>(null);
 
   // Context Menu State
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
@@ -80,7 +82,7 @@ export default function VectorEditor() {
   // Cursor State for Eraser
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const lastEraserPosRef = useRef<Point | null>(null);
-  
+
   // AI State
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
@@ -97,7 +99,15 @@ export default function VectorEditor() {
   const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
 
   // Drag & Drop State
-  const [isDragging, setIsDragging] = useState(false);
+  // Drag & Drop State
+  const [isFileDragging, setIsFileDragging] = useState(false);
+  const {
+    isDragging: isBridgeDragging,
+    draggedAsset,
+    handleDragOver: handleBridgeDragOver,
+    handleDrop: handleBridgeDrop,
+    isTarget
+  } = useDragDrop('vector');
 
   // Viewport / Zoom State
   const [viewBox, setViewBox] = useState({ x: 0, y: 0, w: 1920, h: 1080 });
@@ -204,16 +214,16 @@ export default function VectorEditor() {
       setPaths(prev => prev.map(p => {
         if (selectedPathIds.has(p.id)) {
           if (p.type === 'text') {
-             return { ...p, fontSize, fontFamily, align: textAlign, color };
+            return { ...p, fontSize, fontFamily, align: textAlign, color };
           } else {
-             // For shapes/lines, update stroke properties
-             return { 
-               ...p, 
-               color, 
-               strokeWidth, 
-               smoothing: smoothingLevel,
-               style: tool === Tool.CRAYON ? 'crayon' : tool === Tool.PEN ? 'solid' : p.style
-             };
+            // For shapes/lines, update stroke properties
+            return {
+              ...p,
+              color,
+              strokeWidth,
+              smoothing: smoothingLevel,
+              style: tool === Tool.CRAYON ? 'crayon' : tool === Tool.PEN ? 'solid' : p.style
+            };
           }
         }
         return p;
@@ -230,13 +240,13 @@ export default function VectorEditor() {
 
     const { deltaY, clientX, clientY } = e;
     const svgRect = svgRef.current.getBoundingClientRect();
-    
+
     // Limit max/min zoom if desired, but infinite is fine for now
     // deltaY > 0 is zooming out, < 0 is zooming in
     const zoomIntensity = 0.001; // Sensitivity
     // Using exponential zoom for smoothness
     const zoomFactor = Math.exp(deltaY * zoomIntensity);
-    
+
     setViewBox(prev => {
       // Cursor position relative to the SVG element in pixels
       const dx = clientX - svgRect.left;
@@ -263,7 +273,7 @@ export default function VectorEditor() {
   useEffect(() => {
     const svg = svgRef.current;
     if (!svg) return;
-    
+
     svg.addEventListener('wheel', handleWheel, { passive: false });
     return () => {
       svg.removeEventListener('wheel', handleWheel);
@@ -281,15 +291,15 @@ export default function VectorEditor() {
       y: (e.clientY - CTM.f) / CTM.d
     };
   };
-  
+
   const svgToScreen = (point: Point): Point => {
-     if (!svgRef.current) return { x: 0, y: 0 };
-     const CTM = svgRef.current.getScreenCTM();
-     if (!CTM) return { x: 0, y: 0 };
-     return {
-        x: point.x * CTM.a + CTM.e,
-        y: point.y * CTM.d + CTM.f
-     };
+    if (!svgRef.current) return { x: 0, y: 0 };
+    const CTM = svgRef.current.getScreenCTM();
+    if (!CTM) return { x: 0, y: 0 };
+    return {
+      x: point.x * CTM.a + CTM.e,
+      y: point.y * CTM.d + CTM.f
+    };
   };
 
   const getZoomScale = () => {
@@ -302,48 +312,48 @@ export default function VectorEditor() {
   const getPathAtPoint = (point: Point) => {
     // Iterate reverse to hit the topmost element first
     for (let i = paths.length - 1; i >= 0; i--) {
-       const path = paths[i];
-       
-       if (path.type === 'text') {
-          const dims = getTextDimensions(path.text || '', path.fontSize || 16, path.fontFamily || 'sans-serif');
-          let x = path.points[0].x;
-          let y = path.points[0].y - dims.height; 
-          if (path.align === 'middle') x -= dims.width / 2;
-          if (path.align === 'end') x -= dims.width;
+      const path = paths[i];
 
-          if (point.x >= x - 5 && point.x <= x + dims.width + 5 && 
-              point.y >= y - 5 && point.y <= y + dims.height + 5) {
-             return path.id;
+      if (path.type === 'text') {
+        const dims = getTextDimensions(path.text || '', path.fontSize || 16, path.fontFamily || 'sans-serif');
+        let x = path.points[0].x;
+        let y = path.points[0].y - dims.height;
+        if (path.align === 'middle') x -= dims.width / 2;
+        if (path.align === 'end') x -= dims.width;
+
+        if (point.x >= x - 5 && point.x <= x + dims.width + 5 &&
+          point.y >= y - 5 && point.y <= y + dims.height + 5) {
+          return path.id;
+        }
+      } else {
+        const bounds = getBoundingBox(path.points);
+        const strokePadding = (path.strokeWidth || 3) / 2 + 5;
+
+        // Broad phase check
+        if (point.x >= bounds.x - strokePadding && point.x <= bounds.x + bounds.w + strokePadding &&
+          point.y >= bounds.y - strokePadding && point.y <= bounds.y + bounds.h + strokePadding) {
+
+          // Hit test logic:
+          // 1. If hitting the stroke (outline)
+          const dist = getDistanceToPath(point, path.points);
+          if (dist <= strokePadding) {
+            return path.id;
           }
-       } else {
-         const bounds = getBoundingBox(path.points);
-         const strokePadding = (path.strokeWidth || 3) / 2 + 5; 
-         
-         // Broad phase check
-         if (point.x >= bounds.x - strokePadding && point.x <= bounds.x + bounds.w + strokePadding &&
-             point.y >= bounds.y - strokePadding && point.y <= bounds.y + bounds.h + strokePadding) {
-               
-               // Hit test logic:
-               // 1. If hitting the stroke (outline)
-               const dist = getDistanceToPath(point, path.points);
-               if (dist <= strokePadding) {
-                 return path.id;
-               }
 
-               // 2. If hitting the fill (body)
-               //    We check fill if: 
-               //    (a) The tool is FILL (want to fill inside)
-               //    (b) The tool is SELECT/HAND/etc and the path already HAS a fill.
-               const hasFill = path.fillColor && path.fillColor !== 'none' && path.fillColor !== 'transparent';
-               const shouldCheckFill = tool === Tool.FILL || hasFill;
+          // 2. If hitting the fill (body)
+          //    We check fill if: 
+          //    (a) The tool is FILL (want to fill inside)
+          //    (b) The tool is SELECT/HAND/etc and the path already HAS a fill.
+          const hasFill = path.fillColor && path.fillColor !== 'none' && path.fillColor !== 'transparent';
+          const shouldCheckFill = tool === Tool.FILL || hasFill;
 
-               if (shouldCheckFill) {
-                 if (isPointInPolygon(point, path.points)) {
-                   return path.id;
-                 }
-               }
-         }
-       }
+          if (shouldCheckFill) {
+            if (isPointInPolygon(point, path.points)) {
+              return path.id;
+            }
+          }
+        }
+      }
     }
     return null;
   };
@@ -360,30 +370,30 @@ export default function VectorEditor() {
     // Check if clicking on a transform handle
     const target = e.target as SVGElement;
     const handleType = target.getAttribute('data-handle');
-    
+
     if (handleType && tool === Tool.SELECT && selectedPathIds.size > 0) {
       e.stopPropagation();
       e.currentTarget.setPointerCapture(e.pointerId);
-      
+
       saveStateToUndo();
       setTransformMode(handleType === 'rotate' ? 'rotate' : 'scale');
       setActiveHandle(handleType);
-      
+
       const point = getCoordinates(e);
       transformStartRef.current = point;
-      
+
       // Store initial state of paths for non-destructive transforms
       originalPathsRef.current = JSON.parse(JSON.stringify(paths));
-      
+
       // Store initial bounding box
       const selectedPaths = paths.filter(p => selectedPathIds.has(p.id));
       selectionBoundsRef.current = getCombinedBoundingBox(selectedPaths);
-      
+
       return;
     }
 
     e.currentTarget.setPointerCapture(e.pointerId);
-    
+
     // Allow panning with Middle Mouse Button (1) OR if Hand tool is active (Left Click 0)
     const isMiddleMouse = e.button === 1;
     const isHandToolAction = tool === Tool.HAND && e.button === 0;
@@ -412,7 +422,7 @@ export default function VectorEditor() {
         const hitId = getPathAtPoint(point);
         if (hitId) {
           saveStateToUndo();
-          setPaths(prev => prev.map(p => 
+          setPaths(prev => prev.map(p =>
             p.id === hitId ? { ...p, fillColor: color } : p
           ));
         }
@@ -432,36 +442,36 @@ export default function VectorEditor() {
           setTextAlign(clickedText.align || 'start');
           setColor(clickedText.color || '#000000');
         } else {
-           // Create new text
-           saveStateToUndo();
-           const newTextId = Date.now().toString();
-           const newText: PathData = {
-              id: newTextId,
-              type: 'text',
-              points: [point],
-              color: color,
-              strokeWidth: 1, 
-              text: 'Type here',
-              fontSize: fontSize,
-              fontFamily: fontFamily,
-              align: textAlign
-           };
-           setPaths(prev => [...prev, newText]);
-           setEditingTextId(newTextId);
+          // Create new text
+          saveStateToUndo();
+          const newTextId = Date.now().toString();
+          const newText: PathData = {
+            id: newTextId,
+            type: 'text',
+            points: [point],
+            color: color,
+            strokeWidth: 1,
+            text: 'Type here',
+            fontSize: fontSize,
+            fontFamily: fontFamily,
+            align: textAlign
+          };
+          setPaths(prev => [...prev, newText]);
+          setEditingTextId(newTextId);
         }
         return;
       }
 
       // Handle Selection & Moving
       if (tool === Tool.SELECT || tool === Tool.LASSO) {
-        
+
         const hitPathId = getPathAtPoint(point);
 
         if (hitPathId) {
           saveStateToUndo();
           setTransformMode('translate');
           transformStartRef.current = point;
-          
+
           if (e.shiftKey) {
             setSelectedPathIds(prev => {
               const next = new Set(prev);
@@ -471,39 +481,39 @@ export default function VectorEditor() {
             });
           } else {
             if (!selectedPathIds.has(hitPathId)) {
-               setSelectedPathIds(new Set([hitPathId]));
+              setSelectedPathIds(new Set([hitPathId]));
             }
           }
-          
+
           // Sync Toolbar with Selected Item Properties
           const path = paths.find(p => p.id === hitPathId);
           if (path) {
-             setColor(path.color || '#000000');
-             if (path.type === 'text') {
-                setFontSize(path.fontSize || 24);
-                setFontFamily(path.fontFamily || 'sans-serif');
-                setTextAlign(path.align || 'start');
-             } else {
-                setStrokeWidth(path.strokeWidth || 3);
-                if (path.smoothing !== undefined) setSmoothingLevel(path.smoothing);
-             }
+            setColor(path.color || '#000000');
+            if (path.type === 'text') {
+              setFontSize(path.fontSize || 24);
+              setFontFamily(path.fontFamily || 'sans-serif');
+              setTextAlign(path.align || 'start');
+            } else {
+              setStrokeWidth(path.strokeWidth || 3);
+              if (path.smoothing !== undefined) setSmoothingLevel(path.smoothing);
+            }
           }
 
         } else {
           if (!e.shiftKey) setSelectedPathIds(new Set());
-          
+
           if (tool === Tool.SELECT) {
-             setSelectionRect({ start: point, current: point });
+            setSelectionRect({ start: point, current: point });
           } else {
-             setLassoPoints([point]);
+            setLassoPoints([point]);
           }
         }
         return;
       }
-      
+
       // Handle Drawing (Pen, Shape, Crayon)
       setIsDrawing(true);
-      
+
       if (tool === Tool.SHAPE) {
         shapeStartRef.current = point;
         setCurrentPoints(getShapePoints(shapeType, point, point));
@@ -524,7 +534,7 @@ export default function VectorEditor() {
       // Panning Logic - works for Hand tool OR Middle Mouse Drag
       const dx = e.clientX - dragStartRef.current.x;
       const dy = e.clientY - dragStartRef.current.y;
-      
+
       // Calculate scale factor based on current viewbox vs screen size
       const scaleX = viewBoxStartRef.current.w / rect.width;
       const scaleY = viewBoxStartRef.current.h / rect.height;
@@ -535,27 +545,27 @@ export default function VectorEditor() {
         y: viewBoxStartRef.current.y - dy * scaleY
       });
     } else if (transformMode === 'translate' && transformStartRef.current) {
-       // Moving Selected Paths (Translation)
-       const dx = point.x - transformStartRef.current.x;
-       const dy = point.y - transformStartRef.current.y;
+      // Moving Selected Paths (Translation)
+      const dx = point.x - transformStartRef.current.x;
+      const dy = point.y - transformStartRef.current.y;
 
-       setPaths(prev => prev.map(p => {
-         if (selectedPathIds.has(p.id)) {
-           return {
-             ...p,
-             points: p.points.map(pt => ({ x: pt.x + dx, y: pt.y + dy }))
-           };
-         }
-         return p;
-       }));
+      setPaths(prev => prev.map(p => {
+        if (selectedPathIds.has(p.id)) {
+          return {
+            ...p,
+            points: p.points.map(pt => ({ x: pt.x + dx, y: pt.y + dy }))
+          };
+        }
+        return p;
+      }));
 
-       transformStartRef.current = point;
+      transformStartRef.current = point;
 
     } else if (transformMode === 'rotate' && selectionBoundsRef.current && originalPathsRef.current.length > 0) {
       // Rotating
       const bounds = selectionBoundsRef.current;
       const center = { x: bounds.x + bounds.w / 2, y: bounds.y + bounds.h / 2 };
-      
+
       const startAngle = Math.atan2(transformStartRef.current!.y - center.y, transformStartRef.current!.x - center.x);
       const currentAngle = Math.atan2(point.y - center.y, point.x - center.x);
       const angleDelta = currentAngle - startAngle;
@@ -564,16 +574,16 @@ export default function VectorEditor() {
       setPaths(currentPaths => {
         const nextPaths = [...currentPaths];
         originalPathsRef.current.forEach(origPath => {
-           if (selectedPathIds.has(origPath.id)) {
-              // Find index in current state
-              const idx = nextPaths.findIndex(p => p.id === origPath.id);
-              if (idx !== -1) {
-                 nextPaths[idx] = {
-                   ...origPath,
-                   points: origPath.points.map(p => rotatePoint(p, center, angleDelta))
-                 };
-              }
-           }
+          if (selectedPathIds.has(origPath.id)) {
+            // Find index in current state
+            const idx = nextPaths.findIndex(p => p.id === origPath.id);
+            if (idx !== -1) {
+              nextPaths[idx] = {
+                ...origPath,
+                points: origPath.points.map(p => rotatePoint(p, center, angleDelta))
+              };
+            }
+          }
         });
         return nextPaths;
       });
@@ -582,31 +592,31 @@ export default function VectorEditor() {
       // Scaling
       const bounds = selectionBoundsRef.current;
       const handle = activeHandle;
-      
+
       // Determine origin (fixed point) based on handle
       // If dragging Top-Left, origin is Bottom-Right, etc.
       let originX = bounds.x;
       let originY = bounds.y;
-      
+
       // This is a simplified scaling relative to the opposite corner
       // Ideally we want to track which handle is active to set the origin correctly
       // But for simplicity in this logic, we'll implement simple scaling relative to center or bounds
-      
+
       let baseX = bounds.x;
       let baseY = bounds.y;
       let baseW = bounds.w;
       let baseH = bounds.h;
-      
+
       // Calculate new width/height based on mouse delta
       // Note: This logic assumes simple stretching. 
       // A more robust implementation handles flipping.
-      
+
       let newW = baseW;
       let newH = baseH;
-      
+
       // Determine origin for scaling
       let scaleOrigin = { x: bounds.x + bounds.w / 2, y: bounds.y + bounds.h / 2 };
-      
+
       if (handle === 'nw') { scaleOrigin = { x: bounds.x + bounds.w, y: bounds.y + bounds.h }; }
       else if (handle === 'ne') { scaleOrigin = { x: bounds.x, y: bounds.y + bounds.h }; }
       else if (handle === 'sw') { scaleOrigin = { x: bounds.x + bounds.w, y: bounds.y }; }
@@ -615,75 +625,75 @@ export default function VectorEditor() {
       // Calculate ratios
       // This is a naive implementation: distance ratio
       // Better: Project mouse onto diagonal vectors
-      
+
       const startDistX = transformStartRef.current!.x - scaleOrigin.x;
       const startDistY = transformStartRef.current!.y - scaleOrigin.y;
-      
+
       const curDistX = point.x - scaleOrigin.x;
       const curDistY = point.y - scaleOrigin.y;
-      
+
       const scaleX = startDistX !== 0 ? curDistX / startDistX : 1;
       const scaleY = startDistY !== 0 ? curDistY / startDistY : 1;
-      
+
       // Constrain aspect ratio if shift key? (Optional)
-      
+
       setPaths(currentPaths => {
         const nextPaths = [...currentPaths];
         originalPathsRef.current.forEach(origPath => {
-           if (selectedPathIds.has(origPath.id)) {
-              const idx = nextPaths.findIndex(p => p.id === origPath.id);
-              if (idx !== -1) {
-                 nextPaths[idx] = {
-                   ...origPath,
-                   points: origPath.points.map(p => scalePoint(p, scaleOrigin, scaleX, scaleY))
-                 };
-              }
-           }
+          if (selectedPathIds.has(origPath.id)) {
+            const idx = nextPaths.findIndex(p => p.id === origPath.id);
+            if (idx !== -1) {
+              nextPaths[idx] = {
+                ...origPath,
+                points: origPath.points.map(p => scalePoint(p, scaleOrigin, scaleX, scaleY))
+              };
+            }
+          }
         });
         return nextPaths;
       });
 
     } else if (selectionRect) {
-       // Box Selection Drag
-       setSelectionRect(prev => prev ? { ...prev, current: point } : null);
+      // Box Selection Drag
+      setSelectionRect(prev => prev ? { ...prev, current: point } : null);
     } else if (lassoPoints.length > 0) {
-       // Lasso Selection Drag
-       setLassoPoints(prev => [...prev, point]);
+      // Lasso Selection Drag
+      setLassoPoints(prev => [...prev, point]);
     } else if (isDrawing) {
-      
+
       if (tool === Tool.ERASER) {
-         // Real Erasing Logic with Interpolation
-         const radius = eraserSize / 2;
-         const p1 = lastEraserPosRef.current || point;
-         const p2 = point;
-         const dist = Math.sqrt((p2.x-p1.x)**2 + (p2.y-p1.y)**2);
-         const step = radius / 2; // Step size relative to eraser radius for smooth coverage
-         
-         if (dist > step) {
-            const steps = Math.ceil(dist / step);
-            const pointsToErase: Point[] = [];
-            for(let i=1; i<=steps; i++) {
-               const t = i / steps;
-               pointsToErase.push({
-                  x: p1.x + (p2.x - p1.x) * t,
-                  y: p1.y + (p2.y - p1.y) * t
-               });
-            }
-            
-            // Apply erase for all interpolated points in one batch update
-            setPaths(prev => {
-               let currentPaths = prev;
-               pointsToErase.forEach(ep => {
-                   currentPaths = currentPaths.flatMap(p => eraseFromPath(p, ep, radius));
-               });
-               return currentPaths;
+        // Real Erasing Logic with Interpolation
+        const radius = eraserSize / 2;
+        const p1 = lastEraserPosRef.current || point;
+        const p2 = point;
+        const dist = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
+        const step = radius / 2; // Step size relative to eraser radius for smooth coverage
+
+        if (dist > step) {
+          const steps = Math.ceil(dist / step);
+          const pointsToErase: Point[] = [];
+          for (let i = 1; i <= steps; i++) {
+            const t = i / steps;
+            pointsToErase.push({
+              x: p1.x + (p2.x - p1.x) * t,
+              y: p1.y + (p2.y - p1.y) * t
             });
-         } else {
-            setPaths(prev => prev.flatMap(p => eraseFromPath(p, point, radius)));
-         }
-         
-         lastEraserPosRef.current = point;
-         return;
+          }
+
+          // Apply erase for all interpolated points in one batch update
+          setPaths(prev => {
+            let currentPaths = prev;
+            pointsToErase.forEach(ep => {
+              currentPaths = currentPaths.flatMap(p => eraseFromPath(p, ep, radius));
+            });
+            return currentPaths;
+          });
+        } else {
+          setPaths(prev => prev.flatMap(p => eraseFromPath(p, point, radius)));
+        }
+
+        lastEraserPosRef.current = point;
+        return;
       }
 
       // Drawing
@@ -699,7 +709,7 @@ export default function VectorEditor() {
 
   const handlePointerUp = (e: React.PointerEvent) => {
     e.currentTarget.releasePointerCapture(e.pointerId);
-    
+
     if (isPanning) {
       setIsPanning(false);
     } else if (transformMode !== 'none') {
@@ -715,22 +725,22 @@ export default function VectorEditor() {
       const y = Math.min(r.start.y, r.current.y);
       const w = Math.abs(r.current.x - r.start.x);
       const h = Math.abs(r.current.y - r.start.y);
-      
+
       const newSelected = new Set(selectedPathIds);
-      
+
       paths.forEach(p => {
-         if (p.type === 'text') {
-             // Simplified center point check for text box selection
-             const px = p.points[0].x;
-             const py = p.points[0].y;
-             if (px >= x && px <= x + w && py >= y && py <= y + h) {
-                newSelected.add(p.id);
-             }
-         } else if (isPathInRect(p.points, {x, y, w, h})) {
+        if (p.type === 'text') {
+          // Simplified center point check for text box selection
+          const px = p.points[0].x;
+          const py = p.points[0].y;
+          if (px >= x && px <= x + w && py >= y && py <= y + h) {
             newSelected.add(p.id);
-         }
+          }
+        } else if (isPathInRect(p.points, { x, y, w, h })) {
+          newSelected.add(p.id);
+        }
       });
-      
+
       setSelectedPathIds(newSelected);
       setSelectionRect(null);
 
@@ -738,45 +748,45 @@ export default function VectorEditor() {
       // Commit Lasso Selection
       const newSelected = new Set(selectedPathIds);
       const closedLasso = [...lassoPoints, lassoPoints[0]];
-      
+
       paths.forEach(p => {
-         if (p.type === 'text') {
-             if (isPointInPolygon(p.points[0], closedLasso)) {
-               newSelected.add(p.id);
-             }
-         } else {
-            const bounds = getBoundingBox(p.points);
-            const center = { x: bounds.x + bounds.w/2, y: bounds.y + bounds.h/2 };
-            if (isPointInPolygon(center, closedLasso)) {
-               newSelected.add(p.id);
-            }
-         }
+        if (p.type === 'text') {
+          if (isPointInPolygon(p.points[0], closedLasso)) {
+            newSelected.add(p.id);
+          }
+        } else {
+          const bounds = getBoundingBox(p.points);
+          const center = { x: bounds.x + bounds.w / 2, y: bounds.y + bounds.h / 2 };
+          if (isPointInPolygon(center, closedLasso)) {
+            newSelected.add(p.id);
+          }
+        }
       });
-      
+
       setSelectedPathIds(newSelected);
       setLassoPoints([]);
 
     } else if (isDrawing) {
       setIsDrawing(false);
       lastEraserPosRef.current = null;
-      
+
       // If we were drawing a new path (not erasing), commit it
       if (tool !== Tool.ERASER && tool !== Tool.FILL && currentPoints.length > 1) {
         saveStateToUndo();
-        
+
         const isGeometric = tool === Tool.SHAPE;
-        
+
         const newPath: PathData = {
           id: Date.now().toString(),
           type: 'path',
           points: currentPoints,
-          color: color, 
+          color: color,
           strokeWidth: strokeWidth,
           smoothing: isGeometric ? 0 : smoothingLevel,
           style: tool === Tool.CRAYON ? 'crayon' : 'solid',
           fillColor: 'none'
         };
-        
+
         setPaths(prev => [...prev, newPath]);
       }
       setCurrentPoints([]);
@@ -793,18 +803,18 @@ export default function VectorEditor() {
       // If we clicked something not selected, select it exclusively
       if (!selectedPathIds.has(hitId)) {
         setSelectedPathIds(new Set([hitId]));
-        
+
         // Sync toolbar
         const path = paths.find(p => p.id === hitId);
         if (path) {
           setColor(path.color || '#000000');
           if (path.type === 'text') {
-             setFontSize(path.fontSize || 24);
-             setFontFamily(path.fontFamily || 'sans-serif');
-             setTextAlign(path.align || 'start');
+            setFontSize(path.fontSize || 24);
+            setFontFamily(path.fontFamily || 'sans-serif');
+            setTextAlign(path.align || 'start');
           } else {
-             setStrokeWidth(path.strokeWidth || 3);
-             if (path.smoothing !== undefined) setSmoothingLevel(path.smoothing);
+            setStrokeWidth(path.strokeWidth || 3);
+            if (path.smoothing !== undefined) setSmoothingLevel(path.smoothing);
           }
         }
       }
@@ -813,28 +823,28 @@ export default function VectorEditor() {
       // If clicking empty space but we have a selection, show menu for the selection?
       // Or just close menu if open. 
       if (selectedPathIds.size > 0) {
-         // Optional: allow context menu for existing selection even if not clicking directly on it
-         setContextMenu({ x: e.clientX, y: e.clientY });
+        // Optional: allow context menu for existing selection even if not clicking directly on it
+        setContextMenu({ x: e.clientX, y: e.clientY });
       } else {
-         setContextMenu(null);
+        setContextMenu(null);
       }
     }
   };
 
   // --- Text Handling ---
-  
+
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!editingTextId) return;
     const newVal = e.target.value;
-    setPaths(prev => prev.map(p => 
+    setPaths(prev => prev.map(p =>
       p.id === editingTextId ? { ...p, text: newVal } : p
     ));
   };
-  
+
   const handleTextBlur = () => {
     setEditingTextId(null);
   };
-  
+
   // --- Undo/Redo/Clear ---
 
   const handleUndo = () => {
@@ -865,48 +875,67 @@ export default function VectorEditor() {
   const handleImportedSvg = (content: string) => {
     try {
       const { paths: extractedPaths, viewBox: extractedViewBox } = parseSvgToPaths(content);
-        
+
       if (extractedPaths.length > 0) {
-         setPaths(prev => [...prev, ...extractedPaths]);
-         
-         if (extractedViewBox) {
-           setViewBox(extractedViewBox);
-         }
-         
-         setBackgroundSvg('');
+        setPaths(prev => [...prev, ...extractedPaths]);
+
+        if (extractedViewBox) {
+          setViewBox(extractedViewBox);
+        }
+
+        setBackgroundSvg('');
       } else {
-         const parser = new DOMParser();
-         const doc = parser.parseFromString(content, 'image/svg+xml');
-         const svgElement = doc.querySelector('svg');
-         
-         if (svgElement) {
-            const innerContent = svgElement.innerHTML;
-            if (svgElement.viewBox.baseVal && svgElement.viewBox.baseVal.width > 0) {
-               setViewBox({ 
-                 x: svgElement.viewBox.baseVal.x,
-                 y: svgElement.viewBox.baseVal.y,
-                 w: svgElement.viewBox.baseVal.width,
-                 h: svgElement.viewBox.baseVal.height
-               });
-            }
-            setBackgroundSvg(innerContent);
-         }
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(content, 'image/svg+xml');
+        const svgElement = doc.querySelector('svg');
+
+        if (svgElement) {
+          const innerContent = svgElement.innerHTML;
+          if (svgElement.viewBox.baseVal && svgElement.viewBox.baseVal.width > 0) {
+            setViewBox({
+              x: svgElement.viewBox.baseVal.x,
+              y: svgElement.viewBox.baseVal.y,
+              w: svgElement.viewBox.baseVal.width,
+              h: svgElement.viewBox.baseVal.height
+            });
+          }
+          setBackgroundSvg(innerContent);
+        }
       }
     } catch (e) {
       console.error("Error parsing SVG", e);
     }
   };
 
+  // --- Bridge Registration ---
+  useEffect(() => {
+    const bridge = DragDropBridge.getInstance();
+
+    const dropTarget: DropTarget = {
+      studio: 'vector',
+      acceptedTypes: ['svg'],
+      onDrop: async (asset: Asset, source: StudioType) => {
+        if (asset.type === 'svg' && asset.data.svg) {
+          saveStateToUndo();
+          handleImportedSvg(asset.data.svg);
+        }
+      }
+    };
+
+    bridge.registerDropTarget(dropTarget);
+    return () => bridge.unregisterDropTarget('vector');
+  }, [handleImportedSvg, saveStateToUndo]);
+
   const handleVectorizeConfirm = (config: VectorizeConfig) => {
     if (!pendingFile) return;
     setIsVecModalOpen(false);
-    
+
     const reader = new FileReader();
     reader.onload = async (e) => {
       const base64Data = (e.target?.result as string).split(',')[1];
       setLoadingText(config.complexity === 'low' ? 'Creating Icon...' : 'Vectorizing Art...');
       setIsAiProcessing(true);
-      
+
       try {
         const svgContent = await bitmapToSvg(base64Data, pendingFile.type, config);
         saveStateToUndo();
@@ -929,7 +958,7 @@ export default function VectorEditor() {
       setIsVecModalOpen(true);
       return;
     }
-    
+
     if (file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')) {
       const reader = new FileReader();
       reader.onload = (ev) => {
@@ -941,17 +970,17 @@ export default function VectorEditor() {
       reader.readAsText(file);
       return;
     }
-    
+
     console.warn('Unsupported file type');
   };
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-        // Bypass modal for PNG/JPG and go straight to vectorization if desired, 
-        // OR just set default config to skip the modal step.
-        // For now, just opening modal as per existing logic but can be streamlined.
-        processFile(file);
+      // Bypass modal for PNG/JPG and go straight to vectorization if desired, 
+      // OR just set default config to skip the modal step.
+      // For now, just opening modal as per existing logic but can be streamlined.
+      processFile(file);
     }
   };
 
@@ -960,7 +989,16 @@ export default function VectorEditor() {
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(true);
+
+    // Check if it's a file drag from OS
+    if (e.dataTransfer.types.includes('Files')) {
+      setIsFileDragging(true);
+    }
+
+    // Also notify bridge
+    if (isBridgeDragging) {
+      handleBridgeDragOver(e);
+    }
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
@@ -969,55 +1007,62 @@ export default function VectorEditor() {
     if (e.relatedTarget && e.currentTarget.contains(e.relatedTarget as Node)) {
       return;
     }
-    setIsDragging(false);
+    setIsFileDragging(false);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(false);
-    
+    setIsFileDragging(false);
+
+    // 1. Handle Bridge Drop (Internal Asset)
+    if (isBridgeDragging && draggedAsset) {
+      await handleBridgeDrop(e);
+      return;
+    }
+
+    // 2. Handle File Drop (OS)
     const file = e.dataTransfer.files?.[0];
     if (file) {
       // Direct processing bypass
       if (file.type.startsWith('image/') && !file.type.includes('svg')) {
-         setPendingFile(file);
-         // Simulate confirm immediately with defaults
-         const defaultConfig: VectorizeConfig = {
-            mode: 'illustration', 
-            complexity: 'medium',
-            maxColors: 16
-         };
-         
-         const reader = new FileReader();
-         reader.onload = async (ev) => {
-            const base64Data = (ev.target?.result as string).split(',')[1];
-            setLoadingText('Tracing Geometry...');
-            setIsAiProcessing(true);
-            
-            try {
-               // Use local algorithmic tracer instead of AI
-               // This provides deterministic geometry detection and lines
-               const svgContent = await traceBitmap(base64Data, {
-                 numberofcolors: 16,
-                 pathomit: 2, // Keep small details
-                 ltres: 0.5,  // High precision
-                 qtres: 0.5   // High precision
-               });
-               
-               saveStateToUndo();
-               handleImportedSvg(svgContent);
-            } catch (error) {
-               console.error(error);
-               alert("Failed to trace image.");
-            } finally {
-               setIsAiProcessing(false);
-               setPendingFile(null);
-            }
-         };
-         reader.readAsDataURL(file);
+        setPendingFile(file);
+        // Simulate confirm immediately with defaults
+        const defaultConfig: VectorizeConfig = {
+          mode: 'illustration',
+          complexity: 'medium',
+          maxColors: 16
+        };
+
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          const dataUri = ev.target?.result as string;
+          setLoadingText('Tracing Geometry...');
+          setIsAiProcessing(true);
+
+          try {
+            // Use local algorithmic tracer instead of AI
+            // This provides deterministic geometry detection and lines
+            const svgContent = await traceBitmap(dataUri, {
+              numberofcolors: 16,
+              pathomit: 2, // Keep small details
+              ltres: 0.5,  // High precision
+              qtres: 0.5   // High precision
+            });
+
+            saveStateToUndo();
+            handleImportedSvg(svgContent);
+          } catch (error) {
+            console.error(error);
+            alert("Failed to trace image.");
+          } finally {
+            setIsAiProcessing(false);
+            setPendingFile(null);
+          }
+        };
+        reader.readAsDataURL(file);
       } else {
-         processFile(file);
+        processFile(file);
       }
     }
   };
@@ -1028,8 +1073,8 @@ export default function VectorEditor() {
     if (!svgRef.current) return '';
     const serializer = new XMLSerializer();
     let source = serializer.serializeToString(svgRef.current);
-    
-    if(!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)){
+
+    if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
       source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
     }
     return source;
@@ -1048,23 +1093,23 @@ export default function VectorEditor() {
   };
 
   // --- Client Features ---
-  
+
   const handleSmoothingChange = (level: number) => {
     setSmoothingLevel(level);
   };
 
   const handleSmoothAll = () => {
     if (paths.length === 0) return;
-    
+
     saveStateToUndo();
-    
+
     // Apply smoothing to all non-text paths
     const targetSmoothing = smoothingLevel > 0 ? smoothingLevel : 1;
-    
+
     setPaths(prev => prev.map(p => {
       // Skip text paths - they don't use smoothing
       if (p.type === 'text') return p;
-      
+
       // Apply smoothing to all vector paths
       // Paths with smoothing: 0 (geometric shapes) will get smoothed too
       // Users can always adjust individual paths later if needed
@@ -1076,7 +1121,7 @@ export default function VectorEditor() {
   };
 
   // --- AI Processing ---
-  
+
   const handleAiSubmit = async (prompt: string) => {
     setLoadingText('Gemini is refining your vector...');
     setIsAiProcessing(true);
@@ -1129,7 +1174,7 @@ export default function VectorEditor() {
     if (tool === Tool.SELECT) {
       if (activeHandle) return 'cursor-grabbing'; // When dragging handle
       return 'cursor-default';
-    } 
+    }
     if (tool === Tool.LASSO) return 'cursor-crosshair';
     if (tool === Tool.SHAPE) return 'cursor-crosshair';
     if (tool === Tool.TEXT) return 'cursor-text';
@@ -1141,9 +1186,9 @@ export default function VectorEditor() {
 
   // Calculate Selection Bounding Box for the UI Overlay
   const selectionBounds = React.useMemo(() => {
-     if (selectedPathIds.size === 0) return null;
-     const selectedPaths = paths.filter(p => selectedPathIds.has(p.id));
-     return getCombinedBoundingBox(selectedPaths);
+    if (selectedPathIds.size === 0) return null;
+    const selectedPaths = paths.filter(p => selectedPathIds.has(p.id));
+    return getCombinedBoundingBox(selectedPaths);
   }, [paths, selectedPathIds]);
 
   // Helper for handles (render constants)
@@ -1163,7 +1208,7 @@ export default function VectorEditor() {
         />
       }
       leftPanel={
-        <Toolbar 
+        <Toolbar
           currentTool={tool}
           setTool={setTool}
           currentShapeType={shapeType}
@@ -1175,7 +1220,7 @@ export default function VectorEditor() {
           eraserSize={eraserSize}
           setEraserSize={setEraserSize}
           smoothingLevel={smoothingLevel}
-          setSmoothingLevel={handleSmoothingChange} 
+          setSmoothingLevel={handleSmoothingChange}
           // Text Props
           fontSize={fontSize}
           setFontSize={setFontSize}
@@ -1190,7 +1235,7 @@ export default function VectorEditor() {
         />
       }
       bottomPanel={
-        <Footer 
+        <Footer
           onUpload={handleUpload}
           onDownload={handleDownload}
           onExportCode={() => setIsCodeModalOpen(true)}
@@ -1205,19 +1250,23 @@ export default function VectorEditor() {
         onClick={() => setContextMenu(null)} // Close menu on general click
         onContextMenu={(e) => e.preventDefault()} // Prevent default browser menu globally
       >
-        
+
         {/* Drag Overlay */}
-        {isDragging && (
-           <div className="absolute inset-0 z-[100] bg-cta-orange/20 backdrop-blur-md flex items-center justify-center border-4 border-cta-orange border-dashed m-6 rounded-3xl pointer-events-none animate-in fade-in duration-200">
-              <div className="text-center text-white">
-                <Upload size={80} className="mx-auto mb-6 text-cta-orange animate-bounce" />
-                <h2 className="text-4xl font-bold mb-3">Drop File Here</h2>
-                <p className="text-cta-orange text-lg">SVG, PNG, or JPG supported</p>
-              </div>
-           </div>
+        {(isFileDragging || (isBridgeDragging && !isTarget)) && (
+          <div className="absolute inset-0 z-[100] bg-cta-orange/20 backdrop-blur-md flex items-center justify-center border-4 border-cta-orange border-dashed m-6 rounded-3xl pointer-events-none animate-in fade-in duration-200">
+            <div className="text-center text-white">
+              <Upload size={80} className="mx-auto mb-6 text-cta-orange animate-bounce" />
+              <h2 className="text-4xl font-bold mb-3">
+                {isFileDragging ? 'Drop File Here' : 'Drop Asset Here'}
+              </h2>
+              <p className="text-cta-orange text-lg">
+                {isFileDragging ? 'SVG, PNG, or JPG supported' : `Import ${draggedAsset?.name || 'Asset'}`}
+              </p>
+            </div>
+          </div>
         )}
 
-        <AiPromptModal 
+        <AiPromptModal
           isOpen={isAiModalOpen}
           onClose={() => setIsAiModalOpen(false)}
           onSubmit={handleAiSubmit}
@@ -1262,232 +1311,232 @@ export default function VectorEditor() {
 
             <button
               onClick={() => {
-                 saveStateToUndo();
-                 setPaths(prev => prev.filter(p => !selectedPathIds.has(p.id)));
-                 setSelectedPathIds(new Set());
-                 setContextMenu(null);
+                saveStateToUndo();
+                setPaths(prev => prev.filter(p => !selectedPathIds.has(p.id)));
+                setSelectedPathIds(new Set());
+                setContextMenu(null);
               }}
               className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-900/30 flex items-center justify-between group"
             >
-               <span className="flex items-center gap-2"><Trash2 size={14} /> Delete</span>
-               <span className="text-zinc-400 text-xs font-mono group-hover:text-red-300/50">Del</span>
+              <span className="flex items-center gap-2"><Trash2 size={14} /> Delete</span>
+              <span className="text-zinc-400 text-xs font-mono group-hover:text-red-300/50">Del</span>
             </button>
           </div>
         )}
 
         {/* Canvas Area */}
         <div className="flex-1 relative bg-gray-100 overflow-hidden">
-        
-        {/* Custom Eraser Cursor */}
-        {tool === Tool.ERASER && (
-          <div 
-            className="pointer-events-none absolute border border-zinc-500 rounded-full z-50 -translate-x-1/2 -translate-y-1/2 bg-white/20"
-            style={{
-              width: `${eraserPixelSize}px`,
-              height: `${eraserPixelSize}px`,
-              left: cursorPos.x,
-              top: cursorPos.y,
-            }}
-          />
-        )}
-        
-        {/* Text Input Overlay */}
-        {editingTextId && editingTextObj && (
-           <textarea
-             autoFocus
-             value={editingTextObj.text}
-             onChange={handleTextChange}
-             onBlur={handleTextBlur}
-             style={{
-               position: 'absolute',
-               left: svgToScreen(editingTextObj.points[0]).x,
-               top: svgToScreen(editingTextObj.points[0]).y - (editingTextObj.fontSize || 24),
-               fontSize: (editingTextObj.fontSize || 24) * getZoomScale(),
-               fontFamily: editingTextObj.fontFamily,
-               color: editingTextObj.color,
-               background: 'transparent',
-               border: '1px dashed #3b82f6',
-               outline: 'none',
-               padding: 0,
-               margin: 0,
-               resize: 'none',
-               overflow: 'hidden',
-               whiteSpace: 'pre',
-               transformOrigin: 'top left',
-               minWidth: '50px',
-               zIndex: 60,
-               textAlign: (editingTextObj.align === 'middle' ? 'center' : editingTextObj.align === 'end' ? 'right' : 'left') as 'left' | 'center' | 'right',
-               // Offset based on alignment
-               transform: editingTextObj.align === 'middle' ? 'translateX(-50%)' : editingTextObj.align === 'end' ? 'translateX(-100%)' : 'none'
-             }}
-             className="shadow-none focus:ring-0"
-           />
-        )}
 
-        <svg
-          ref={svgRef}
-          className={`w-full h-full touch-none ${getCursorClass()}`}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerLeave={handlePointerUp}
-          onContextMenu={handleContextMenu}
-          viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}
-          preserveAspectRatio="xMidYMid slice"
-        >
-          <defs>
-            <filter id="crayon" x="-20%" y="-20%" width="140%" height="140%">
-               <feTurbulence type="fractalNoise" baseFrequency="0.5" numOctaves="3" result="noise" />
-               <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" />
-            </filter>
-          </defs>
+          {/* Custom Eraser Cursor */}
+          {tool === Tool.ERASER && (
+            <div
+              className="pointer-events-none absolute border border-zinc-500 rounded-full z-50 -translate-x-1/2 -translate-y-1/2 bg-white/20"
+              style={{
+                width: `${eraserPixelSize}px`,
+                height: `${eraserPixelSize}px`,
+                left: cursorPos.x,
+                top: cursorPos.y,
+              }}
+            />
+          )}
 
-          {/* Background / Uploaded Layer */}
-          {backgroundSvg && <g dangerouslySetInnerHTML={{ __html: backgroundSvg }} />}
+          {/* Text Input Overlay */}
+          {editingTextId && editingTextObj && (
+            <textarea
+              autoFocus
+              value={editingTextObj.text}
+              onChange={handleTextChange}
+              onBlur={handleTextBlur}
+              style={{
+                position: 'absolute',
+                left: svgToScreen(editingTextObj.points[0]).x,
+                top: svgToScreen(editingTextObj.points[0]).y - (editingTextObj.fontSize || 24),
+                fontSize: (editingTextObj.fontSize || 24) * getZoomScale(),
+                fontFamily: editingTextObj.fontFamily,
+                color: editingTextObj.color,
+                background: 'transparent',
+                border: '1px dashed #3b82f6',
+                outline: 'none',
+                padding: 0,
+                margin: 0,
+                resize: 'none',
+                overflow: 'hidden',
+                whiteSpace: 'pre',
+                transformOrigin: 'top left',
+                minWidth: '50px',
+                zIndex: 60,
+                textAlign: (editingTextObj.align === 'middle' ? 'center' : editingTextObj.align === 'end' ? 'right' : 'left') as 'left' | 'center' | 'right',
+                // Offset based on alignment
+                transform: editingTextObj.align === 'middle' ? 'translateX(-50%)' : editingTextObj.align === 'end' ? 'translateX(-100%)' : 'none'
+              }}
+              className="shadow-none focus:ring-0"
+            />
+          )}
 
-          {/* Paths & Text Layer */}
-          {paths.map((path) => (
-            <React.Fragment key={path.id}>
-               
-               {/* --- TEXT RENDER --- */}
-               {path.type === 'text' && editingTextId !== path.id ? (
-                 <text
-                   x={path.points[0].x}
-                   y={path.points[0].y}
-                   fill={path.color}
-                   fontSize={path.fontSize || 24}
-                   fontFamily={path.fontFamily || 'sans-serif'}
-                   textAnchor={path.align || 'start'}
-                   style={{ userSelect: 'none', pointerEvents: 'none' }} // Let container handle events
-                   className={`${selectedPathIds.has(path.id) && transformMode === 'none' ? 'drop-shadow-[0_0_2px_rgba(59,130,246,0.8)]' : ''}`}
-                 >
-                   {path.text}
-                 </text>
-               ) : null}
+          <svg
+            ref={svgRef}
+            className={`w-full h-full touch-none ${getCursorClass()}`}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerLeave={handlePointerUp}
+            onContextMenu={handleContextMenu}
+            viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}
+            preserveAspectRatio="xMidYMid slice"
+          >
+            <defs>
+              <filter id="crayon" x="-20%" y="-20%" width="140%" height="140%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.5" numOctaves="3" result="noise" />
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" />
+              </filter>
+            </defs>
 
-               {/* --- PATH RENDER --- */}
-               {path.type !== 'text' && (
-                 <>
-                  {selectedPathIds.has(path.id) && transformMode === 'none' && (
+            {/* Background / Uploaded Layer */}
+            {backgroundSvg && <g dangerouslySetInnerHTML={{ __html: backgroundSvg }} />}
+
+            {/* Paths & Text Layer */}
+            {paths.map((path) => (
+              <React.Fragment key={path.id}>
+
+                {/* --- TEXT RENDER --- */}
+                {path.type === 'text' && editingTextId !== path.id ? (
+                  <text
+                    x={path.points[0].x}
+                    y={path.points[0].y}
+                    fill={path.color}
+                    fontSize={path.fontSize || 24}
+                    fontFamily={path.fontFamily || 'sans-serif'}
+                    textAnchor={path.align || 'start'}
+                    style={{ userSelect: 'none', pointerEvents: 'none' }} // Let container handle events
+                    className={`${selectedPathIds.has(path.id) && transformMode === 'none' ? 'drop-shadow-[0_0_2px_rgba(59,130,246,0.8)]' : ''}`}
+                  >
+                    {path.text}
+                  </text>
+                ) : null}
+
+                {/* --- PATH RENDER --- */}
+                {path.type !== 'text' && (
+                  <>
+                    {selectedPathIds.has(path.id) && transformMode === 'none' && (
+                      <path
+                        d={pointsToSmoothedPath(path.points, path.smoothing !== undefined ? path.smoothing : smoothingLevel)}
+                        stroke="#3b82f6"
+                        strokeWidth={(path.strokeWidth || 3) + 4}
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        opacity="0.5"
+                      />
+                    )}
                     <path
                       d={pointsToSmoothedPath(path.points, path.smoothing !== undefined ? path.smoothing : smoothingLevel)}
-                      stroke="#3b82f6"
-                      strokeWidth={(path.strokeWidth || 3) + 4}
-                      fill="none"
+                      stroke={path.color || '#000000'}
+                      strokeWidth={path.strokeWidth || 3}
+                      fill={path.fillColor || 'none'}
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      opacity="0.5"
+                      filter={path.style === 'crayon' ? 'url(#crayon)' : undefined}
+                      data-id={path.id}
                     />
-                  )}
-                  <path
-                    d={pointsToSmoothedPath(path.points, path.smoothing !== undefined ? path.smoothing : smoothingLevel)}
-                    stroke={path.color || '#000000'}
-                    strokeWidth={path.strokeWidth || 3}
-                    fill={path.fillColor || 'none'}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    filter={path.style === 'crayon' ? 'url(#crayon)' : undefined}
-                    data-id={path.id}
-                  />
-                 </>
-               )}
-            </React.Fragment>
-          ))}
+                  </>
+                )}
+              </React.Fragment>
+            ))}
 
-          {/* Active Drawing Path (For Pen/Shape) */}
-          {isDrawing && currentPoints.length > 0 && tool !== Tool.ERASER && tool !== Tool.TEXT && tool !== Tool.FILL && (
-             <path
-             d={pointsToLinedPath(currentPoints)}
-             stroke={color}
-             strokeWidth={strokeWidth}
-             fill="none"
-             strokeLinecap="round"
-             strokeLinejoin="round"
-             filter={tool === Tool.CRAYON ? 'url(#crayon)' : undefined}
-             className="opacity-80"
-           />
-          )}
+            {/* Active Drawing Path (For Pen/Shape) */}
+            {isDrawing && currentPoints.length > 0 && tool !== Tool.ERASER && tool !== Tool.TEXT && tool !== Tool.FILL && (
+              <path
+                d={pointsToLinedPath(currentPoints)}
+                stroke={color}
+                strokeWidth={strokeWidth}
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter={tool === Tool.CRAYON ? 'url(#crayon)' : undefined}
+                className="opacity-80"
+              />
+            )}
 
-          {/* Selection Rect Overlay (Dragging to Select) */}
-          {selectionRect && (
-            <rect
-              x={Math.min(selectionRect.start.x, selectionRect.current.x)}
-              y={Math.min(selectionRect.start.y, selectionRect.current.y)}
-              width={Math.abs(selectionRect.current.x - selectionRect.start.x)}
-              height={Math.abs(selectionRect.current.y - selectionRect.start.y)}
-              fill="rgba(59, 130, 246, 0.1)"
-              stroke="#3b82f6"
-              strokeWidth={2 / getZoomScale()}
-              strokeDasharray={5 / getZoomScale()}
-            />
-          )}
+            {/* Selection Rect Overlay (Dragging to Select) */}
+            {selectionRect && (
+              <rect
+                x={Math.min(selectionRect.start.x, selectionRect.current.x)}
+                y={Math.min(selectionRect.start.y, selectionRect.current.y)}
+                width={Math.abs(selectionRect.current.x - selectionRect.start.x)}
+                height={Math.abs(selectionRect.current.y - selectionRect.start.y)}
+                fill="rgba(59, 130, 246, 0.1)"
+                stroke="#3b82f6"
+                strokeWidth={2 / getZoomScale()}
+                strokeDasharray={5 / getZoomScale()}
+              />
+            )}
 
-          {/* Lasso Overlay */}
-          {lassoPoints.length > 0 && (
-            <polygon 
-              points={lassoPoints.map(p => `${p.x},${p.y}`).join(' ')}
-              fill="rgba(59, 130, 246, 0.1)"
-              stroke="#3b82f6"
-              strokeWidth={2 / getZoomScale()}
-              strokeDasharray={5 / getZoomScale()}
-            />
-          )}
+            {/* Lasso Overlay */}
+            {lassoPoints.length > 0 && (
+              <polygon
+                points={lassoPoints.map(p => `${p.x},${p.y}`).join(' ')}
+                fill="rgba(59, 130, 246, 0.1)"
+                stroke="#3b82f6"
+                strokeWidth={2 / getZoomScale()}
+                strokeDasharray={5 / getZoomScale()}
+              />
+            )}
 
-          {/* TRANSFORM HANDLES OVERLAY */}
-          {selectionBounds && tool === Tool.SELECT && (
-             <g>
+            {/* TRANSFORM HANDLES OVERLAY */}
+            {selectionBounds && tool === Tool.SELECT && (
+              <g>
                 {/* Bounding Box Rect */}
-                <rect 
-                  x={selectionBounds.x} 
-                  y={selectionBounds.y} 
-                  width={selectionBounds.w} 
+                <rect
+                  x={selectionBounds.x}
+                  y={selectionBounds.y}
+                  width={selectionBounds.w}
                   height={selectionBounds.h}
                   fill="none"
                   stroke="#3b82f6"
                   strokeWidth={1 / getZoomScale()}
                 />
-                
+
                 {/* Corner Resize Handles */}
-                <rect x={selectionBounds.x - handleSize/2} y={selectionBounds.y - handleSize/2} width={handleSize} height={handleSize} fill="white" stroke="#3b82f6" strokeWidth={1/getZoomScale()} data-handle="nw" className="cursor-nw-resize" />
-                <rect x={selectionBounds.x + selectionBounds.w - handleSize/2} y={selectionBounds.y - handleSize/2} width={handleSize} height={handleSize} fill="white" stroke="#3b82f6" strokeWidth={1/getZoomScale()} data-handle="ne" className="cursor-ne-resize" />
-                <rect x={selectionBounds.x + selectionBounds.w - handleSize/2} y={selectionBounds.y + selectionBounds.h - handleSize/2} width={handleSize} height={handleSize} fill="white" stroke="#3b82f6" strokeWidth={1/getZoomScale()} data-handle="se" className="cursor-se-resize" />
-                <rect x={selectionBounds.x - handleSize/2} y={selectionBounds.y + selectionBounds.h - handleSize/2} width={handleSize} height={handleSize} fill="white" stroke="#3b82f6" strokeWidth={1/getZoomScale()} data-handle="sw" className="cursor-sw-resize" />
+                <rect x={selectionBounds.x - handleSize / 2} y={selectionBounds.y - handleSize / 2} width={handleSize} height={handleSize} fill="white" stroke="#3b82f6" strokeWidth={1 / getZoomScale()} data-handle="nw" className="cursor-nw-resize" />
+                <rect x={selectionBounds.x + selectionBounds.w - handleSize / 2} y={selectionBounds.y - handleSize / 2} width={handleSize} height={handleSize} fill="white" stroke="#3b82f6" strokeWidth={1 / getZoomScale()} data-handle="ne" className="cursor-ne-resize" />
+                <rect x={selectionBounds.x + selectionBounds.w - handleSize / 2} y={selectionBounds.y + selectionBounds.h - handleSize / 2} width={handleSize} height={handleSize} fill="white" stroke="#3b82f6" strokeWidth={1 / getZoomScale()} data-handle="se" className="cursor-se-resize" />
+                <rect x={selectionBounds.x - handleSize / 2} y={selectionBounds.y + selectionBounds.h - handleSize / 2} width={handleSize} height={handleSize} fill="white" stroke="#3b82f6" strokeWidth={1 / getZoomScale()} data-handle="sw" className="cursor-sw-resize" />
 
                 {/* Rotation Handle */}
-                <line 
-                  x1={selectionBounds.x + selectionBounds.w / 2} 
-                  y1={selectionBounds.y} 
-                  x2={selectionBounds.x + selectionBounds.w / 2} 
-                  y2={selectionBounds.y - rotationHandleDist} 
-                  stroke="#3b82f6" 
-                  strokeWidth={1 / getZoomScale()} 
+                <line
+                  x1={selectionBounds.x + selectionBounds.w / 2}
+                  y1={selectionBounds.y}
+                  x2={selectionBounds.x + selectionBounds.w / 2}
+                  y2={selectionBounds.y - rotationHandleDist}
+                  stroke="#3b82f6"
+                  strokeWidth={1 / getZoomScale()}
                 />
-                <circle 
-                  cx={selectionBounds.x + selectionBounds.w / 2} 
-                  cy={selectionBounds.y - rotationHandleDist} 
-                  r={handleSize / 1.5} 
-                  fill="white" 
-                  stroke="#3b82f6" 
+                <circle
+                  cx={selectionBounds.x + selectionBounds.w / 2}
+                  cy={selectionBounds.y - rotationHandleDist}
+                  r={handleSize / 1.5}
+                  fill="white"
+                  stroke="#3b82f6"
                   strokeWidth={1 / getZoomScale()}
                   data-handle="rotate"
                   className="cursor-alias"
                 />
-             </g>
-          )}
+              </g>
+            )}
 
-        </svg>
-      </div>
-
-      {/* Loading Overlay */}
-      {isAiProcessing && (
-        <div className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-16 h-16 border-4 border-cta-orange border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-cta-orange font-mono animate-pulse">{loadingText}</p>
-          </div>
+          </svg>
         </div>
-      )}
-    </div>
+
+        {/* Loading Overlay */}
+        {isAiProcessing && (
+          <div className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-16 h-16 border-4 border-cta-orange border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-cta-orange font-mono animate-pulse">{loadingText}</p>
+            </div>
+          </div>
+        )}
+      </div>
     </Shell>
   );
 }

@@ -10,6 +10,18 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
+// SSR-safe storage that returns undefined during SSR
+const getStorage = () => {
+  if (typeof window === 'undefined') {
+    return {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {},
+    };
+  }
+  return localStorage;
+};
+
 /**
  * Asset Types
  */
@@ -372,12 +384,12 @@ export const useUnifiedStore = create<UnifiedStore>()(
     }),
     {
       name: 'bisect-storage',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => getStorage()),
       partialize: (state) => ({
         projects: state.projects,
         assets: state.assets,
         currentProject: state.currentProject
-      })
+      }),
     }
   )
 );

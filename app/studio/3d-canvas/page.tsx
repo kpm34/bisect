@@ -320,8 +320,8 @@ function EditorContent() {
                 <SceneHierarchyPanel open={showHierarchy} onClose={() => setShowHierarchy(false)} />
               )}
 
-              {/* Character 2: Prompt Line - Centered with margin for hierarchy panel */}
-              <div className="absolute bottom-0 left-[55%] -translate-x-1/2 w-3/5 max-w-4xl z-[60]">
+              {/* Character 2: Prompt Line - Responsive centered positioning */}
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[90%] sm:w-[80%] md:w-[70%] lg:w-3/5 max-w-4xl z-[60]">
                 <SceneCommandInput sceneLoaded={sceneFile !== null} activeTab={activeTab} />
               </div>
             </div>

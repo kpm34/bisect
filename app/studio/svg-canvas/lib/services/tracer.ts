@@ -13,7 +13,7 @@ export interface TracerConfig {
 }
 
 export const traceBitmap = (
-  base64Data: string,
+  imageUrl: string,
   config: TracerConfig = {}
 ): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -34,7 +34,7 @@ export const traceBitmap = (
     try {
       // ImageTracer.imageToSVG takes a URL/URI, callback, and options
       ImageTracer.imageToSVG(
-        `data:image/png;base64,${base64Data}`,
+        imageUrl,
         (svgString) => {
           if (!svgString) {
             reject(new Error("Tracing failed to produce SVG"));
