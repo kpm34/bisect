@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { MaterialSelector } from './MaterialSelector';
-import ObjectTransformControls from './ObjectTransformControls';
+import ObjectEditor from './ObjectEditor';
 import EnvironmentControls from './EnvironmentControls';
+import EffectsControls from './EffectsControls';
 import { SceneEnvironment, EnvironmentPreset } from '@/lib/core/materials/types';
 
 /**
@@ -13,7 +14,7 @@ import { SceneEnvironment, EnvironmentPreset } from '@/lib/core/materials/types'
  * Simplified structure: only functional containers
  */
 
-type TabId = 'material' | 'object' | 'animation' | 'scene';
+type TabId = 'material' | 'object' | 'animation' | 'scene' | 'effects';
 
 interface TabConfig {
   id: TabId;
@@ -25,6 +26,7 @@ const tabs: TabConfig[] = [
   { id: 'object', label: 'Object' },
   { id: 'animation', label: 'Animation' },
   { id: 'scene', label: 'Scene' },
+  { id: 'effects', label: 'Effects' },
 ];
 
 interface SceneInspectorProps {
@@ -65,11 +67,10 @@ export default function SceneInspector({ onTabChange, environment, onEnvironment
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`flex-shrink-0 min-w-[80px] px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'bg-[#5ba4cf] text-white shadow-md'
-                  : 'bg-transparent text-gray-600 hover:text-gray-900'
-              }`}
+              className={`flex-shrink-0 min-w-[80px] px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${activeTab === tab.id
+                ? 'bg-[#5ba4cf] text-white shadow-md'
+                : 'bg-transparent text-gray-600 hover:text-gray-900'
+                }`}
             >
               {tab.label}
             </button>
@@ -83,8 +84,8 @@ export default function SceneInspector({ onTabChange, environment, onEnvironment
 
         {activeTab === 'object' && (
           <>
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Object Transform</h3>
-            <ObjectTransformControls />
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">Object Editor</h3>
+            <ObjectEditor />
           </>
         )}
 
@@ -110,6 +111,13 @@ export default function SceneInspector({ onTabChange, environment, onEnvironment
               intensity={environment.intensity ?? 1.0}
               onIntensityChange={setIntensity}
             />
+          </>
+        )}
+
+        {activeTab === 'effects' && (
+          <>
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">Visual Effects</h3>
+            <EffectsControls />
           </>
         )}
       </div>

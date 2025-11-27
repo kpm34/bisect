@@ -1,0 +1,43 @@
+[
+    {
+        "command": "event",
+        "args": {
+            "trigger": "start",
+            "action": "log",
+            "message": "Starting Full System Test"
+        }
+    },
+    {
+        "command": "add",
+        "args": {
+            "type": "box"
+        }
+    },
+    {
+        "command": "color",
+        "args": {
+            "color": "#ff0000"
+        }
+    },
+    {
+        "command": "event",
+        "args": {
+            "trigger": "click",
+            "action": "destroy"
+        }
+    },
+    {
+        "command": "apply_modifier",
+        "args": {
+            "type": "wireframe",
+            "value": 1
+        }
+    },
+    {
+        "command": "import_asset",
+        "args": {
+            "url": "https://vazxmixjsiawhamofees.supabase.co/storage/v1/object/public/models/duck/model.gltf",
+            "format": "gltf"
+        }
+    }
+]

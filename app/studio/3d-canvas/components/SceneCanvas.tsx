@@ -2,7 +2,8 @@
 
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Environment, Grid, PerspectiveCamera, useGLTF } from '@react-three/drei';
-import { EffectComposer, Outline } from '@react-three/postprocessing';
+import { EffectComposer, Outline, Bloom, Noise, Vignette, Glitch } from '@react-three/postprocessing';
+import { Physics, RigidBody } from '@react-three/rapier';
 import { Suspense, useState, useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { useSelection } from '../r3f/SceneSelectionContext';
@@ -11,6 +12,8 @@ import GlitchLoader from './GlitchLoader';
 import { GoldVariations } from './GoldVariations';
 import { IconGenerator } from './IconGenerator';
 import { MaterialPreviewOverlay } from './MaterialPreviewOverlay';
+import { InteractiveObject } from './InteractiveObject';
+import { CliBridge } from './CliBridge';
 import { SceneEnvironment } from '@/lib/core/materials/types';
 
 interface R3FCanvasProps {
@@ -124,14 +127,17 @@ export default function R3FCanvas({
         {/* Scene Content with Error Handling */}
         <ErrorBoundary fallback={(error) => <ErrorFallback error={error} />}>
           <Suspense fallback={null}>
-            {fileUrl && sceneFile && (
-              <GLBScene
-                url={fileUrl}
-                fileName={sceneFile.name}
-                setIsSceneReady={setIsSceneReady}
-                setLoadingProgress={setLoadingProgress}
-              />
-            )}
+            <Physics gravity={[0, -9.81, 0]}>
+              {fileUrl && sceneFile && (
+                <GLBScene
+                  url={fileUrl}
+                  fileName={sceneFile.name}
+                  setIsSceneReady={setIsSceneReady}
+                  setLoadingProgress={setLoadingProgress}
+                />
+              )}
+              <AddedObjectsRenderer />
+            </Physics>
           </Suspense>
         </ErrorBoundary>
 
@@ -160,8 +166,11 @@ export default function R3FCanvas({
         {/* Camera Controls - Option+Drag to orbit, MMB to pan, Scroll to zoom */}
         <ConditionalOrbitControls />
 
-        {/* Selection Outline - Must be last so it processes the rendered scene */}
+        {/* Selection Outline */}
         <SelectionOutline />
+
+        {/* Post-Processing Effects */}
+        <SceneEffects />
       </Canvas>
 
       {/* Loading Animation Overlay */}
@@ -223,7 +232,46 @@ function EditorUIOverlay({
           {selectedObject ? `Selected: ${selectedObject.name || selectedObject.type}` : 'Click to select'}
         </div>
       </div>
+
+      {/* Shape Spawner Toolbar */}
+      <ShapeSpawnerToolbar />
+
+      {/* CLI Bridge */}
+      <CliBridge />
     </>
+  );
+}
+
+function ShapeSpawnerToolbar() {
+  const { addObject } = useSelection();
+
+  return (
+    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2 bg-black/80 p-2 rounded-xl backdrop-blur-sm border border-white/10">
+      <button
+        onClick={() => addObject('box')}
+        className="p-2 hover:bg-white/20 rounded-lg transition-colors text-white flex flex-col items-center gap-1 min-w-[60px]"
+        title="Add Box"
+      >
+        <div className="w-6 h-6 border-2 border-white rounded-sm" />
+        <span className="text-[10px] font-medium">Box</span>
+      </button>
+      <button
+        onClick={() => addObject('sphere')}
+        className="p-2 hover:bg-white/20 rounded-lg transition-colors text-white flex flex-col items-center gap-1 min-w-[60px]"
+        title="Add Sphere"
+      >
+        <div className="w-6 h-6 border-2 border-white rounded-full" />
+        <span className="text-[10px] font-medium">Sphere</span>
+      </button>
+      <button
+        onClick={() => addObject('plane')}
+        className="p-2 hover:bg-white/20 rounded-lg transition-colors text-white flex flex-col items-center gap-1 min-w-[60px]"
+        title="Add Plane"
+      >
+        <div className="w-6 h-6 border-b-2 border-white mb-2" />
+        <span className="text-[10px] font-medium">Plane</span>
+      </button>
+    </div>
   );
 }
 
@@ -321,6 +369,54 @@ function SelectionOutline() {
         xRay={true}                   // See selection through other objects (Blender-like)
       />
     </EffectComposer>
+  );
+}
+
+/**
+ * SceneEffects - Renders active post-processing effects
+ */
+function SceneEffects() {
+  const { effects } = useSelection();
+
+  // If no effects are active, don't render composer (saves performance)
+  if (!effects.bloom && !effects.glitch && !effects.noise && !effects.vignette) {
+    return null;
+  }
+
+  return (
+    <EffectComposer>
+      <>
+        {effects.bloom && <Bloom luminanceThreshold={0.2} mipmapBlur intensity={0.5} />}
+        {effects.glitch && <Glitch delay={new THREE.Vector2(1.5, 3.5)} duration={new THREE.Vector2(0.6, 1.0)} strength={new THREE.Vector2(0.3, 1.0)} />}
+        {effects.noise && <Noise opacity={0.1} />}
+        {effects.vignette && <Vignette eskil={false} offset={0.1} darkness={1.1} />}
+      </>
+    </EffectComposer>
+  );
+}
+
+/**
+ * AddedObjectsRenderer - Renders user-added shapes with physics
+ */
+function AddedObjectsRenderer() {
+  const { addedObjects, setSelectedObject } = useSelection();
+
+  return (
+    <>
+      {addedObjects.map((obj) => (
+        <InteractiveObject key={obj.id} obj={obj}>
+          <mesh
+            name={obj.name}
+            userData={{ id: obj.id, isAddedObject: true }}
+          >
+            {obj.type === 'box' && <boxGeometry />}
+            {obj.type === 'sphere' && <sphereGeometry />}
+            {obj.type === 'plane' && <planeGeometry args={[10, 10]} />}
+            <meshStandardMaterial color={obj.color} side={THREE.DoubleSide} />
+          </mesh>
+        </InteractiveObject>
+      ))}
+    </>
   );
 }
 

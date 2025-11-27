@@ -1,0 +1,23 @@
+[
+    {
+        "command": "event",
+        "args": {
+            "trigger": "start",
+            "action": "log",
+            "message": "Starting Import Test"
+        }
+    },
+    {
+        "command": "import_asset",
+        "args": {
+            "url": "https://vazxmixjsiawhamofees.supabase.co/storage/v1/object/public/models/duck/model.gltf",
+            "format": "gltf"
+        }
+    },
+    {
+        "command": "add",
+        "args": {
+            "type": "plane"
+        }
+    }
+]

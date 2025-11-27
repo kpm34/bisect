@@ -10,6 +10,42 @@ export interface FaceSelection {
   faceIndex: number;
 }
 
+export type SceneObjectType = 'box' | 'sphere' | 'plane' | 'external' | 'parametric';
+
+export interface SceneObject {
+  id: string;
+  type: SceneObjectType;
+  url?: string; // For external assets
+  formula?: { x: string; y: string; z: string; uRange: [number, number]; vRange: [number, number] }; // For parametric objects
+  name: string;
+  position: [number, number, number];
+  rotation: [number, number, number];
+  scale: [number, number, number];
+  color: string;
+  physics: {
+    enabled: boolean;
+    type: 'dynamic' | 'fixed' | 'kinematic';
+    mass: number;
+    restitution: number;
+    friction: number;
+  };
+  events: {
+    id: string;
+    trigger: 'start' | 'click' | 'hover' | 'collision';
+    action: 'move' | 'scale' | 'color' | 'destroy';
+    parameters: any;
+  }[];
+  animation?: {
+    current: string | null;
+    playing: boolean;
+    speed: number;
+  };
+  lod?: {
+    enabled: boolean;
+    levels: { distance: number; url: string }[];
+  };
+}
+
 type SelectionContextValue = {
   // Universal Editor (works with Spline and GLTF)
   universalEditor: UniversalEditor | null;
@@ -60,6 +96,21 @@ type SelectionContextValue = {
   setPosition: (x: number, y: number, z: number) => void;
   setRotation: (x: number, y: number, z: number) => void;
   setScale: (x: number, y: number, z: number) => void;
+
+  // Effects
+  effects: {
+    bloom: boolean;
+    glitch: boolean;
+    noise: boolean;
+    vignette: boolean;
+  };
+  setEffects: (effects: { bloom: boolean; glitch: boolean; noise: boolean; vignette: boolean }) => void;
+
+  // Scene Objects
+  addedObjects: SceneObject[];
+  addObject: (type: SceneObjectType, url?: string, formula?: any) => void;
+  removeObject: (id: string) => void;
+  updateObject: (id: string, updates: Partial<SceneObject>) => void;
 };
 
 const SelectionContext = createContext<SelectionContextValue | null>(null);
@@ -454,6 +505,49 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
     },
     [selectedFaces]
   );
+  // Scene Objects State (for added shapes)
+  const [addedObjects, setAddedObjects] = useState<SceneObject[]>([]);
+
+  const addObject = (type: SceneObjectType, url?: string, formula?: any) => {
+    const newObj: SceneObject = {
+      id: Math.random().toString(36).substr(2, 9),
+      type,
+      url,
+      formula,
+      name: `${type.charAt(0).toUpperCase() + type.slice(1)} ${addedObjects.length + 1}`,
+      position: [0, 5, 0], // Start high to drop
+      rotation: [0, 0, 0],
+      scale: [1, 1, 1],
+      color: '#ffffff',
+      physics: {
+        enabled: true,
+        type: 'dynamic',
+        mass: 1,
+        restitution: 0.5,
+        friction: 0.5,
+      },
+      events: [],
+      animation: {
+        current: null,
+        playing: true,
+        speed: 1,
+      },
+      lod: {
+        enabled: false,
+        levels: [],
+      }
+    };
+    setAddedObjects(prev => [...prev, newObj]);
+  };
+
+  const removeObject = useCallback((id: string) => {
+    setAddedObjects(prev => prev.filter(o => o.id !== id));
+    if (selectedObject?.uuid === id) setSelectedObject(null);
+  }, [selectedObject]);
+
+  const updateObject = useCallback((id: string, updates: Partial<SceneObject>) => {
+    setAddedObjects(prev => prev.map(o => o.id === id ? { ...o, ...updates } : o));
+  }, []);
 
   const value = useMemo<SelectionContextValue>(
     () => ({
@@ -487,6 +581,12 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
       toggleFaceSelection,
       clearFaceSelection,
       isFaceSelected,
+      effects,
+      setEffects,
+      addedObjects,
+      addObject,
+      removeObject,
+      updateObject,
     }),
     [
       universalEditor,
@@ -517,6 +617,12 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
       toggleFaceSelection,
       clearFaceSelection,
       isFaceSelected,
+      effects,
+      setEffects,
+      addedObjects,
+      addObject,
+      removeObject,
+      updateObject,
     ]
   );
 
@@ -527,8 +633,8 @@ export function useSelection() {
   const ctx = useContext(SelectionContext);
   if (ctx) return ctx;
 
-  // Safe no-op fallback to avoid client crashes if provider hasn't mounted yet
-  const noop = () => {};
+  // Safe no-op fallback
+  const noop = () => { };
   const noopBool = () => false;
   const noopObj = () => null;
 
@@ -563,5 +669,11 @@ export function useSelection() {
     toggleFaceSelection: noop,
     clearFaceSelection: noop,
     isFaceSelected: noopBool,
+    effects: { bloom: false, glitch: false, noise: false, vignette: false },
+    setEffects: noop,
+    addedObjects: [],
+    addObject: noop,
+    removeObject: noop,
+    updateObject: noop,
   };
 }

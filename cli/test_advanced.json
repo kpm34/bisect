@@ -1,0 +1,61 @@
+[
+    {
+        "command": "event",
+        "args": {
+            "trigger": "start",
+            "action": "log",
+            "message": "Starting Advanced Features Test"
+        }
+    },
+    {
+        "command": "import_asset",
+        "args": {
+            "url": "https://vazxmixjsiawhamofees.supabase.co/storage/v1/object/public/models/duck/model.gltf",
+            "format": "gltf"
+        }
+    },
+    {
+        "command": "animate",
+        "args": {
+            "name": "Walk",
+            "speed": 1.5
+        }
+    },
+    {
+        "command": "set_lod",
+        "args": {
+            "levels": [
+                {
+                    "distance": 0,
+                    "url": "https://vazxmixjsiawhamofees.supabase.co/storage/v1/object/public/models/duck/model.gltf"
+                },
+                {
+                    "distance": 10,
+                    "url": "https://vazxmixjsiawhamofees.supabase.co/storage/v1/object/public/models/box/model.gltf"
+                }
+            ]
+        }
+    },
+    {
+        "command": "bake_model",
+        "args": {
+            "resolution": 2048
+        }
+    },
+    {
+        "command": "generate_parametric",
+        "args": {
+            "x": "u * 10 - 5",
+            "y": "Math.sin(u * Math.PI * 2) * Math.cos(v * Math.PI * 2) * 2",
+            "z": "v * 10 - 5",
+            "u_range": [
+                0,
+                1
+            ],
+            "v_range": [
+                0,
+                1
+            ]
+        }
+    }
+]
