@@ -622,7 +622,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     justifyContent: 'center',
     gap: '24px',
-    paddingTop: '120px', // Space for 2 swatches above
+    paddingTop: '60px', // Moved up ~15% towards midpoint
     paddingBottom: '16px',
     flexWrap: 'nowrap',
     maxWidth: '100%',
