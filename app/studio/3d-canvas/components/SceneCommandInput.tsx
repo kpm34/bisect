@@ -150,7 +150,7 @@ export default function SceneCommandInput({ sceneLoaded, activeTab }: SceneComma
   };
 
   return (
-    <div className="p-4">
+    <div className="px-2">
       {/* Feedback Display */}
       {feedback && (
         <div className="mb-2 px-4 py-2 bg-gray-800/90 backdrop-blur-sm rounded-lg border border-gray-700 text-sm text-white whitespace-pre-line">
@@ -160,14 +160,14 @@ export default function SceneCommandInput({ sceneLoaded, activeTab }: SceneComma
 
       <form onSubmit={handleCommand}>
         {/* Liquid Glass Container */}
-        <div className="relative bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl p-6">
+        <div className="relative bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl p-4">
           <textarea
             value={command}
             onChange={(e) => setCommand(e.target.value)}
             placeholder={getPlaceholder()}
             disabled={!sceneLoaded || isProcessing}
-            rows={3}
-            className="w-full bg-transparent text-white placeholder-gray-500 resize-none outline-none pr-12"
+            rows={2}
+            className="w-full bg-transparent text-white placeholder-gray-500 resize-none outline-none pr-14 text-sm"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -180,7 +180,7 @@ export default function SceneCommandInput({ sceneLoaded, activeTab }: SceneComma
           <button
             type="submit"
             disabled={!command.trim() || !sceneLoaded || isProcessing || aiProcessing}
-            className="absolute bottom-4 right-4 w-10 h-10 bg-cta-orange hover:bg-cta-orange-hover disabled:bg-gray-600 disabled:opacity-50 rounded-full flex items-center justify-center transition-all shadow-lg hover:shadow-xl"
+            className="absolute bottom-3 right-3 w-9 h-9 bg-cta-orange hover:bg-cta-orange-hover disabled:bg-gray-600 disabled:opacity-50 rounded-full flex items-center justify-center transition-all shadow-lg hover:shadow-xl"
           >
             {isProcessing || aiProcessing ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
