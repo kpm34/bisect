@@ -435,7 +435,7 @@ export function MaterialSelector() {
                           style={{
                             ...styles.swatch,
                             backgroundImage: previewUrl ? `url(${previewUrl})` : undefined,
-                            backgroundColor: isSubcategory ? (item as any).color : (item as MaterialConfig).properties?.baseColorHex || '#cccccc',
+                            backgroundColor: previewUrl ? 'transparent' : (isSubcategory ? (item as any).color : (item as MaterialConfig).properties?.baseColorHex || '#cccccc'),
                             backgroundSize: 'cover',
                             backgroundRepeat: 'no-repeat',
                             backgroundPosition: 'center',
