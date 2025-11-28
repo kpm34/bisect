@@ -48,15 +48,15 @@ const METAL_DEFAULTS: Record<string, { color: string; roughness: number; metalne
   titanium: { color: '#878681', roughness: 0.35, metalness: 1.0 }, // Brushed titanium
 };
 
-// Stone subcategories
+// Stone subcategories - using Supabase-hosted previews
 const STONE_SUBCATEGORIES = ['marble', 'granite', 'concrete', 'sandstone', 'slate'] as const;
 
 const STONE_PREVIEW_URLS: Record<string, string> = {
-  marble: '/assets/generated/stone_marble.png',
-  granite: '/assets/generated/stone_granite.png',
-  concrete: '/assets/generated/stone_concrete.png',
-  sandstone: '/assets/generated/stone_sandstone.png',
-  slate: '/assets/generated/stone_slate.png',
+  marble: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/stone/marble-black.png',
+  granite: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/stone/granite-speckled.png',
+  concrete: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/stone/concrete-smooth.png',
+  sandstone: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/stone/sandstone-beige.png',
+  slate: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/stone/slate-dark.png',
 };
 
 const STONE_DEFAULTS: Record<string, { color: string; roughness: number; metalness: number }> = {
@@ -67,15 +67,15 @@ const STONE_DEFAULTS: Record<string, { color: string; roughness: number; metalne
   slate: { color: '#4A4A4A', roughness: 0.6, metalness: 0.0 },
 };
 
-// Fabric subcategories
+// Fabric subcategories - using Supabase-hosted previews
 const FABRIC_SUBCATEGORIES = ['cotton', 'silk', 'denim', 'leather', 'velvet'] as const;
 
 const FABRIC_PREVIEW_URLS: Record<string, string> = {
-  cotton: '/assets/generated/fabric_cotton.png',
-  silk: '/assets/generated/fabric_silk.png',
-  denim: '/assets/materials/fabric/FBR_Denim_Blue/BaseColor.png', // Fallback to existing
-  leather: '/assets/materials/fabric/FBR_Leather_Brown/BaseColor.png', // Fallback to existing
-  velvet: '/assets/materials/fabric/FBR_Velvet_Red/BaseColor.png', // Fallback to existing
+  cotton: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/fabric/cotton-white.png',
+  silk: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/fabric/silk-red.png',
+  denim: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/fabric/denim-blue.png',
+  leather: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/fabric/leather-brown.png',
+  velvet: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/fabric/velvet-purple.png',
 };
 
 const FABRIC_DEFAULTS: Record<string, { color: string; roughness: number; metalness: number }> = {
@@ -84,6 +84,25 @@ const FABRIC_DEFAULTS: Record<string, { color: string; roughness: number; metaln
   denim: { color: '#1E3A8A', roughness: 0.8, metalness: 0.0 },
   leather: { color: '#8B4513', roughness: 0.6, metalness: 0.0 },
   velvet: { color: '#800080', roughness: 0.7, metalness: 0.0 },
+};
+
+// Wood subcategories - using Supabase-hosted previews
+const WOOD_SUBCATEGORIES = ['oak', 'walnut', 'maple', 'cherry', 'bamboo'] as const;
+
+const WOOD_PREVIEW_URLS: Record<string, string> = {
+  oak: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/wood/oak.png',
+  walnut: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/wood/walnut.png',
+  maple: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/wood/maple.png',
+  cherry: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/wood/cherry.png',
+  bamboo: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/wood/bamboo.png',
+};
+
+const WOOD_DEFAULTS: Record<string, { color: string; roughness: number; metalness: number }> = {
+  oak: { color: '#8B7355', roughness: 0.5, metalness: 0.0 },
+  walnut: { color: '#5C4033', roughness: 0.5, metalness: 0.0 },
+  maple: { color: '#D4A76A', roughness: 0.4, metalness: 0.0 },
+  cherry: { color: '#9B4F36', roughness: 0.45, metalness: 0.0 },
+  bamboo: { color: '#D8BF8C', roughness: 0.4, metalness: 0.0 },
 };
 
 type MaterialCategoryType = MaterialCategory;
@@ -147,6 +166,16 @@ export function MaterialSelector() {
       name: slug.charAt(0).toUpperCase() + slug.slice(1),
       previewUrl: FABRIC_PREVIEW_URLS[slug],
       ...FABRIC_DEFAULTS[slug],
+    }));
+  }, []);
+
+  const woodSubcategoryItems = useMemo(() => {
+    return WOOD_SUBCATEGORIES.map(slug => ({
+      id: `wood-${slug}`,
+      slug,
+      name: slug.charAt(0).toUpperCase() + slug.slice(1),
+      previewUrl: WOOD_PREVIEW_URLS[slug],
+      ...WOOD_DEFAULTS[slug],
     }));
   }, []);
 
@@ -362,15 +391,17 @@ export function MaterialSelector() {
             const isMetalCategory = categoryId === 'metal';
             const isStoneCategory = categoryId === 'stone';
             const isFabricCategory = categoryId === 'fabric';
+            const isWoodCategory = categoryId === 'wood';
             const categoryMaterials = materialsByCategory[categoryId];
 
-            if (!isMetalCategory && !isStoneCategory && !isFabricCategory && (!categoryMaterials || categoryMaterials.length === 0)) return null;
+            if (!isMetalCategory && !isStoneCategory && !isFabricCategory && !isWoodCategory && (!categoryMaterials || categoryMaterials.length === 0)) return null;
 
-            // Use subcategories for Metal, Stone, Fabric; local manifest for others
+            // Use subcategories for Metal, Stone, Fabric, Wood; local manifest for others (Glass)
             let items: any[] = categoryMaterials;
             if (isMetalCategory) items = metalSubcategoryItems;
             if (isStoneCategory) items = stoneSubcategoryItems;
             if (isFabricCategory) items = fabricSubcategoryItems;
+            if (isWoodCategory) items = woodSubcategoryItems;
 
             // Reorder: [1, 2, 0, 3, 4] so center (0) is in the middle
             const reordered = [
@@ -398,7 +429,7 @@ export function MaterialSelector() {
                   {reordered.map((item, displayIndex) => {
                     if (!item) return null;
                     const isCenter = displayIndex === 2;
-                    const isSubcategory = isMetalCategory || isStoneCategory || isFabricCategory;
+                    const isSubcategory = isMetalCategory || isStoneCategory || isFabricCategory || isWoodCategory;
                     const itemId = isSubcategory ? (item as any).id : (item as MaterialConfig).id;
                     const isActive = selectedMaterialId?.category === categoryId &&
                       selectedMaterialId?.id === itemId;
@@ -463,13 +494,13 @@ export function MaterialSelector() {
                 </span>
 
                 {/* Browse more link on hover for subcategories */}
-                {hoveredCategory === categoryId && (isMetalCategory || isStoneCategory || isFabricCategory) && (
+                {hoveredCategory === categoryId && (isMetalCategory || isStoneCategory || isFabricCategory || isWoodCategory) && (
                   <button
                     style={styles.browseMoreButton}
                     onClick={(e) => {
                       e.stopPropagation();
-                      // Open with the center item's category (gold/marble/cotton by default)
-                      const defaultSub = isMetalCategory ? 'gold' : isStoneCategory ? 'marble' : 'cotton';
+                      // Open with the center item's category
+                      const defaultSub = isMetalCategory ? 'gold' : isStoneCategory ? 'marble' : isFabricCategory ? 'cotton' : 'wood';
                       handleBrowseCategory(defaultSub);
                     }}
                   >
