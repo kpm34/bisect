@@ -36,7 +36,7 @@ const METAL_PREVIEW_URLS: Record<string, string> = {
   silver: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/metal/silver-variations/silver-polished.png',
   copper: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/metal/copper-variations/copper-matte.png',
   iron: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/metal/iron-variations/iron-rusted.png',
-  titanium: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/metal/titanium-variations/titanium-anodized-blue.png',
+  titanium: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/metal/titanium-variations/titanium-brushed.png',
 };
 
 // Default material properties for metal subcategories - matched to preview variants
@@ -45,7 +45,7 @@ const METAL_DEFAULTS: Record<string, { color: string; roughness: number; metalne
   silver: { color: '#C0C0C0', roughness: 0.15, metalness: 1.0 },
   copper: { color: '#B87333', roughness: 0.5, metalness: 1.0 },  // Matte copper
   iron: { color: '#8B4513', roughness: 0.8, metalness: 0.4 },    // Rusted brown
-  titanium: { color: '#4169E1', roughness: 0.3, metalness: 0.9 }, // Anodized blue
+  titanium: { color: '#878681', roughness: 0.35, metalness: 1.0 }, // Brushed titanium
 };
 
 // Stone subcategories
