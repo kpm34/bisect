@@ -105,6 +105,91 @@ const WOOD_DEFAULTS: Record<string, { color: string; roughness: number; metalnes
   bamboo: { color: '#D8BF8C', roughness: 0.4, metalness: 0.0 },
 };
 
+// PBR Texture Maps from Supabase storage (downloaded from AmbientCG/Polyhaven)
+// These provide realistic texturing for non-metal materials
+const SUPABASE_TEXTURES_BASE = 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-textures';
+
+const TEXTURE_MAP_URLS: Record<string, { diffuse?: string; normal?: string; roughness?: string; ao?: string }> = {
+  // Stone textures
+  marble: {
+    diffuse: `${SUPABASE_TEXTURES_BASE}/stone/marble/diffuse.jpg`,
+    normal: `${SUPABASE_TEXTURES_BASE}/stone/marble/normal.jpg`,
+    roughness: `${SUPABASE_TEXTURES_BASE}/stone/marble/roughness.jpg`,
+  },
+  granite: {
+    diffuse: `${SUPABASE_TEXTURES_BASE}/stone/granite/diffuse.jpg`,
+    normal: `${SUPABASE_TEXTURES_BASE}/stone/granite/normal.jpg`,
+    roughness: `${SUPABASE_TEXTURES_BASE}/stone/granite/roughness.jpg`,
+  },
+  concrete: {
+    diffuse: `${SUPABASE_TEXTURES_BASE}/stone/concrete/diffuse.jpg`,
+    normal: `${SUPABASE_TEXTURES_BASE}/stone/concrete/normal.jpg`,
+    roughness: `${SUPABASE_TEXTURES_BASE}/stone/concrete/roughness.jpg`,
+  },
+  sandstone: {
+    diffuse: `${SUPABASE_TEXTURES_BASE}/stone/sandstone/diffuse.jpg`,
+    normal: `${SUPABASE_TEXTURES_BASE}/stone/sandstone/normal.jpg`,
+    roughness: `${SUPABASE_TEXTURES_BASE}/stone/sandstone/roughness.jpg`,
+  },
+  slate: {
+    diffuse: `${SUPABASE_TEXTURES_BASE}/stone/slate/diffuse.jpg`,
+    normal: `${SUPABASE_TEXTURES_BASE}/stone/slate/normal.jpg`,
+    roughness: `${SUPABASE_TEXTURES_BASE}/stone/slate/roughness.jpg`,
+  },
+  // Fabric textures
+  cotton: {
+    diffuse: `${SUPABASE_TEXTURES_BASE}/fabric/cotton/diffuse.jpg`,
+    normal: `${SUPABASE_TEXTURES_BASE}/fabric/cotton/normal.jpg`,
+    roughness: `${SUPABASE_TEXTURES_BASE}/fabric/cotton/roughness.jpg`,
+  },
+  silk: {
+    diffuse: `${SUPABASE_TEXTURES_BASE}/fabric/silk/diffuse.jpg`,
+    normal: `${SUPABASE_TEXTURES_BASE}/fabric/silk/normal.jpg`,
+    roughness: `${SUPABASE_TEXTURES_BASE}/fabric/silk/roughness.jpg`,
+  },
+  denim: {
+    diffuse: `${SUPABASE_TEXTURES_BASE}/fabric/denim/diffuse.jpg`,
+    normal: `${SUPABASE_TEXTURES_BASE}/fabric/denim/normal.jpg`,
+    roughness: `${SUPABASE_TEXTURES_BASE}/fabric/denim/roughness.jpg`,
+  },
+  leather: {
+    diffuse: `${SUPABASE_TEXTURES_BASE}/fabric/leather/diffuse.jpg`,
+    normal: `${SUPABASE_TEXTURES_BASE}/fabric/leather/normal.jpg`,
+    roughness: `${SUPABASE_TEXTURES_BASE}/fabric/leather/roughness.jpg`,
+  },
+  velvet: {
+    diffuse: `${SUPABASE_TEXTURES_BASE}/fabric/velvet/diffuse.jpg`,
+    normal: `${SUPABASE_TEXTURES_BASE}/fabric/velvet/normal.jpg`,
+    roughness: `${SUPABASE_TEXTURES_BASE}/fabric/velvet/roughness.jpg`,
+  },
+  // Wood textures
+  oak: {
+    diffuse: `${SUPABASE_TEXTURES_BASE}/wood/oak/diffuse.jpg`,
+    normal: `${SUPABASE_TEXTURES_BASE}/wood/oak/normal.jpg`,
+    roughness: `${SUPABASE_TEXTURES_BASE}/wood/oak/roughness.jpg`,
+  },
+  walnut: {
+    diffuse: `${SUPABASE_TEXTURES_BASE}/wood/walnut/diffuse.jpg`,
+    normal: `${SUPABASE_TEXTURES_BASE}/wood/walnut/normal.jpg`,
+    roughness: `${SUPABASE_TEXTURES_BASE}/wood/walnut/roughness.jpg`,
+  },
+  maple: {
+    diffuse: `${SUPABASE_TEXTURES_BASE}/wood/maple/diffuse.jpg`,
+    normal: `${SUPABASE_TEXTURES_BASE}/wood/maple/normal.jpg`,
+    roughness: `${SUPABASE_TEXTURES_BASE}/wood/maple/roughness.jpg`,
+  },
+  cherry: {
+    diffuse: `${SUPABASE_TEXTURES_BASE}/wood/cherry/diffuse.jpg`,
+    normal: `${SUPABASE_TEXTURES_BASE}/wood/cherry/normal.jpg`,
+    roughness: `${SUPABASE_TEXTURES_BASE}/wood/cherry/roughness.jpg`,
+  },
+  bamboo: {
+    diffuse: `${SUPABASE_TEXTURES_BASE}/wood/bamboo/diffuse.jpg`,
+    normal: `${SUPABASE_TEXTURES_BASE}/wood/bamboo/normal.jpg`,
+    roughness: `${SUPABASE_TEXTURES_BASE}/wood/bamboo/roughness.jpg`,
+  },
+};
+
 type MaterialCategoryType = MaterialCategory;
 
 export function MaterialSelector() {
@@ -298,7 +383,7 @@ export function MaterialSelector() {
     console.log(`Applied preset ${preset.name}`);
   };
 
-  // Handler for applying subcategory (Metal, Stone, Fabric)
+  // Handler for applying subcategory (Metal, Stone, Fabric, Wood)
   const handleSubcategoryClick = async (item: any, category: string) => {
     if (!selectedObject) {
       console.warn('⚠️ No object selected');
@@ -316,18 +401,95 @@ export function MaterialSelector() {
     setMetalness(item.metalness);
 
     const THREE = await import('three');
+    const textureLoader = new THREE.TextureLoader();
+
+    // Check if this material has PBR textures
+    const textureMaps = item.textureMaps || TEXTURE_MAP_URLS[item.slug];
+
+    // Load textures if available (for Stone, Fabric, Wood)
+    let diffuseMap: THREE.Texture | null = null;
+    let normalMap: THREE.Texture | null = null;
+    let roughnessMap: THREE.Texture | null = null;
+    let aoMap: THREE.Texture | null = null;
+
+    if (textureMaps && (category === 'stone' || category === 'fabric' || category === 'wood')) {
+      try {
+        const loadTexture = (url: string): Promise<THREE.Texture | null> => {
+          return new Promise((resolve) => {
+            if (!url) {
+              resolve(null);
+              return;
+            }
+            textureLoader.load(
+              url,
+              (texture) => {
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                texture.repeat.set(2, 2); // Tile texture
+                resolve(texture);
+              },
+              undefined,
+              () => resolve(null)
+            );
+          });
+        };
+
+        // Load all available textures in parallel
+        const [diff, norm, rough, ao] = await Promise.all([
+          textureMaps.diffuse ? loadTexture(textureMaps.diffuse) : Promise.resolve(null),
+          textureMaps.normal ? loadTexture(textureMaps.normal) : Promise.resolve(null),
+          textureMaps.roughness ? loadTexture(textureMaps.roughness) : Promise.resolve(null),
+          textureMaps.ao ? loadTexture(textureMaps.ao) : Promise.resolve(null),
+        ]);
+
+        diffuseMap = diff;
+        normalMap = norm;
+        roughnessMap = rough;
+        aoMap = ao;
+
+        console.log(`📦 Loaded textures for ${item.name}:`, {
+          diffuse: !!diffuseMap,
+          normal: !!normalMap,
+          roughness: !!roughnessMap,
+          ao: !!aoMap
+        });
+      } catch (error) {
+        console.warn('Failed to load textures, falling back to color:', error);
+      }
+    }
 
     selectedObject.traverse((child: any) => {
       if (child.isMesh && child.material) {
-        const material = new THREE.MeshPhysicalMaterial({
-          color: colorHex,
+        // Create material with textures if available
+        const materialParams: any = {
+          color: diffuseMap ? 0xffffff : colorHex, // White if using diffuse texture
           metalness: item.metalness,
           roughness: item.roughness,
-          clearcoat: item.roughness < 0.2 ? 0.5 : 0,
-          clearcoatRoughness: 0.1,
-          envMapIntensity: 1.5,
-        });
+          envMapIntensity: category === 'metal' ? 1.5 : 1.0,
+        };
+
+        // Add textures if loaded
+        if (diffuseMap) materialParams.map = diffuseMap;
+        if (normalMap) materialParams.normalMap = normalMap;
+        if (roughnessMap) materialParams.roughnessMap = roughnessMap;
+        if (aoMap) {
+          materialParams.aoMap = aoMap;
+          materialParams.aoMapIntensity = 1.0;
+        }
+
+        // Add clearcoat for polished surfaces
+        if (item.roughness < 0.2) {
+          materialParams.clearcoat = 0.5;
+          materialParams.clearcoatRoughness = 0.1;
+        }
+
+        const material = new THREE.MeshPhysicalMaterial(materialParams);
         child.material = material;
+
+        // Ensure UV2 exists for aoMap
+        if (aoMap && child.geometry && !child.geometry.attributes.uv2) {
+          child.geometry.setAttribute('uv2', child.geometry.attributes.uv);
+        }
       }
     });
 
