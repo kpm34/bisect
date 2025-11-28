@@ -24,7 +24,7 @@ const SceneCommandInput = dynamic(() => import('./components/SceneCommandInput')
   ssr: false,
   loading: () => (
     <div className="px-2">
-      <div className="relative bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl p-4 h-[72px]" />
+      <div className="relative bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl p-4 h-[68px]" />
     </div>
   ),
 });
@@ -326,7 +326,7 @@ function EditorContent() {
               )}
 
               {/* Character 2: Prompt Line - Responsive centered positioning */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[92%] sm:w-[85%] md:w-[75%] lg:w-[65%] max-w-3xl z-[60] pb-safe">
+              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-[90%] sm:w-[80%] md:w-[70%] lg:w-[60%] max-w-2xl z-[60]">
                 <SceneCommandInput sceneLoaded={sceneFile !== null} activeTab={activeTab} />
               </div>
             </div>
