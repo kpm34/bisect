@@ -111,8 +111,8 @@ export function MaterialDrawer({ isOpen, onClose }: MaterialDrawerProps) {
         onClick={onClose}
       />
 
-      {/* Drawer panel - on top of everything */}
-      <div className="fixed inset-y-0 right-0 w-[420px] bg-zinc-950 border-l border-zinc-800 shadow-2xl z-[9999] flex flex-col animate-in slide-in-from-right duration-300">
+      {/* Drawer panel - on top of everything, responsive width */}
+      <div className="fixed inset-y-0 right-0 w-[90vw] max-w-[420px] sm:w-[420px] bg-zinc-950 border-l border-zinc-800 shadow-2xl z-[9999] flex flex-col animate-in slide-in-from-right duration-300">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-zinc-800">
         <div className="flex items-center gap-2">
@@ -167,9 +167,9 @@ export function MaterialDrawer({ isOpen, onClose }: MaterialDrawerProps) {
         </div>
       )}
 
-      {/* Material Grid */}
+      {/* Material Grid - responsive columns */}
       <div className="flex-1 overflow-y-auto p-4">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
           {filteredMaterials.map((material) => {
             const isSelected = selectedMaterialId === material.id;
             const isFeatured = material.tags?.includes('featured');

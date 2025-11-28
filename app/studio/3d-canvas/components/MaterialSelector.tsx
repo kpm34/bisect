@@ -697,12 +697,12 @@ export function MaterialSelector() {
               </button>
             </div>
 
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(40px,1fr))] gap-2 pb-2">
               {footerPresets.map((preset) => (
                 <button
                   key={preset.id}
                   onClick={() => handlePresetClick(preset)}
-                  className="group relative flex-shrink-0 w-12 h-12 rounded-full overflow-hidden border border-zinc-200 hover:border-cta-orange transition-all focus:outline-none focus:ring-2 focus:ring-cta-orange/50"
+                  className="group relative aspect-square rounded-full overflow-hidden border border-zinc-200 hover:border-cta-orange transition-all focus:outline-none focus:ring-2 focus:ring-cta-orange/50"
                   title={preset.name}
                 >
                   <img
@@ -803,24 +803,29 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: '0.05em',
   },
 
-  // Horizontal container for all category swatches
+  // Horizontal container for all category swatches - responsive to panel width
   swatchContainer: {
     display: 'flex',
-    justifyContent: 'center',
-    gap: '24px',
-    paddingTop: '60px', // Moved up ~15% towards midpoint
+    justifyContent: 'space-evenly', // Distribute evenly across available width
+    alignItems: 'flex-end',
+    gap: '8px', // Minimum gap between items
+    paddingTop: '60px',
     paddingBottom: '16px',
-    flexWrap: 'nowrap',
+    flexWrap: 'nowrap', // Keep all in one row
     maxWidth: '100%',
+    overflow: 'hidden', // Prevent overflow
   },
 
-  // Wrapper for each category (popup + label)
+  // Wrapper for each category (popup + label) - responsive sizing
   swatchWrapper: {
     position: 'relative',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     gap: '0px',
+    flex: '1 1 0', // Allow growing and shrinking equally
+    minWidth: '46px', // Minimum width for smallest swatch
+    maxWidth: '70px', // Maximum width to prevent over-expansion
   } as React.CSSProperties,
 
   // Vertical list of material variations (popup)

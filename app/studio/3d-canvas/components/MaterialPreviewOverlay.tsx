@@ -159,38 +159,38 @@ export function MaterialPreviewOverlay({ isOpen, onClose, materialType = 'gold' 
   // Browse view for variations
   if (showBrowse && selectedPreset) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-        <div className="bg-zinc-900 rounded-2xl shadow-2xl w-[800px] max-h-[85vh] overflow-hidden border border-zinc-700">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-[800px] max-h-[85vh] overflow-hidden border border-zinc-700">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-700 bg-gradient-to-r from-amber-900/20 to-zinc-900">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-zinc-700 bg-gradient-to-r from-amber-900/20 to-zinc-900">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <button
                 onClick={() => setShowBrowse(false)}
-                className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
+                className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors flex-shrink-0"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-              <Search className="w-5 h-5 text-amber-400" />
-              <h2 className="text-xl font-semibold text-white">Browse: {selectedPreset.name}</h2>
+              <Search className="w-5 h-5 text-amber-400 flex-shrink-0" />
+              <h2 className="text-lg sm:text-xl font-semibold text-white truncate">Browse: {selectedPreset.name}</h2>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
+              className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors flex-shrink-0"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Variations Grid */}
-          <div className="p-6 overflow-y-auto max-h-[calc(85vh-140px)]">
+          <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(85vh-140px)]">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
               </div>
             ) : browseVariations.length > 0 ? (
-              <div className="grid grid-cols-5 gap-4">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 sm:gap-4">
                 {browseVariations.map((variation) => (
                   <button
                     key={variation.id}
@@ -241,22 +241,22 @@ export function MaterialPreviewOverlay({ isOpen, onClose, materialType = 'gold' 
 
   // Main preset view
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-zinc-900 rounded-2xl shadow-2xl w-[800px] max-h-[85vh] overflow-hidden border border-zinc-700">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-[800px] max-h-[85vh] overflow-hidden border border-zinc-700">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-700 bg-gradient-to-r from-amber-900/20 to-zinc-900">
-          <div className="flex items-center gap-3">
-            <Sparkles className="w-5 h-5 text-amber-400" />
-            <h2 className="text-xl font-semibold text-white capitalize">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-zinc-700 bg-gradient-to-r from-amber-900/20 to-zinc-900">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <Sparkles className="w-5 h-5 text-amber-400 flex-shrink-0" />
+            <h2 className="text-lg sm:text-xl font-semibold text-white capitalize truncate">
               {category?.name || materialType} {category?.display_mode === 'flat' ? '' : 'Variations'}
             </h2>
-            <span className="text-xs text-zinc-500 bg-zinc-800 px-2 py-1 rounded">
+            <span className="text-xs text-zinc-500 bg-zinc-800 px-2 py-1 rounded flex-shrink-0 hidden sm:inline">
               {presets.length} {presets.length === 1 ? 'preset' : 'presets'}
             </span>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
+            className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors flex-shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
@@ -264,32 +264,32 @@ export function MaterialPreviewOverlay({ isOpen, onClose, materialType = 'gold' 
 
         {/* Category Tabs - Only shown for tabs display_mode */}
         {category?.display_mode === 'tabs' && tabs.length > 0 && (
-          <div className="flex gap-2 px-6 py-3 border-b border-zinc-800 bg-zinc-900/50">
+          <div className="flex gap-1 sm:gap-2 px-4 sm:px-6 py-3 border-b border-zinc-800 bg-zinc-900/50 overflow-x-auto">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                     : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
                 }`}
               >
                 {tab.label}
-                <span className="ml-2 text-xs opacity-60">({tab.count})</span>
+                <span className="ml-1 sm:ml-2 text-xs opacity-60">({tab.count})</span>
               </button>
             ))}
           </div>
         )}
 
-        {/* Preview Grid */}
-        <div className="p-6 overflow-y-auto max-h-[calc(85vh-220px)]">
+        {/* Preview Grid - responsive columns */}
+        <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(85vh-220px)]">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
             </div>
           ) : displayPresets.length > 0 ? (
-            <div className="grid grid-cols-5 gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 sm:gap-4">
               {displayPresets.map((preset) => {
                 const isSelected = selectedPreset?.id === preset.id;
 
@@ -342,38 +342,38 @@ export function MaterialPreviewOverlay({ isOpen, onClose, materialType = 'gold' 
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-zinc-800 bg-zinc-900/50">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-zinc-500">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-zinc-800 bg-zinc-900/50">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <p className="text-xs text-zinc-500 truncate max-w-full">
               {selectedObject
                 ? `Applying to: ${selectedObject.name || 'Selected Object'}`
-                : 'Select an object in the scene to apply materials'
+                : 'Select an object to apply materials'
               }
             </p>
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full sm:w-auto justify-end">
               {/* Browse button - only enabled when a preset is selected */}
               <button
                 onClick={handleBrowseClick}
                 disabled={!selectedPreset}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
                   selectedPreset
                     ? 'bg-zinc-700 text-white hover:bg-zinc-600'
                     : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
                 }`}
               >
-                <Search className="w-4 h-4 inline mr-1.5" />
-                Browse
+                <Search className="w-4 h-4 inline mr-1" />
+                <span className="hidden sm:inline">Browse</span>
               </button>
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-sm text-zinc-400 hover:text-white transition-colors"
+                className="px-3 sm:px-4 py-2 text-xs sm:text-sm text-zinc-400 hover:text-white transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={onClose}
                 disabled={!selectedPreset}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
                   selectedPreset
                     ? 'bg-amber-500 text-white hover:bg-amber-600'
                     : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
