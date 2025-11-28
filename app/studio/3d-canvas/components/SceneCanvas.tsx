@@ -276,11 +276,11 @@ function ShapeSpawnerToolbar() {
 }
 
 /**
- * SceneSync - Syncs R3F scene to SelectionContext for hierarchy panel
+ * SceneSync - Syncs R3F scene and renderer to SelectionContext for hierarchy panel and MCP bridge
  */
 function SceneSync() {
-  const { scene } = useThree();
-  const { setR3FScene } = useSelection();
+  const { scene, gl } = useThree();
+  const { setR3FScene, setR3FRenderer } = useSelection();
 
   useEffect(() => {
     if (setR3FScene) {
@@ -288,6 +288,13 @@ function SceneSync() {
       console.log('🔗 Synced R3F scene to SelectionContext');
     }
   }, [scene, setR3FScene]);
+
+  useEffect(() => {
+    if (setR3FRenderer && gl) {
+      setR3FRenderer(gl);
+      console.log('🔗 Synced R3F renderer to SelectionContext');
+    }
+  }, [gl, setR3FRenderer]);
 
   return null;
 }

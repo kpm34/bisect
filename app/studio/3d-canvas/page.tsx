@@ -4,9 +4,21 @@ import { useState, useEffect, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { Shell } from '@/components/shared/Shell';
-import { SelectionProvider } from './r3f/SceneSelectionContext';
+import { SelectionProvider, useSelection } from './r3f/SceneSelectionContext';
 import { scenePersistence } from './utils/scenePersistence';
 import { SceneEnvironment } from '@/lib/core/materials/types';
+
+// Dynamically import MCP bridge handler to avoid SSR issues
+// It uses WebSocket which is not available during server-side rendering
+let mcpBridgeHandler: typeof import('@/lib/services/mcp-bridge-handler').mcpBridgeHandler | null = null;
+let initMCPBridge: typeof import('@/lib/services/mcp-bridge-handler').initMCPBridge | null = null;
+
+if (typeof window !== 'undefined') {
+  import('@/lib/services/mcp-bridge-handler').then((mod) => {
+    mcpBridgeHandler = mod.mcpBridgeHandler;
+    initMCPBridge = mod.initMCPBridge;
+  });
+}
 
 // Disable SSR for SceneCanvas (requires WebGL/browser APIs)
 // Using React Three Fiber for declarative 3D scene management
@@ -69,6 +81,95 @@ export default function EditorPage() {
  * - Case-insensitive object selection
  * - Works with both Spline and GLTF scenes
  */
+/**
+ * MCPBridgeConnector - Connects the MCP bridge to the scene context
+ * Must be inside SelectionProvider to access scene/renderer
+ */
+function MCPBridgeConnector() {
+  const { r3fScene, r3fRenderer, selectedObject, addedObjects, addObject } = useSelection();
+  const [bridgeReady, setBridgeReady] = useState(false);
+
+  // Initialize MCP bridge on mount (client-side only) - delayed to not block page load
+  useEffect(() => {
+    // Delay initialization to let page render first
+    const timeoutId = setTimeout(() => {
+      const initBridge = async () => {
+        try {
+          // Dynamic import on client side
+          const mod = await import('@/lib/services/mcp-bridge-handler');
+          mcpBridgeHandler = mod.mcpBridgeHandler;
+          initMCPBridge = mod.initMCPBridge;
+
+          console.log('🔌 Initializing MCP Bridge...');
+          await initMCPBridge({
+            openaiApiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+          });
+          setBridgeReady(true);
+          console.log('🔌 MCP Bridge ready');
+        } catch (err) {
+          console.warn('⚠️ MCP Bridge init failed:', err);
+        }
+      };
+
+      initBridge();
+    }, 2000); // Wait 2 seconds after page load
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (mcpBridgeHandler) {
+        console.log('🔌 Disconnecting MCP Bridge...');
+        mcpBridgeHandler.disconnect();
+      }
+    };
+  }, []);
+
+  // Update bridge with scene context when it changes
+  useEffect(() => {
+    if (!bridgeReady || !mcpBridgeHandler) return;
+
+    mcpBridgeHandler.setSceneContext({
+      scene: r3fScene as any,
+      renderer: r3fRenderer as any,
+      selectedObject: selectedObject as any,
+      addedObjects: addedObjects.map((obj) => ({
+        id: obj.id,
+        type: obj.type,
+        name: obj.name,
+        position: obj.position,
+        color: obj.color,
+      })),
+    });
+  }, [bridgeReady, r3fScene, r3fRenderer, selectedObject, addedObjects]);
+
+  // Set up legacy command callbacks
+  useEffect(() => {
+    if (!bridgeReady || !mcpBridgeHandler) return;
+
+    mcpBridgeHandler.setLegacyCallbacks({
+      onAddObject: (type) => {
+        console.log('🔌 MCP: Adding object:', type);
+        addObject(type as any);
+      },
+      onUpdateObject: (updates) => {
+        console.log('🔌 MCP: Updating object:', updates);
+        // Update selected object if we have one
+        if (selectedObject) {
+          // Handle color updates directly on Three.js mesh
+          if (updates.color && typeof updates.color === 'string') {
+            selectedObject.traverse((child: any) => {
+              if (child.isMesh && child.material?.color) {
+                child.material.color.set(updates.color as string);
+              }
+            });
+          }
+        }
+      },
+    });
+  }, [bridgeReady, addObject, selectedObject]);
+
+  return null; // This is a connector component, no UI
+}
+
 function EditorContent() {
   const searchParams = useSearchParams();
   const projectId = searchParams?.get('project'); // Get project ID from URL
@@ -262,6 +363,8 @@ function EditorContent() {
 
   return (
     <SelectionProvider>
+      {/* MCP Bridge Connector - connects to ws://localhost:8080 for Claude Code integration */}
+      <MCPBridgeConnector />
       <Shell
         rightPanel={
           <div

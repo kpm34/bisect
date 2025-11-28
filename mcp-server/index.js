@@ -8,11 +8,25 @@ const {
 } = require("@modelcontextprotocol/sdk/types.js");
 const { z } = require("zod");
 const WebSocket = require("ws");
+const {
+    createRequest,
+    isResponse,
+    matchResponse,
+    parseMessage,
+    serializeMessage,
+    OperationType,
+} = require("./protocol.js");
+
+// --- Configuration ---
+const BRIDGE_URL = "ws://localhost:8080";
+const REQUEST_TIMEOUT_MS = 30000; // 30 seconds
 
 // --- Bridge Connection ---
-const BRIDGE_URL = "ws://localhost:8080";
 let bridgeSocket = null;
 let isConnected = false;
+
+// Pending requests waiting for responses
+const pendingRequests = new Map();
 
 function connectToBridge() {
     return new Promise((resolve, reject) => {
@@ -24,6 +38,10 @@ function connectToBridge() {
             resolve();
         });
 
+        bridgeSocket.on("message", (data) => {
+            handleBridgeMessage(data);
+        });
+
         bridgeSocket.on("error", (err) => {
             console.error("Bridge connection error:", err.message);
             isConnected = false;
@@ -33,10 +51,49 @@ function connectToBridge() {
         bridgeSocket.on("close", () => {
             console.error("Bridge disconnected");
             isConnected = false;
+            // Reject all pending requests
+            for (const [requestId, pending] of pendingRequests) {
+                pending.reject(new Error("Bridge connection closed"));
+                clearTimeout(pending.timeout);
+            }
+            pendingRequests.clear();
         });
     });
 }
 
+/**
+ * Handle incoming messages from the bridge
+ */
+function handleBridgeMessage(data) {
+    const message = parseMessage(data.toString());
+    if (!message) {
+        console.error("Failed to parse bridge message");
+        return;
+    }
+
+    console.error("Received from bridge:", JSON.stringify(message).slice(0, 200));
+
+    // Check if this is a response to a pending request
+    if (isResponse(message)) {
+        const pending = pendingRequests.get(message.id);
+        if (pending) {
+            clearTimeout(pending.timeout);
+            pendingRequests.delete(message.id);
+
+            if (message.success) {
+                pending.resolve(message.data);
+            } else {
+                pending.reject(new Error(message.error || "Request failed"));
+            }
+        } else {
+            console.error("Received response for unknown request:", message.id);
+        }
+    }
+}
+
+/**
+ * Send a fire-and-forget command (legacy)
+ */
 function sendToEditor(command) {
     if (!isConnected || !bridgeSocket) {
         throw new Error("Not connected to Bisect Editor Bridge");
@@ -44,11 +101,41 @@ function sendToEditor(command) {
     bridgeSocket.send(JSON.stringify({ type: "CLI_COMMAND", command }));
 }
 
+/**
+ * Send a request and wait for response
+ * @param {string} operation - Operation type from OperationType
+ * @param {object} payload - Request payload
+ * @returns {Promise<any>} Response data
+ */
+function sendRequest(operation, payload = {}) {
+    return new Promise((resolve, reject) => {
+        if (!isConnected || !bridgeSocket) {
+            reject(new Error("Not connected to Bisect Editor Bridge"));
+            return;
+        }
+
+        const request = createRequest(operation, payload);
+        console.error(`Sending request: ${request.id} (${operation})`);
+
+        // Set up timeout
+        const timeout = setTimeout(() => {
+            pendingRequests.delete(request.id);
+            reject(new Error(`Request timed out after ${REQUEST_TIMEOUT_MS}ms`));
+        }, REQUEST_TIMEOUT_MS);
+
+        // Store pending request
+        pendingRequests.set(request.id, { resolve, reject, timeout });
+
+        // Send the request
+        bridgeSocket.send(serializeMessage(request));
+    });
+}
+
 // --- MCP Server Setup ---
 const server = new Server(
     {
         name: "bisect-mcp-server",
-        version: "1.0.0",
+        version: "2.0.0",
     },
     {
         capabilities: {
@@ -61,6 +148,54 @@ const server = new Server(
 server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
         tools: [
+            // ============================================
+            // NEW: AI-Powered Intelligent Tools
+            // ============================================
+            {
+                name: "smart_edit",
+                description: "AI-powered scene editing using natural language. Routes to GPT-4o for materials, Gemini for spatial layouts, Claude for complex planning. Examples: 'make it look like marble', 'arrange objects in a grid', 'create a forest scene'",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        command: {
+                            type: "string",
+                            description: "Natural language editing command",
+                        },
+                        useVision: {
+                            type: "boolean",
+                            description: "Include viewport screenshot for visual context (default: false)",
+                        },
+                    },
+                    required: ["command"],
+                },
+            },
+            {
+                name: "get_scene_analysis",
+                description: "Get AI-analyzed scene with semantic relationships between objects (on_top_of, next_to, inside, etc.). Returns nodes, edges, and natural language summary.",
+                inputSchema: {
+                    type: "object",
+                    properties: {},
+                },
+            },
+            {
+                name: "get_screenshot",
+                description: "Capture current viewport as base64 PNG image for vision analysis",
+                inputSchema: {
+                    type: "object",
+                    properties: {},
+                },
+            },
+            {
+                name: "describe_scene",
+                description: "Get natural language description of what's currently in the scene, including object relationships and materials",
+                inputSchema: {
+                    type: "object",
+                    properties: {},
+                },
+            },
+            // ============================================
+            // Legacy Tools (Fire-and-Forget)
+            // ============================================
             {
                 name: "spawn_object",
                 description: "Spawn a new 3D object in the scene (box, sphere, plane)",
@@ -167,7 +302,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             {
                 name: "get_scene_tree",
-                description: "Get the current scene hierarchy",
+                description: "[Legacy] Get the current scene hierarchy (use get_scene_analysis for AI-powered version)",
                 inputSchema: {
                     type: "object",
                     properties: {},
@@ -236,6 +371,131 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     try {
         switch (name) {
+            // ============================================
+            // NEW: AI-Powered Intelligent Tools
+            // ============================================
+            case "smart_edit": {
+                const { command, useVision } = args;
+                console.error(`Smart edit: "${command}" (vision: ${useVision || false})`);
+
+                // Step 1: If vision is enabled, capture screenshot first
+                let screenshot = null;
+                if (useVision) {
+                    console.error("Capturing screenshot for vision analysis...");
+                    try {
+                        const screenshotResponse = await sendRequest(OperationType.GET_SCREENSHOT, {});
+                        screenshot = screenshotResponse.base64;
+                        console.error(`Screenshot captured: ${screenshotResponse.width}x${screenshotResponse.height}`);
+                    } catch (screenshotError) {
+                        console.error("Warning: Failed to capture screenshot:", screenshotError.message);
+                        // Continue without screenshot
+                    }
+                }
+
+                // Step 2: Send AI command with optional screenshot
+                // Use debate system for complex commands (longer than 50 chars)
+                const useDebate = command.length > 50;
+                console.error(`Sending AI command (debate: ${useDebate}, screenshot: ${screenshot ? 'yes' : 'no'})`);
+
+                const response = await sendRequest(OperationType.SMART_EDIT, {
+                    command,
+                    useVision: useVision || false,
+                    screenshot: screenshot,
+                    useDebate: useDebate,
+                });
+
+                // Format the response
+                const plan = response.plan;
+                let resultText = `AI Execution Plan:\n`;
+                resultText += `Approach: ${plan.approach}\n`;
+                resultText += `Reasoning: ${plan.reasoning}\n`;
+                resultText += `Commands: ${JSON.stringify(plan.commands, null, 2)}\n`;
+
+                if (useVision && screenshot) {
+                    resultText += `\nVision: Analyzed viewport screenshot`;
+                }
+                if (useDebate) {
+                    resultText += `\nDebate: Multi-model consensus used`;
+                }
+                if (response.tokensUsed) {
+                    resultText += `\nTokens used: ${response.tokensUsed}`;
+                }
+                if (response.cost) {
+                    resultText += `\nCost: $${response.cost.totalCost}`;
+                }
+
+                return {
+                    content: [{ type: "text", text: resultText }],
+                };
+            }
+
+            case "get_scene_analysis": {
+                console.error("Requesting scene analysis...");
+
+                const response = await sendRequest(OperationType.GET_SCENE_GRAPH, {});
+
+                let resultText = `Scene Analysis:\n`;
+                resultText += `Objects: ${response.nodes?.length || 0}\n`;
+                resultText += `Relationships: ${response.edges?.length || 0}\n\n`;
+                resultText += `Summary: ${response.summary}\n\n`;
+
+                if (response.nodes && response.nodes.length > 0) {
+                    resultText += `Objects:\n`;
+                    for (const node of response.nodes) {
+                        resultText += `  - ${node.name} (${node.type}) at [${node.position.x.toFixed(1)}, ${node.position.y.toFixed(1)}, ${node.position.z.toFixed(1)}]\n`;
+                    }
+                }
+
+                if (response.edges && response.edges.length > 0) {
+                    resultText += `\nRelationships:\n`;
+                    for (const edge of response.edges) {
+                        resultText += `  - ${edge.source} ${edge.relation.replace(/_/g, ' ')} ${edge.target} (confidence: ${edge.confidence})\n`;
+                    }
+                }
+
+                return {
+                    content: [{ type: "text", text: resultText }],
+                };
+            }
+
+            case "get_screenshot": {
+                console.error("Requesting viewport screenshot...");
+
+                const response = await sendRequest(OperationType.GET_SCREENSHOT, {});
+
+                return {
+                    content: [
+                        {
+                            type: "image",
+                            data: response.base64,
+                            mimeType: "image/png",
+                        },
+                        {
+                            type: "text",
+                            text: `Screenshot captured: ${response.width}x${response.height}`,
+                        },
+                    ],
+                };
+            }
+
+            case "describe_scene": {
+                console.error("Requesting scene description...");
+
+                // Get scene analysis first
+                const sceneGraph = await sendRequest(OperationType.GET_SCENE_GRAPH, {});
+
+                // Return the natural language summary
+                return {
+                    content: [{
+                        type: "text",
+                        text: sceneGraph.summary || "The scene appears to be empty or could not be analyzed.",
+                    }],
+                };
+            }
+
+            // ============================================
+            // Legacy Tools (Fire-and-Forget)
+            // ============================================
             case "spawn_object": {
                 const { type } = args;
                 sendToEditor({ type: "ADD_OBJECT", payload: { type } });
@@ -279,23 +539,29 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             }
 
             case "get_scene_tree": {
-                // In a real implementation, we would request this from the editor via WebSocket
-                // and wait for a response. For now, we'll send a request and return a placeholder
-                // or implement a request-response pattern if possible.
-                // Since sendToEditor is fire-and-forget, we can't easily return the data here
-                // without a more complex async setup.
-                // We'll just trigger a log in the editor for now.
-                sendToEditor({ type: "GET_SCENE_TREE" });
-                return {
-                    content: [{ type: "text", text: "Requested scene tree (check editor console)" }],
-                };
+                // Now uses request-response pattern
+                try {
+                    const response = await sendRequest(OperationType.GET_SCENE_GRAPH, {});
+                    return {
+                        content: [{
+                            type: "text",
+                            text: `Scene tree:\n${JSON.stringify(response.nodes, null, 2)}`,
+                        }],
+                    };
+                } catch (err) {
+                    // Fallback to fire-and-forget
+                    sendToEditor({ type: "GET_SCENE_TREE" });
+                    return {
+                        content: [{ type: "text", text: "Requested scene tree (check editor console)" }],
+                    };
+                }
             }
 
             case "play_animation": {
-                const { name, speed } = args;
-                sendToEditor({ type: "PLAY_ANIMATION", payload: { name, speed: speed || 1 } });
+                const { name: animName, speed } = args;
+                sendToEditor({ type: "PLAY_ANIMATION", payload: { name: animName, speed: speed || 1 } });
                 return {
-                    content: [{ type: "text", text: `Playing animation: ${name}` }],
+                    content: [{ type: "text", text: `Playing animation: ${animName}` }],
                 };
             }
 
@@ -343,7 +609,7 @@ async function main() {
     await connectToBridge();
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    console.error("Bisect MCP Server running on stdio");
+    console.error("Bisect MCP Server v2.0 running on stdio (with AI tools)");
 }
 
 main().catch((error) => {

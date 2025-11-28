@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import type { Object3D } from 'three';
+import type { Object3D, WebGLRenderer } from 'three';
 import type { UniversalEditor } from '@/lib/core/adapters';
 
 // Face selection: object UUID + face index
@@ -54,6 +54,10 @@ type SelectionContextValue = {
   // R3F Scene (for React Three Fiber)
   r3fScene: Object3D | null;
   setR3FScene: (scene: Object3D | null) => void;
+
+  // R3F Renderer (for screenshots, MCP bridge)
+  r3fRenderer: WebGLRenderer | null;
+  setR3FRenderer: (renderer: WebGLRenderer | null) => void;
 
   // DEPRECATED: Single selection (for backwards compatibility)
   selectedObject: Object3D | null;
@@ -118,6 +122,7 @@ const SelectionContext = createContext<SelectionContextValue | null>(null);
 export function SelectionProvider({ children }: { children: React.ReactNode }) {
   const [universalEditor, setUniversalEditor] = useState<UniversalEditor | null>(null);
   const [r3fScene, setR3FScene] = useState<Object3D | null>(null);
+  const [r3fRenderer, setR3FRenderer] = useState<WebGLRenderer | null>(null);
 
   // DEPRECATED: Single selection (kept for backwards compatibility)
   const [selectedObject, setSelectedObject] = useState<Object3D | null>(null);
@@ -563,6 +568,8 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
       setUniversalEditor,
       r3fScene,
       setR3FScene,
+      r3fRenderer,
+      setR3FRenderer,
       selectedObject,
       setSelectedObject: setSelectedObjectWrapper,
       selectedObjects,
@@ -599,6 +606,7 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
     [
       universalEditor,
       r3fScene,
+      r3fRenderer,
       selectedObject,
       setSelectedObjectWrapper,
       selectedObjects,
@@ -651,6 +659,8 @@ export function useSelection() {
     setUniversalEditor: noop,
     r3fScene: null,
     setR3FScene: noop,
+    r3fRenderer: null,
+    setR3FRenderer: noop,
     selectedObject: null,
     setSelectedObject: noop,
     selectedObjects: new Set<string>(),
