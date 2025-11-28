@@ -3,25 +3,31 @@
 /**
  * useAIMaterialEditor - AI-powered material editing hook
  *
- * Uses the full MaterialAgent for intelligent material editing.
- * Supports:
- * - Natural language material adjustments
+ * Uses the full BrowserAgentAdapter orchestrator for intelligent editing.
+ * The orchestrator routes commands to specialist agents:
+ * - MaterialAgent (GPT-4o) for materials, textures, colors
+ * - GeminiSpatialAgent for spatial/layout tasks
+ * - ClaudePlannerAgent for complex multi-step planning
+ *
+ * Features:
+ * - Multi-model AI routing (GPT-4o, Gemini, Claude)
+ * - RAG-powered memory of past successful edits
  * - PBR texture application from Supabase library
- * - Color, roughness, metalness adjustments
- * - Creative material suggestions
+ * - Agent debate system for complex requests
+ * - Visual analysis tools
+ * - Automatic fallback chain
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useSelection } from '../r3f/SceneSelectionContext';
 import {
   MaterialCategory,
-  buildCategoryPrompt,
   clampToCategory,
   detectCategory,
 } from '@/lib/core/materials/category-constraints';
 import { AVAILABLE_PBR_TEXTURES, findTextureByName } from '@/lib/core/ai/material-agent';
 
-// Types from browser-agent-adapter
+// Types for AI execution
 interface ExecutionPlan {
   approach: string;
   reasoning: string;
@@ -34,6 +40,7 @@ interface ExecutionPlan {
 
 interface MaterialCommand {
   action: string;
+  type?: string;
   params: Record<string, any>;
 }
 
@@ -42,6 +49,9 @@ interface ExecutionResult {
   plan?: ExecutionPlan;
   error?: string;
   reasoning?: string;
+  agent?: string;
+  tokensUsed?: number;
+  cost?: any;
 }
 
 interface MaterialContext {
@@ -61,16 +71,24 @@ interface TextureMaps {
 }
 
 /**
- * Lightweight AI Material Editor
+ * AI Material Editor with Full Orchestration
  *
- * Uses GPT-4o-mini for cost-effective material adjustments.
- * Falls back to rule-based parsing if AI unavailable.
+ * Uses BrowserAgentAdapter which:
+ * 1. Routes to MaterialAgent (GPT-4o) for material/texture commands
+ * 2. Routes to GeminiSpatialAgent for spatial/layout commands
+ * 3. Routes to ClaudePlannerAgent for complex multi-step tasks
+ * 4. Uses RAG for memory of past successful edits
+ * 5. Falls back to rule-based parsing if all AI fails
  */
 export function useAIMaterialEditor() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [lastAgent, setLastAgent] = useState<string | null>(null);
 
   const { setColor, setRoughness, setMetalness, selectedObject } = useSelection();
+
+  // Cache the agent adapter to avoid re-initialization
+  const agentRef = useRef<any>(null);
 
   // Get current material properties from selected object
   const getMaterialContext = useCallback((): MaterialContext => {
@@ -112,7 +130,38 @@ export function useAIMaterialEditor() {
   }, [selectedObject]);
 
   /**
-   * Execute a material command using AI
+   * Initialize or get cached agent adapter
+   */
+  const getAgent = useCallback(async () => {
+    if (agentRef.current) {
+      return agentRef.current;
+    }
+
+    const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+    if (!apiKey) {
+      return null;
+    }
+
+    // Dynamic import to avoid loading SDK if not needed
+    const { BrowserAgentAdapter } = await import('@/lib/core/ai/browser-agent-adapter');
+
+    agentRef.current = new BrowserAgentAdapter({
+      apiKey,
+      model: 'gpt-4o', // Full model for orchestration
+      enableRAG: true, // Enable RAG for learning from past edits
+    });
+
+    return agentRef.current;
+  }, []);
+
+  /**
+   * Execute a command using the AI orchestrator
+   *
+   * The orchestrator will:
+   * 1. Use GPT-4o-mini to classify the command type
+   * 2. Route to the appropriate specialist agent
+   * 3. Execute with RAG context and agent debate if needed
+   * 4. Return structured commands for execution
    */
   const executeMaterialCommand = useCallback(
     async (prompt: string): Promise<ExecutionResult> => {
@@ -125,39 +174,43 @@ export function useAIMaterialEditor() {
 
       setIsProcessing(true);
       setLastError(null);
+      setLastAgent(null);
 
       const context = getMaterialContext();
 
       try {
-        // Check for OpenAI API key
-        const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+        const agent = await getAgent();
 
-        if (!apiKey) {
-          // Fall back to simple rule-based parsing
-          console.log('⚠️ No API key, using rule-based material parsing');
-          return executeRuleBased(prompt, context, setColor, setRoughness, setMetalness);
+        if (!agent) {
+          // No API key, fall back to rule-based
+          console.log('⚠️ No API key, using rule-based parsing');
+          return executeRuleBased(prompt, context, setColor, setRoughness, setMetalness, selectedObject);
         }
 
-        // Dynamic import to avoid loading OpenAI SDK if not needed
-        const { BrowserAgentAdapter } = await import('@/lib/core/ai/browser-agent-adapter');
+        console.log('🤖 Sending to AI Orchestrator:', prompt);
 
-        const agent = new BrowserAgentAdapter({
-          apiKey,
-          model: 'gpt-4o-mini', // Cost-effective for simple material edits
-          enableRAG: false, // Disable RAG for faster responses
-        });
-
-        // Build material-specific prompt
-        const materialPrompt = buildMaterialPrompt(prompt, context);
-
-        const result = await agent.execute(materialPrompt, {
-          sceneData: {
-            selectedObjects: [context.objectName || 'unknown'],
-            materialCategory: context.category,
+        // Build rich scene context for the orchestrator
+        const sceneData = {
+          selectedObjects: [context.objectName || 'unknown'],
+          materialCategory: context.category,
+          currentMaterial: {
+            color: context.currentColor,
+            roughness: context.currentRoughness,
+            metalness: context.currentMetalness,
           },
-        });
+          // Add available textures info so AI knows what's available
+          availableTextures: Object.keys(AVAILABLE_PBR_TEXTURES).flatMap(cat =>
+            Object.keys((AVAILABLE_PBR_TEXTURES as any)[cat]).map(mat => `${cat}/${mat}`)
+          ),
+        };
+
+        // Execute through the orchestrator (routes to appropriate agent)
+        const result = await agent.execute(prompt, { sceneData });
 
         if (result.success && result.plan) {
+          console.log('✅ AI Orchestrator returned plan:', result.plan);
+          setLastAgent(result.plan.approach || 'unknown');
+
           // Execute the commands
           await executeCommands(
             result.plan.commands,
@@ -172,15 +225,18 @@ export function useAIMaterialEditor() {
             success: true,
             plan: result.plan,
             reasoning: result.plan.reasoning,
+            agent: result.plan.approach,
+            tokensUsed: result.tokensUsed,
+            cost: result.cost,
           };
         } else {
-          // Try rule-based fallback
-          console.log('⚠️ AI failed, trying rule-based fallback');
+          // Orchestrator failed, try rule-based fallback
+          console.log('⚠️ AI Orchestrator failed, trying rule-based fallback');
           return executeRuleBased(prompt, context, setColor, setRoughness, setMetalness, selectedObject);
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        console.error('❌ AI material edit failed:', errorMessage);
+        console.error('❌ AI execution failed:', errorMessage);
         setLastError(errorMessage);
 
         // Try rule-based fallback
@@ -189,57 +245,16 @@ export function useAIMaterialEditor() {
         setIsProcessing(false);
       }
     },
-    [selectedObject, getMaterialContext, setColor, setRoughness, setMetalness]
+    [selectedObject, getMaterialContext, getAgent, setColor, setRoughness, setMetalness]
   );
 
   return {
     executeMaterialCommand,
     isProcessing,
     lastError,
+    lastAgent,
     getMaterialContext,
   };
-}
-
-/**
- * Build material-specific prompt for AI
- */
-function buildMaterialPrompt(userPrompt: string, context: MaterialContext): string {
-  const categorySection = context.category
-    ? buildCategoryPrompt(context.category)
-    : '';
-
-  return `MATERIAL EDITING TASK: "${userPrompt}"
-
-## Current Material State:
-- Object: ${context.objectName || 'Unknown'}
-- Color: ${context.currentColor || 'Not set'}
-- Roughness: ${context.currentRoughness?.toFixed(2) ?? 'Not set'} (0=glossy, 1=matte)
-- Metalness: ${context.currentMetalness?.toFixed(2) ?? 'Not set'} (0=non-metal, 1=full metal)
-
-${categorySection}
-
-## Available Actions (return in commands array):
-Return a JSON object with an array of commands:
-{
-  "approach": "material-edit",
-  "reasoning": "Brief explanation of what you're doing",
-  "commands": [
-    { "action": "setColor", "params": { "color": 16766720 } },
-    { "action": "setRoughness", "params": { "value": 0.5 } },
-    { "action": "setMetalness", "params": { "value": 0.8 } }
-  ]
-}
-
-## Interpretation Guide:
-- "more brushed" = increase roughness by ~0.1-0.2
-- "more polished/shiny" = decrease roughness by ~0.1-0.2
-- "more metallic" = increase metalness (if category allows)
-- "golden/copper/bronze tint" = shift color toward warm tones
-- "darker/lighter" = adjust color brightness
-- "matte finish" = increase roughness toward category max
-- "glossy" = decrease roughness toward category min
-
-Interpret the user's intent and adjust from current values. Stay within category constraints.`;
 }
 
 /**
