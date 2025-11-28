@@ -22,6 +22,11 @@ const SceneCanvas = dynamic(() => import('./components/SceneCanvas'), {
 // Disable SSR for SceneCommandInput
 const SceneCommandInput = dynamic(() => import('./components/SceneCommandInput'), {
   ssr: false,
+  loading: () => (
+    <div className="px-2">
+      <div className="relative bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl p-4 h-[72px]" />
+    </div>
+  ),
 });
 
 // Disable SSR for SceneInspector
