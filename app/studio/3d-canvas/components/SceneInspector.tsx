@@ -56,13 +56,13 @@ export default function SceneInspector({ onTabChange, environment, onEnvironment
   return (
     <>
       {/* Tab Bar - Layer 3: Tab switching logic */}
-      <div className="px-4 pt-4 pb-2">
-        <nav className="flex gap-1 px-4 py-3 bg-[#f5f3ed] rounded-[50px] shadow-md overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="px-3 pt-4 pb-2">
+        <nav className="flex gap-0.5 px-1.5 py-1.5 bg-[#f5f3ed] rounded-full shadow-md">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`flex-shrink-0 min-w-[80px] px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${activeTab === tab.id
+              className={`flex-1 px-2 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${activeTab === tab.id
                 ? 'bg-[#5ba4cf] text-white shadow-md'
                 : 'bg-transparent text-gray-600 hover:text-gray-900'
                 }`}
