@@ -73,7 +73,7 @@ export default function R3FCanvas({
   }, [sceneFile]);
 
   return (
-    <div className="w-full h-screen relative">
+    <div className="w-full h-full relative">
       {/* File Upload UI */}
       {showFileUpload && onFileUpload && (
         <FileUploadOverlay
