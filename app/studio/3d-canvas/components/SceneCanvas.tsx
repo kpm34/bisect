@@ -596,23 +596,47 @@ function FileUploadOverlay({
 }) {
   const [isDragging, setIsDragging] = useState(false);
 
+  // Prevent default browser behavior for drag events on window
+  useEffect(() => {
+    const preventDefault = (e: DragEvent) => {
+      e.preventDefault();
+    };
+
+    window.addEventListener('dragover', preventDefault);
+    window.addEventListener('drop', preventDefault);
+
+    return () => {
+      window.removeEventListener('dragover', preventDefault);
+      window.removeEventListener('drop', preventDefault);
+    };
+  }, []);
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
 
+    console.log('📥 Drop event received');
     const files = Array.from(e.dataTransfer.files);
+    console.log('📁 Files dropped:', files.map(f => f.name));
+
     const validFile = files.find(f =>
       /\.(glb|gltf|fbx|obj|splinecode)$/i.test(f.name)
     );
 
     if (validFile) {
+      console.log('✅ Valid file found:', validFile.name);
       onFileSelect(validFile);
+    } else if (files.length > 0) {
+      console.warn('❌ No valid 3D file found. Dropped files:', files.map(f => f.name));
+      alert(`Unsupported file type: ${files[0].name}\n\nSupported formats: GLB, GLTF, FBX, OBJ, Spline`);
     }
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      console.log('📁 File selected via input:', file.name);
       onFileSelect(file);
     }
   };
@@ -633,16 +657,28 @@ function FileUploadOverlay({
 
   return (
     <div
-      className={`absolute inset-0 z-10 flex items-center justify-center pointer-events-none ${isDragging ? 'bg-blue-500/20' : ''
-        }`}
+      className={`absolute inset-0 z-10 flex items-center justify-center ${isDragging ? 'bg-blue-500/20' : ''}`}
       onDragOver={(e) => {
         e.preventDefault();
+        e.stopPropagation();
         setIsDragging(true);
       }}
-      onDragLeave={() => setIsDragging(false)}
+      onDragEnter={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+      }}
+      onDragLeave={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Only set false if leaving the container, not entering a child
+        if (e.currentTarget === e.target) {
+          setIsDragging(false);
+        }
+      }}
       onDrop={handleDrop}
     >
-      <div className="text-center pointer-events-auto">
+      <div className="text-center">
         <div className="text-white text-lg font-medium mb-4">
           {isDragging ? 'Drop your 3D file here' : 'Drop a 3D file to start'}
         </div>
