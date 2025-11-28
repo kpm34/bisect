@@ -505,10 +505,18 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
     },
     [selectedFaces]
   );
+  const [effects, setEffects] = useState({
+    bloom: false,
+    glitch: false,
+    noise: false,
+    vignette: false,
+  });
+
   // Scene Objects State (for added shapes)
   const [addedObjects, setAddedObjects] = useState<SceneObject[]>([]);
 
   const addObject = (type: SceneObjectType, url?: string, formula?: any) => {
+    console.log('🏗️ [Context] addObject called:', { type, url, formula });
     const newObj: SceneObject = {
       id: Math.random().toString(36).substr(2, 9),
       type,

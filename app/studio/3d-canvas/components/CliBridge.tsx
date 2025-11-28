@@ -10,17 +10,18 @@ export function CliBridge() {
         const ws = new WebSocket('ws://localhost:8080');
 
         ws.onopen = () => {
-            console.log('Connected to CLI Bridge');
+            console.log('✅ [CliBridge] Connected to CLI Bridge');
             ws.send(JSON.stringify({ type: 'REGISTER_EDITOR' }));
         };
 
         ws.onmessage = (event) => {
             try {
                 const command = JSON.parse(event.data);
-                console.log('Received CLI command:', command);
+                console.log('📩 [CliBridge] Received command:', command);
 
                 switch (command.type) {
                     case 'ADD_OBJECT':
+                        console.log('➕ [CliBridge] Adding object:', command.payload.type);
                         addObject(command.payload.type);
                         break;
                     case 'UPDATE_OBJECT':
@@ -115,8 +116,46 @@ export function CliBridge() {
             }
         };
 
+        // Expose test function for browser automation
+        (window as any).runAdvancedTest = () => {
+            console.log('🧪 [CliBridge] Running in-browser test...');
+
+            // 1. Add Duck
+            addObject('external', 'https://vazxmixjsiawhamofees.supabase.co/storage/v1/object/public/models/duck/model.gltf');
+
+            setTimeout(() => {
+                // 2. Animate Duck
+                if (addedObjects.length > 0) {
+                    const id = addedObjects[addedObjects.length - 1].id;
+                    updateObject(id, {
+                        animation: { current: 'Walk', playing: true, speed: 1.5 }
+                    });
+                }
+            }, 2000);
+
+            setTimeout(() => {
+                // 3. Bake (Color change)
+                if (addedObjects.length > 0) {
+                    const id = addedObjects[addedObjects.length - 1].id;
+                    updateObject(id, { color: '#ffaa00' });
+                }
+            }, 4000);
+
+            setTimeout(() => {
+                // 4. Parametric Surface
+                addObject('parametric', undefined, {
+                    x: "u * 10 - 5",
+                    y: "Math.sin(u * Math.PI * 2) * Math.cos(v * Math.PI * 2) * 2",
+                    z: "v * 10 - 5",
+                    uRange: [0, 1],
+                    vRange: [0, 1]
+                });
+            }, 6000);
+        };
+
         return () => {
             ws.close();
+            delete (window as any).runAdvancedTest;
         };
     }, [addObject, updateObject, selectedObject, addedObjects]);
 

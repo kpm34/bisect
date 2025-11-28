@@ -517,20 +517,35 @@ function GLBScene({
 
     console.log('✅ Processing GLTF scene');
 
-    // Calculate bounding box
+    // Calculate bounding box BEFORE any transforms
     const box = new THREE.Box3().setFromObject(gltf.scene);
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
 
-    // Center the model
-    gltf.scene.position.sub(center);
-
     // Scale to fit in view (max dimension = 5 units)
     const maxDim = Math.max(size.x, size.y, size.z);
+    let scale = 1;
     if (maxDim > 0) {
-      const scale = 5 / maxDim;
+      scale = 5 / maxDim;
       gltf.scene.scale.setScalar(scale);
     }
+
+    // Place model at origin (0, 0, 0) - center it horizontally and sit on ground
+    // After scaling, recalculate the center offset
+    const scaledCenterX = center.x * scale;
+    const scaledCenterY = center.y * scale;
+    const scaledCenterZ = center.z * scale;
+    const scaledMinY = box.min.y * scale;
+
+    // Position so model is centered at origin and sits on Y=0 ground plane
+    gltf.scene.position.set(
+      -scaledCenterX,           // Center horizontally on X
+      -scaledMinY,              // Sit on ground (Y=0)
+      -scaledCenterZ            // Center horizontally on Z
+    );
+
+    console.log(`📍 Model positioned at origin (0, 0, 0), sitting on ground`);
+    console.log(`📐 Scale: ${scale.toFixed(3)}, Original size: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
 
     // Count meshes
     let meshCount = 0;

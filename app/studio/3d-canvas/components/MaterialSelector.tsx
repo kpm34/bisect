@@ -165,7 +165,7 @@ export function MaterialSelector() {
     });
 
     // Apply PBR properties
-    const colorHex = parseInt(material.properties.baseColorHex.replace('#', ''), 16);
+    const colorHex = parseInt((material.properties?.baseColorHex || '#cccccc').replace('#', ''), 16);
     setColor(colorHex);
     setRoughness(material.properties.roughness);
     setMetalness(material.properties.metallic);
@@ -435,7 +435,7 @@ export function MaterialSelector() {
                           style={{
                             ...styles.swatch,
                             backgroundImage: previewUrl ? `url(${previewUrl})` : undefined,
-                            backgroundColor: isMetalCategory ? (item as any).color : (item as MaterialConfig).properties.baseColorHex,
+                            backgroundColor: isMetalCategory ? (item as any).color : (item as MaterialConfig).properties?.baseColorHex || '#cccccc',
                             backgroundSize: 'cover',
                             backgroundRepeat: 'no-repeat',
                             backgroundPosition: 'center',

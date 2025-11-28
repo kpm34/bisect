@@ -321,7 +321,7 @@ function EditorContent() {
               )}
 
               {/* Character 2: Prompt Line - Responsive centered positioning */}
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[90%] sm:w-[80%] md:w-[70%] lg:w-3/5 max-w-4xl z-[60]">
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[92%] sm:w-[85%] md:w-[75%] lg:w-[65%] max-w-3xl z-[60]">
                 <SceneCommandInput sceneLoaded={sceneFile !== null} activeTab={activeTab} />
               </div>
             </div>
