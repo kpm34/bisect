@@ -435,12 +435,11 @@ export function MaterialSelector() {
                           style={{
                             ...styles.swatch,
                             backgroundImage: previewUrl ? `url(${previewUrl})` : undefined,
-                            backgroundColor: isMetalCategory ? (item as any).color : (item as MaterialConfig).properties?.baseColorHex || '#cccccc',
+                            backgroundColor: isSubcategory ? (item as any).color : (item as MaterialConfig).properties?.baseColorHex || '#cccccc',
                             backgroundSize: 'cover',
                             backgroundRepeat: 'no-repeat',
                             backgroundPosition: 'center',
-                            cursor: selectedObject ? 'pointer' : 'not-allowed',
-                            opacity: selectedObject ? 1 : 0.5,
+                            cursor: 'pointer',
                           }}
                         />
 
@@ -449,15 +448,9 @@ export function MaterialSelector() {
                           <div style={styles.activeIndicator}>✓</div>
                         )}
 
-                        {/* Tooltip */}
+                        {/* Tooltip - Subtle label */}
                         <div style={styles.tooltip} className="material-tooltip">
                           {itemName}
-                          <div style={styles.tooltipDetails}>
-                            M: {itemMetalness.toFixed(1)} · R: {itemRoughness.toFixed(1)}
-                          </div>
-                          {isMetalCategory && (
-                            <div style={styles.tooltipHint}>Click for more →</div>
-                          )}
                         </div>
                       </li>
                     );
@@ -719,35 +712,25 @@ const styles: Record<string, React.CSSProperties> = {
     transition: 'all 0.15s ease',
   } as React.CSSProperties,
 
-  // Tooltip on hover
+  // Tooltip on hover - subtle label
   tooltip: {
     position: 'absolute',
-    left: '60px',
+    left: '54px',
     top: '50%',
-    transform: 'translateY(-50%) translateX(-5px)',
-    borderRadius: '4px',
-    background: 'rgba(0, 0, 0, 0.9)',
-    color: 'white',
-    fontSize: '12px',
-    padding: '6px 12px',
+    transform: 'translateY(-50%)',
+    borderRadius: '3px',
+    background: 'rgba(0, 0, 0, 0.6)',
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: '10px',
+    fontWeight: 500,
+    padding: '3px 6px',
     whiteSpace: 'nowrap',
     pointerEvents: 'none',
     opacity: 0,
-    transition: 'opacity 0.2s ease',
+    transition: 'opacity 0.15s ease',
     zIndex: 9999,
   } as React.CSSProperties,
 
-  tooltipDetails: {
-    fontSize: '10px',
-    color: '#d1d5db',
-    marginTop: '2px',
-  },
-
-  tooltipHint: {
-    fontSize: '9px',
-    color: '#f59e0b',
-    marginTop: '4px',
-  },
 
   footer: {
     padding: '12px 24px',
