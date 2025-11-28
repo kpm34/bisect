@@ -30,22 +30,22 @@ import type { MaterialPreset } from '@/lib/services/supabase/types';
 // Metal subcategories with their default presets from Supabase
 const METAL_SUBCATEGORIES = ['gold', 'silver', 'copper', 'iron', 'titanium'] as const;
 
-// Preview URLs for metal subcategories (polished variants as defaults)
+// Preview URLs for metal subcategories - using distinct variations for visual differentiation
 const METAL_PREVIEW_URLS: Record<string, string> = {
   gold: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/metal/gold-variations/gold-polished.png',
   silver: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/metal/silver-variations/silver-polished.png',
-  copper: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/metal/copper-variations/copper-polished.png',
-  iron: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/metal/iron-variations/iron-polished.png',
-  titanium: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/metal/titanium-variations/titanium-polished.png',
+  copper: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/metal/copper-variations/copper-oxidized.png',
+  iron: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/metal/iron-variations/iron-rusted.png',
+  titanium: 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-previews/metal/titanium-variations/titanium-anodized-blue.png',
 };
 
-// Default material properties for metal subcategories
+// Default material properties for metal subcategories - matched to preview variants
 const METAL_DEFAULTS: Record<string, { color: string; roughness: number; metalness: number }> = {
   gold: { color: '#FFD700', roughness: 0.15, metalness: 1.0 },
   silver: { color: '#C0C0C0', roughness: 0.15, metalness: 1.0 },
-  copper: { color: '#B87333', roughness: 0.2, metalness: 1.0 },
-  iron: { color: '#434343', roughness: 0.4, metalness: 1.0 },
-  titanium: { color: '#878681', roughness: 0.25, metalness: 1.0 },
+  copper: { color: '#4A9B7F', roughness: 0.6, metalness: 0.7 },  // Oxidized/patina green
+  iron: { color: '#8B4513', roughness: 0.8, metalness: 0.4 },    // Rusted brown
+  titanium: { color: '#4169E1', roughness: 0.3, metalness: 0.9 }, // Anodized blue
 };
 
 // Stone subcategories
