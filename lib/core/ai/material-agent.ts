@@ -9,6 +9,162 @@ import { SceneGraphBuilder } from './scene-graph-builder';
 import { AgentDebateSystem } from './agent-debate-system';
 
 /**
+ * Available PBR Textures in Supabase Storage
+ * These are high-quality CC0 textures from AmbientCG
+ */
+const SUPABASE_TEXTURES_BASE = 'https://vmawsauglaejrwfajnht.supabase.co/storage/v1/object/public/material-textures';
+
+export const AVAILABLE_PBR_TEXTURES = {
+  stone: {
+    marble: {
+      name: 'Marble',
+      description: 'Light grey polished marble stone',
+      diffuse: `${SUPABASE_TEXTURES_BASE}/stone/marble/diffuse.jpg`,
+      normal: `${SUPABASE_TEXTURES_BASE}/stone/marble/normal.jpg`,
+      roughness: `${SUPABASE_TEXTURES_BASE}/stone/marble/roughness.jpg`,
+      defaultProps: { roughness: 0.1, metalness: 0.0 }
+    },
+    granite: {
+      name: 'Granite',
+      description: 'Speckled grey granite rock',
+      diffuse: `${SUPABASE_TEXTURES_BASE}/stone/granite/diffuse.jpg`,
+      normal: `${SUPABASE_TEXTURES_BASE}/stone/granite/normal.jpg`,
+      roughness: `${SUPABASE_TEXTURES_BASE}/stone/granite/roughness.jpg`,
+      defaultProps: { roughness: 0.4, metalness: 0.0 }
+    },
+    concrete: {
+      name: 'Concrete',
+      description: 'Smooth grey concrete',
+      diffuse: `${SUPABASE_TEXTURES_BASE}/stone/concrete/diffuse.jpg`,
+      normal: `${SUPABASE_TEXTURES_BASE}/stone/concrete/normal.jpg`,
+      roughness: `${SUPABASE_TEXTURES_BASE}/stone/concrete/roughness.jpg`,
+      defaultProps: { roughness: 0.8, metalness: 0.0 }
+    },
+    sandstone: {
+      name: 'Sandstone',
+      description: 'Beige desert sandstone',
+      diffuse: `${SUPABASE_TEXTURES_BASE}/stone/sandstone/diffuse.jpg`,
+      normal: `${SUPABASE_TEXTURES_BASE}/stone/sandstone/normal.jpg`,
+      roughness: `${SUPABASE_TEXTURES_BASE}/stone/sandstone/roughness.jpg`,
+      defaultProps: { roughness: 0.9, metalness: 0.0 }
+    },
+    slate: {
+      name: 'Slate',
+      description: 'Dark slate rock',
+      diffuse: `${SUPABASE_TEXTURES_BASE}/stone/slate/diffuse.jpg`,
+      normal: `${SUPABASE_TEXTURES_BASE}/stone/slate/normal.jpg`,
+      roughness: `${SUPABASE_TEXTURES_BASE}/stone/slate/roughness.jpg`,
+      defaultProps: { roughness: 0.6, metalness: 0.0 }
+    },
+  },
+  fabric: {
+    cotton: {
+      name: 'Cotton',
+      description: 'White cotton fabric',
+      diffuse: `${SUPABASE_TEXTURES_BASE}/fabric/cotton/diffuse.jpg`,
+      normal: `${SUPABASE_TEXTURES_BASE}/fabric/cotton/normal.jpg`,
+      roughness: `${SUPABASE_TEXTURES_BASE}/fabric/cotton/roughness.jpg`,
+      defaultProps: { roughness: 0.9, metalness: 0.0 }
+    },
+    silk: {
+      name: 'Silk',
+      description: 'Smooth red silk fabric',
+      diffuse: `${SUPABASE_TEXTURES_BASE}/fabric/silk/diffuse.jpg`,
+      normal: `${SUPABASE_TEXTURES_BASE}/fabric/silk/normal.jpg`,
+      roughness: `${SUPABASE_TEXTURES_BASE}/fabric/silk/roughness.jpg`,
+      defaultProps: { roughness: 0.4, metalness: 0.0 }
+    },
+    denim: {
+      name: 'Denim',
+      description: 'Blue denim jeans fabric',
+      diffuse: `${SUPABASE_TEXTURES_BASE}/fabric/denim/diffuse.jpg`,
+      normal: `${SUPABASE_TEXTURES_BASE}/fabric/denim/normal.jpg`,
+      roughness: `${SUPABASE_TEXTURES_BASE}/fabric/denim/roughness.jpg`,
+      defaultProps: { roughness: 0.8, metalness: 0.0 }
+    },
+    leather: {
+      name: 'Leather',
+      description: 'Brown saddle leather',
+      diffuse: `${SUPABASE_TEXTURES_BASE}/fabric/leather/diffuse.jpg`,
+      normal: `${SUPABASE_TEXTURES_BASE}/fabric/leather/normal.jpg`,
+      roughness: `${SUPABASE_TEXTURES_BASE}/fabric/leather/roughness.jpg`,
+      defaultProps: { roughness: 0.6, metalness: 0.0 }
+    },
+    velvet: {
+      name: 'Velvet',
+      description: 'Purple velvet fabric',
+      diffuse: `${SUPABASE_TEXTURES_BASE}/fabric/velvet/diffuse.jpg`,
+      normal: `${SUPABASE_TEXTURES_BASE}/fabric/velvet/normal.jpg`,
+      roughness: `${SUPABASE_TEXTURES_BASE}/fabric/velvet/roughness.jpg`,
+      defaultProps: { roughness: 0.7, metalness: 0.0 }
+    },
+  },
+  wood: {
+    oak: {
+      name: 'Oak',
+      description: 'Light brown oak wood',
+      diffuse: `${SUPABASE_TEXTURES_BASE}/wood/oak/diffuse.jpg`,
+      normal: `${SUPABASE_TEXTURES_BASE}/wood/oak/normal.jpg`,
+      roughness: `${SUPABASE_TEXTURES_BASE}/wood/oak/roughness.jpg`,
+      defaultProps: { roughness: 0.5, metalness: 0.0 }
+    },
+    walnut: {
+      name: 'Walnut',
+      description: 'Dark brown walnut wood',
+      diffuse: `${SUPABASE_TEXTURES_BASE}/wood/walnut/diffuse.jpg`,
+      normal: `${SUPABASE_TEXTURES_BASE}/wood/walnut/normal.jpg`,
+      roughness: `${SUPABASE_TEXTURES_BASE}/wood/walnut/roughness.jpg`,
+      defaultProps: { roughness: 0.5, metalness: 0.0 }
+    },
+    maple: {
+      name: 'Maple',
+      description: 'Light maple wood',
+      diffuse: `${SUPABASE_TEXTURES_BASE}/wood/maple/diffuse.jpg`,
+      normal: `${SUPABASE_TEXTURES_BASE}/wood/maple/normal.jpg`,
+      roughness: `${SUPABASE_TEXTURES_BASE}/wood/maple/roughness.jpg`,
+      defaultProps: { roughness: 0.4, metalness: 0.0 }
+    },
+    cherry: {
+      name: 'Cherry',
+      description: 'Reddish cherry wood',
+      diffuse: `${SUPABASE_TEXTURES_BASE}/wood/cherry/diffuse.jpg`,
+      normal: `${SUPABASE_TEXTURES_BASE}/wood/cherry/normal.jpg`,
+      roughness: `${SUPABASE_TEXTURES_BASE}/wood/cherry/roughness.jpg`,
+      defaultProps: { roughness: 0.45, metalness: 0.0 }
+    },
+    bamboo: {
+      name: 'Bamboo',
+      description: 'Light bamboo wood',
+      diffuse: `${SUPABASE_TEXTURES_BASE}/wood/bamboo/diffuse.jpg`,
+      normal: `${SUPABASE_TEXTURES_BASE}/wood/bamboo/normal.jpg`,
+      roughness: `${SUPABASE_TEXTURES_BASE}/wood/bamboo/roughness.jpg`,
+      defaultProps: { roughness: 0.4, metalness: 0.0 }
+    },
+  },
+  metal: {
+    gold: { name: 'Gold', description: 'Polished gold metal', defaultProps: { color: '#FFD700', roughness: 0.15, metalness: 1.0 } },
+    silver: { name: 'Silver', description: 'Polished silver metal', defaultProps: { color: '#C0C0C0', roughness: 0.15, metalness: 1.0 } },
+    copper: { name: 'Copper', description: 'Matte copper metal', defaultProps: { color: '#B87333', roughness: 0.5, metalness: 1.0 } },
+    iron: { name: 'Iron', description: 'Rusted iron metal', defaultProps: { color: '#8B4513', roughness: 0.8, metalness: 0.4 } },
+    titanium: { name: 'Titanium', description: 'Brushed titanium', defaultProps: { color: '#878681', roughness: 0.35, metalness: 1.0 } },
+  }
+} as const;
+
+// Helper to find texture by name
+export function findTextureByName(query: string): { category: string; material: string; texture: any } | null {
+  const lower = query.toLowerCase();
+
+  for (const [category, materials] of Object.entries(AVAILABLE_PBR_TEXTURES)) {
+    for (const [materialKey, texture] of Object.entries(materials)) {
+      if (lower.includes(materialKey) || lower.includes(texture.name.toLowerCase())) {
+        return { category, material: materialKey, texture };
+      }
+    }
+  }
+  return null;
+}
+
+/**
  * Material Agent (GPT-4o)
  * Specialized in material editing, texture generation, and visual analysis.
  * Contains the core logic previously in BrowserAgentAdapter.
@@ -190,33 +346,72 @@ export class MaterialAgent implements SpecialistAgent {
   }
 
   private _buildSystemPrompt(): string {
-    return `You are a professional Spline 3D editor specialized in MATERIALS and TEXTURES.
-    
-You have expert - level skills in:
-- Material design(PBR workflows)
-    - Color theory and application
-        - Texture generation and mapping
-            - Lighting interactions
+    // Build available textures list for the prompt
+    const textureList = this._buildTextureList();
 
-When given a command, return a structured execution plan in JSON format.
+    return `You are an expert AI assistant for a 3D design editor. You help users edit materials, apply textures, transform objects, and create scenes.
+
+## YOUR CAPABILITIES:
+1. **Material Editing** - Change colors, roughness, metalness, and other PBR properties
+2. **Texture Application** - Apply realistic PBR textures from our library
+3. **Scene Understanding** - Analyze and describe the current scene
+4. **Creative Assistance** - Suggest materials and styles based on context
+
+## AVAILABLE PBR TEXTURES:
+${textureList}
+
+## COMMAND FORMAT:
+Return a JSON object with your execution plan:
 {
-    "approach": "direct-api",
-        "reasoning": "Brief explanation",
-            "commands": [
-                {
-                    "type": "spline-api",
-                    "action": "setObjectProperty",
-                    "params": {
-                        "objectName": "Cube",
-                        "property": "material.color",
-                        "value": 16711680
-                    }
-                }
-            ]
+  "approach": "direct-api",
+  "reasoning": "Brief explanation of what you're doing and why",
+  "commands": [
+    // For applying a texture:
+    { "action": "applyTexture", "params": { "category": "stone", "material": "marble" } },
+
+    // For setting color (as hex integer):
+    { "action": "setColor", "params": { "color": 16766720 } },
+
+    // For adjusting roughness (0-1):
+    { "action": "setRoughness", "params": { "value": 0.5 } },
+
+    // For adjusting metalness (0-1):
+    { "action": "setMetalness", "params": { "value": 0.8 } },
+
+    // For UV tiling adjustment:
+    { "action": "setTextureRepeat", "params": { "x": 2, "y": 2 } }
+  ]
 }
 
-IMPORTANT: Return "commands" as an array of objects, NOT strings.
-Focus on modifying material properties like color, roughness, metalness, and textures.`;
+## INTERPRETATION GUIDE:
+- "make it look like marble" → applyTexture with category="stone", material="marble"
+- "wooden floor" or "oak texture" → applyTexture with category="wood", material="oak"
+- "leather material" → applyTexture with category="fabric", material="leather"
+- "make it gold" or "golden" → applyTexture with category="metal", material="gold"
+- "more brushed/matte" → increase roughness by 0.1-0.2
+- "more polished/shiny" → decrease roughness by 0.1-0.2
+- "darker" → adjust color toward darker values
+- "lighter/brighter" → adjust color toward lighter values
+
+## IMPORTANT RULES:
+1. ALWAYS return valid JSON with "approach", "reasoning", and "commands" fields
+2. Commands must be an array of objects, not strings
+3. For textures, use exact category and material names from the list above
+4. Be helpful and creative - suggest alternatives if the exact request isn't available
+5. If unsure, explain your reasoning and ask for clarification in the "reasoning" field`;
+  }
+
+  private _buildTextureList(): string {
+    const lines: string[] = [];
+
+    for (const [category, materials] of Object.entries(AVAILABLE_PBR_TEXTURES)) {
+      lines.push(`\n### ${category.toUpperCase()}`);
+      for (const [key, mat] of Object.entries(materials)) {
+        lines.push(`- **${key}**: ${mat.name} - ${mat.description}`);
+      }
+    }
+
+    return lines.join('\n');
   }
 
   private _buildMessages(
