@@ -1,20 +1,23 @@
-# Unified 3D Creator - Project Navigation Map
+# Bisect - Project Navigation Map
 
-## 🗺️ Cross-Project Context Map
-
-This document provides navigation paths to related projects for seamless context gathering by AI agents.
+This document provides navigation paths to related source projects for context gathering.
 
 ---
 
-## 📍 Current Project Location
+## Project Location
 
 ```
-/Users/kashyapmaheshwari/Blender-Workspace/projects/unified-3d-creator
+/Users/kashyapmaheshwari/Blender-Workspace/projects/Bisect
 ```
+
+**Live**: [bisect.app](https://bisect.app)
+**Repository**: https://github.com/kpm34/bisect
 
 ---
 
-## 🔗 Related Projects
+## Source Projects
+
+Bisect was created by merging two source projects. These are referenced for historical context and original implementation patterns.
 
 ### 1. VectorCraft AI (Source for Vector & Texture Studios)
 
@@ -23,27 +26,16 @@ This document provides navigation paths to related projects for seamless context
 /Users/kashyapmaheshwari/Blender-Workspace/projects/vectorcraft-ai
 ```
 
-**Key Files:**
-- **SVG Editor:** `src/App-SVG-Editor.tsx` (2000+ lines)
-- **Texture Studio:** `src/MatcapStudio.tsx`
-- **Main App:** `src/App.tsx`
-- **Components:** `src/components/` (15 components)
-- **Services:** `src/lib/services/` (Gemini, tracer)
-- **Utilities:** `utils/geometry.ts`
-- **Types:** `lib/types/types.ts`
+**Key Files (Reference Only):**
+- `src/App-SVG-Editor.tsx` - Original SVG editor (2000+ lines)
+- `src/MatcapStudio.tsx` - Original texture studio
+- `src/components/` - 15 original components
+- `src/lib/services/` - Gemini AI integration
 
-**What We Copied:**
-- ✅ Complete SVG Editor → `app/studio/vector/page.tsx`
-- ✅ All components → `app/studio/vector/components/`
-- ✅ Services & utils → `app/studio/vector/lib/`, `app/studio/vector/utils/`
-- ✅ MatCap Studio → `app/studio/textures/page.tsx`
-- ✅ Generation utilities → `app/studio/textures/matcap-&-pbr-genai/`
-
-**Reference for:**
-- SVG drawing tools implementation
-- Gemini AI integration patterns
-- Texture generation algorithms
-- Export format implementations
+**What Was Merged:**
+- Complete SVG Editor → `app/studio/svg-canvas/`
+- MatCap Studio → `app/studio/tex-factory/`
+- Services & utilities → `lib/` and `app/studio/*/lib/`
 
 ---
 
@@ -54,374 +46,181 @@ This document provides navigation paths to related projects for seamless context
 /Users/kashyapmaheshwari/Blender-Workspace/projects/prism
 ```
 
-**Key Files:**
-- **3D Editor:** `src/app/editor/page.tsx`
-- **Editor Components:** `src/app/editor/components/`
-- **R3F Components:** `src/app/editor/r3f/`
-- **Core Library:** `src/lib/core/` (~9,500 lines)
-  - `adapters/` - ISceneAdapter, SplineAdapter, GLTFAdapter
-  - `materials/` - 600+ PBR presets + manifest
-  - `ai/` - GPT-4o agent + RAG system
-  - `scene/` - Scene manipulation
-  - `utils/` - Spatial math
-- **Persistence:** `src/lib/persistence/`
-- **Hooks:** `src/hooks/`
-- **Utils:** `src/utils/`
+**Key Files (Reference Only):**
+- `src/app/editor/page.tsx` - Original 3D editor
+- `src/lib/core/` - Core library (~9,500 lines)
+- `src/lib/core/adapters/` - Format adapters
+- `src/lib/core/materials/` - 600+ material presets
+- `src/lib/core/ai/` - AI agent + RAG
 
-**What We Copied:**
-- ✅ Complete 3D Editor → `app/studio/scene/page.tsx`
-- ✅ Editor components → `app/studio/scene/components/`
-- ✅ R3F components → `app/studio/scene/r3f/`
-- ✅ Core library → `lib/core/`
-- ✅ Persistence layer → `lib/persistence/`
-- ✅ Hooks → `hooks/`
-- ✅ Utils → `app/studio/scene/utils/`
-
-**Reference for:**
-- ISceneAdapter pattern implementation
-- Material library system architecture
-- AI agent with RAG memory
-- React Three Fiber best practices
-- IndexedDB persistence patterns
+**What Was Merged:**
+- 3D Editor → `app/studio/3d-canvas/`
+- Core library → `lib/core/`
+- Hooks → `hooks/`
+- Persistence → `lib/persistence/`
 
 ---
 
-## 📦 Source Project Dependencies
+## Bisect Project Structure
 
-### VectorCraft AI Key Dependencies
-
-```json
-{
-  "react": "^18.3.1",
-  "react-dom": "^18.3.1",
-  "@google/generative-ai": "^0.21.0",
-  "three": "^0.181.0",
-  "@react-three/fiber": "^9.4.0",
-  "@react-three/drei": "^10.7.0",
-  "lucide-react": "^0.462.0",
-  "imagetracerjs": "^1.2.6"
-}
 ```
-
-### Prism Key Dependencies
-
-```json
-{
-  "next": "14.2.33",
-  "react": "^18.3.1",
-  "@react-three/fiber": "^8.15.0",
-  "@react-three/drei": "^9.88.0",
-  "@splinetool/runtime": "^1.10.99",
-  "@splinetool/r3f-spline": "^1.0.2",
-  "@gltf-transform/core": "^4.2.1",
-  "openai": "^4.67.0",
-  "chromadb": "^1.8.0",
-  "@supabase/supabase-js": "^2.x"
-}
+Bisect/
+├── app/
+│   ├── page.tsx                    # Landing page
+│   ├── api/                        # API routes
+│   │   ├── ai/                     # AI endpoints
+│   │   ├── materials/              # Material queries
+│   │   └── tex-factory/            # Texture generation
+│   └── studio/
+│       ├── 3d-canvas/              # 3D Studio (from Prism)
+│       │   ├── page.tsx            # Entry point
+│       │   └── components/         # Editor components
+│       ├── svg-canvas/             # Vector Studio (from VectorCraft)
+│       │   ├── page.tsx            # Entry point
+│       │   └── components/         # Drawing tools
+│       └── tex-factory/            # Texture Studio (from VectorCraft)
+│           ├── page.tsx            # Entry point
+│           └── matcap-&-pbr-genai/ # Generation utilities
+├── lib/
+│   ├── core/                       # Core library (from Prism)
+│   │   ├── adapters/               # ISceneAdapter, SplineAdapter, GLTFAdapter
+│   │   ├── ai/                     # AI agents (GPT-4o, Gemini, Claude)
+│   │   ├── materials/              # 600+ material presets
+│   │   ├── rag/                    # RAG system
+│   │   └── scene/                  # Scene manipulation
+│   ├── store/                      # Zustand state
+│   │   └── unified-store.ts        # Central state management
+│   ├── services/                   # API services
+│   │   └── mcp-bridge-handler.ts   # MCP integration
+│   ├── persistence/                # Storage
+│   └── drag-drop/                  # Cross-studio transfer
+├── components/
+│   └── shared/                     # Shell, navigation
+├── hooks/                          # React hooks
+├── mcp-server/                     # MCP server
+└── cli/                            # CLI tool
 ```
 
 ---
 
-## 🗂️ File Mapping Reference
+## File Mapping (Source → Bisect)
 
-### Vector Studio Files
+### Vector Studio
+| Bisect Path | Original Source |
+|-------------|-----------------|
+| `app/studio/svg-canvas/page.tsx` | `vectorcraft-ai/src/App-SVG-Editor.tsx` |
+| `app/studio/svg-canvas/components/` | `vectorcraft-ai/src/components/` |
+| `app/studio/svg-canvas/lib/` | `vectorcraft-ai/src/lib/` |
 
-| Unified Path | Original Source | Purpose |
-|-------------|-----------------|---------|
-| `app/studio/vector/page.tsx` | `vectorcraft-ai/src/App-SVG-Editor.tsx` | Main SVG editor |
-| `app/studio/vector/components/` | `vectorcraft-ai/src/components/` | UI components |
-| `app/studio/vector/lib/` | `vectorcraft-ai/src/lib/` | Services (AI, tracer) |
-| `app/studio/vector/utils/` | `vectorcraft-ai/utils/` | Geometry utilities |
+### Texture Studio
+| Bisect Path | Original Source |
+|-------------|-----------------|
+| `app/studio/tex-factory/page.tsx` | `vectorcraft-ai/src/MatcapStudio.tsx` |
+| `app/studio/tex-factory/matcap-&-pbr-genai/` | `vectorcraft-ai/matcap-&-pbr-genai/` |
 
-### Texture Studio Files
-
-| Unified Path | Original Source | Purpose |
-|-------------|-----------------|---------|
-| `app/studio/textures/page.tsx` | `vectorcraft-ai/src/MatcapStudio.tsx` | MatCap/PBR generator |
-| `app/studio/textures/matcap-&-pbr-genai/` | `vectorcraft-ai/matcap-&-pbr-genai/` | Generation utilities |
-
-### 3D Studio Files
-
-| Unified Path | Original Source | Purpose |
-|-------------|-----------------|---------|
-| `app/studio/scene/page.tsx` | `prism/src/app/editor/page.tsx` | Main 3D editor |
-| `app/studio/scene/components/` | `prism/src/app/editor/components/` | Editor components |
-| `app/studio/scene/r3f/` | `prism/src/app/editor/r3f/` | R3F components |
-| `app/studio/scene/utils/` | `prism/src/utils/` | Scene utilities |
-
-### Shared Core Library
-
-| Unified Path | Original Source | Purpose |
-|-------------|-----------------|---------|
-| `lib/core/adapters/` | `prism/src/lib/core/adapters/` | Format adapters |
-| `lib/core/materials/` | `prism/src/lib/core/materials/` | 600+ materials |
-| `lib/core/ai/` | `prism/src/lib/core/ai/` | AI agents + RAG |
-| `lib/core/scene/` | `prism/src/lib/core/scene/` | Scene manipulation |
-| `lib/persistence/` | `prism/src/lib/persistence/` | IndexedDB storage |
-| `hooks/` | `prism/src/hooks/` | React hooks |
+### 3D Studio
+| Bisect Path | Original Source |
+|-------------|-----------------|
+| `app/studio/3d-canvas/page.tsx` | `prism/src/app/editor/page.tsx` |
+| `app/studio/3d-canvas/components/` | `prism/src/app/editor/components/` |
+| `lib/core/` | `prism/src/lib/core/` |
 
 ---
 
-## 🔍 Quick Navigation Commands
+## Import Patterns
 
-### Navigate to VectorCraft AI
-
-```bash
-cd /Users/kashyapmaheshwari/Blender-Workspace/projects/vectorcraft-ai
-```
-
-**Read key files:**
-```bash
-# SVG Editor (main component)
-cat src/App-SVG-Editor.tsx
-
-# Gemini service
-cat src/lib/services/gemini.ts
-
-# Geometry utilities
-cat utils/geometry.ts
-```
-
-### Navigate to Prism
-
-```bash
-cd /Users/kashyapmaheshwari/Blender-Workspace/projects/prism
-```
-
-**Read key files:**
-```bash
-# 3D Editor (main component)
-cat src/app/editor/page.tsx
-
-# ISceneAdapter interface
-cat src/lib/core/adapters/ISceneAdapter.ts
-
-# Material manifest
-cat src/lib/core/materials/material-manifest.ts
-
-# AI agent
-cat src/lib/core/ai/unified-spline-agent.ts
-```
-
-### Navigate to Unified Project
-
-```bash
-cd /Users/kashyapmaheshwari/Blender-Workspace/projects/unified-3d-creator
-```
-
----
-
-## 📚 Context Gathering Guide for AI Agents
-
-### When Working on Vector Studio
-
-**Need context about:**
-1. **Drawing tools** → Read `vectorcraft-ai/src/App-SVG-Editor.tsx` lines 350-515 (interaction handlers)
-2. **Export formats** → Read `vectorcraft-ai/src/components/CodeExportModal.tsx`
-3. **AI integration** → Read `vectorcraft-ai/src/lib/services/gemini.ts`
-4. **Geometry utils** → Read `vectorcraft-ai/utils/geometry.ts`
-
-### When Working on Texture Studio
-
-**Need context about:**
-1. **MatCap generation** → Read `vectorcraft-ai/src/MatcapStudio.tsx`
-2. **PBR generation** → Read `vectorcraft-ai/matcap-&-pbr-genai/`
-3. **Image processing** → Search for "normal map" in `vectorcraft-ai/src/MatcapStudio.tsx`
-
-### When Working on 3D Studio
-
-**Need context about:**
-1. **Scene adapters** → Read `prism/src/lib/core/adapters/ISceneAdapter.ts`
-2. **Material system** → Read `prism/src/lib/core/materials/material-manifest.ts`
-3. **AI agent** → Read `prism/src/lib/core/ai/unified-spline-agent.ts`
-4. **R3F patterns** → Read `prism/src/app/editor/r3f/UniversalCanvas.tsx`
-5. **Scene manipulation** → Read `prism/src/lib/core/scene/`
-
-### When Working on AI Integration
-
-**Need context about:**
-1. **Gemini patterns** → Read `vectorcraft-ai/src/lib/services/gemini.ts`
-2. **OpenAI patterns** → Read `prism/src/lib/core/ai/unified-spline-agent.ts`
-3. **RAG system** → Read `prism/src/lib/core/rag/browser-rag-system.ts`
-
-### When Working on State Management
-
-**Need context about:**
-1. **Session management** → Read `prism/src/lib/persistence/SceneSessionManager.ts`
-2. **IndexedDB** → Read `prism/src/lib/persistence/IndexedDBStore.ts`
-3. **Hooks** → Read `prism/src/hooks/useSceneSession.ts`
-
----
-
-## 🎯 Import Path Patterns
-
-### Original Import Patterns (to fix)
-
-**VectorCraft:**
-```typescript
-// Original
-import { Tool } from '../lib/types/types';
-import { geometry } from '../utils/geometry';
-import Toolbar from './components/Toolbar';
-
-// Should become
-import { Tool } from './lib/types/types';
-import { geometry } from './utils/geometry';
-import Toolbar from './components/Toolbar';
-```
-
-**Prism:**
-```typescript
-// Original
-import { ISceneAdapter } from '@/lib/core/adapters/ISceneAdapter';
-import { useSceneSession } from '@/hooks/useSceneSession';
-
-// Should become
-import { ISceneAdapter } from '@/lib/core/adapters/ISceneAdapter';
-import { useSceneSession } from '@/hooks/useSceneSession';
-// (These should work as-is with @ alias)
-```
-
-### New Unified Imports
-
+### Standard Imports
 ```typescript
 // AI Orchestrator
-import { orchestrator, generateTexture } from '@/lib/ai/orchestrator';
+import { orchestrator } from '@/lib/ai/orchestrator';
 
 // Unified Store
 import { useUnifiedStore } from '@/lib/store/unified-store';
 
-// Drag & Drop
-import { useDragDrop, AssetConverter } from '@/lib/drag-drop/bridge';
-
-// Core (from Prism)
+// Core Library
 import { ISceneAdapter } from '@/lib/core/adapters/ISceneAdapter';
 import { materialLibrary } from '@/lib/core/materials/material-manifest';
+
+// Hooks
+import { useSceneSession } from '@/hooks/useSceneSession';
+import { useMaterials } from '@/hooks/useMaterials';
 ```
 
 ---
 
-## 🏗️ Architecture Comparison
+## Context Gathering Guide
 
-### VectorCraft AI Architecture
+### Vector Studio Development
+- Drawing tools: `app/studio/svg-canvas/components/`
+- Export formats: `app/studio/svg-canvas/components/CodeExportModal.tsx`
+- AI integration: `app/studio/svg-canvas/lib/services/gemini.ts`
 
-```
-vectorcraft-ai/
-├── Single-page app (Vite + React)
-├── Client-side only (no SSR)
-├── Multiple entry points:
-│   ├── App-SVG-Editor.tsx (main)
-│   ├── App.tsx (texture generator)
-│   └── MatcapStudio.tsx (MatCap mode)
-├── Gemini AI for all tasks
-└── No persistence (in-memory state)
-```
+### Texture Studio Development
+- MatCap generation: `app/studio/tex-factory/page.tsx`
+- PBR generation: `app/studio/tex-factory/matcap-&-pbr-genai/`
 
-### Prism Architecture
+### 3D Studio Development
+- Scene adapters: `lib/core/adapters/`
+- Material system: `lib/core/materials/material-manifest.ts`
+- AI agent: `lib/core/ai/unified-spline-agent.ts`
 
-```
-prism/
-├── Next.js App Router (SSR)
-├── Shared core library (~9.5K lines)
-├── Adapter pattern for formats
-├── OpenAI GPT-4o + RAG
-├── IndexedDB + Supabase persistence
-└── Context API state management
-```
+### AI Integration
+- Gemini patterns: `app/studio/svg-canvas/lib/services/gemini.ts`
+- OpenAI patterns: `lib/core/ai/unified-spline-agent.ts`
+- RAG system: `lib/core/rag/browser-rag-system.ts`
+- MCP bridge: `lib/services/mcp-bridge-handler.ts`
 
-### Unified Architecture
-
-```
-unified-3d-creator/
-├── Next.js 14 base (from Prism)
-├── 3 isolated studios with routing
-├── Multi-agent AI orchestrator
-├── Zustand unified state
-├── Drag & drop bridge
-└── Best of both worlds
-```
+### State Management
+- Unified store: `lib/store/unified-store.ts`
+- Session management: `lib/persistence/SceneSessionManager.ts`
+- IndexedDB: `lib/persistence/IndexedDBStore.ts`
 
 ---
 
-## 🔄 Migration Status
-
-### Completed ✅
-
-- [x] Project structure created
-- [x] All 3 studios copied
-- [x] Core library integrated
-- [x] AI orchestrator built
-- [x] State management configured
-- [x] Drag & drop system created
-- [x] Documentation written
-
-### Pending ⏳
-
-- [ ] Import path fixes
-- [ ] Dev server testing
-- [ ] AI orchestrator connection
-- [ ] Drop handler implementation
-- [ ] Asset library UI
-
----
-
-## 🆘 Quick Reference
+## Quick Reference
 
 ### Find a Feature
 
-**"Where is the SVG pen tool?"**
 ```bash
-cd /Users/kashyapmaheshwari/Blender-Workspace/projects/vectorcraft-ai
-grep -n "Tool.PEN" src/App-SVG-Editor.tsx
-# Line 510: handling pen tool drawing
-```
+# SVG drawing tools
+grep -rn "Tool\." app/studio/svg-canvas/
 
-**"Where is the material library?"**
-```bash
-cd /Users/kashyapmaheshwari/Blender-Workspace/projects/prism
-cat src/lib/core/materials/material-manifest.ts
-# 600+ PBR presets defined here
-```
+# Material library
+cat lib/core/materials/material-manifest.ts
 
-**"Where is scene rendering?"**
-```bash
-cd /Users/kashyapmaheshwari/Blender-Workspace/projects/prism
-cat src/app/editor/r3f/UniversalCanvas.tsx
-# React Three Fiber canvas component
+# Scene rendering
+cat app/studio/3d-canvas/components/
 ```
 
 ### Common Tasks
 
 **Add a new drawing tool:**
-1. Study: `vectorcraft-ai/src/App-SVG-Editor.tsx` (handlePointerDown)
-2. Add to: `unified-3d-creator/app/studio/vector/page.tsx`
-3. Update: Tool enum in types
+1. Study: `app/studio/svg-canvas/components/`
+2. Update: Tool enum in types
+3. Add handler in page.tsx
 
 **Add a new material:**
-1. Study: `prism/src/lib/core/materials/`
-2. Add to: Material manifest JSON
-3. Include: Texture files in public folder
+1. Study: `lib/core/materials/`
+2. Add to: Material manifest
+3. Include: Preview image in Supabase
 
 **Add a new AI agent:**
-1. Study: `prism/src/lib/core/ai/unified-spline-agent.ts`
-2. Add to: `unified-3d-creator/lib/ai/orchestrator.ts`
-3. Configure: Agent priorities and strengths
+1. Study: `lib/core/ai/unified-spline-agent.ts`
+2. Add to: `lib/ai/orchestrator.ts`
+3. Configure: Agent priorities
 
 ---
 
-## 📞 Contact Information
+## Related Documentation
 
-**Project Location:** `/Users/kashyapmaheshwari/Blender-Workspace/projects/unified-3d-creator`
-
-**Related Projects:**
-- VectorCraft: `../vectorcraft-ai`
-- Prism: `../prism`
-
-**Documentation:**
-- This file: `PROJECT_MAP.md`
-- Architecture: `README.md`
-- Workspace: `/Users/kashyapmaheshwari/Blender-Workspace/.claude/CLAUDE.md`
+| File | Description |
+|------|-------------|
+| `.memory.md` | Project status & priorities |
+| `README.md` | Project overview |
+| `.claude/CLAUDE.md` | Claude Code configuration |
+| `docs/material-system-flow.md` | Material architecture |
 
 ---
 
-*This map is designed for AI agents to quickly gather context from source projects. Update as architecture evolves.*
+*This map is designed for AI agents to gather context. Update as architecture evolves.*
+*Last updated: Nov 30, 2025*

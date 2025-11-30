@@ -1,86 +1,122 @@
 # Quick Deploy to Vercel
 
-## Step 1: Install Vercel CLI
+## Important
+
+**Bisect is already configured on Vercel. Do NOT create a new project.**
+
+- **Vercel Project**: `bisect`
+- **Domain**: bisect.app
+- **Auto-deploy**: Pushes to `main` auto-deploy to production
+
+---
+
+## Deploy to Production
+
+```bash
+cd /Users/kashyapmaheshwari/Blender-Workspace/projects/Bisect
+vercel --prod
+```
+
+That's it! The project is already linked.
+
+---
+
+## First Time Setup (If Needed)
+
+### Step 1: Install Vercel CLI
 
 ```bash
 npm install -g vercel
 ```
 
-## Step 2: Login to Vercel
+### Step 2: Login to Vercel
 
 ```bash
 vercel login
 ```
 
-## Step 3: Deploy (First Time)
+### Step 3: Link to Existing Project
 
 ```bash
-cd /Users/kashyapmaheshwari/Blender-Workspace/projects/unified-3d-creator
-vercel
+cd /Users/kashyapmaheshwari/Blender-Workspace/projects/Bisect
+vercel link
 ```
 
 **When prompted:**
-- Set up and deploy? → **Yes**
-- Which scope? → **Your account**
-- Link to existing project? → **No** (first time)
-- Project name? → **unified-3d-creator**
-- Directory? → **./** (press Enter)
-- Override settings? → **No**
+- Link to existing project? → **Yes**
+- Which project? → **bisect**
 
-## Step 4: Add Environment Variables
+---
 
-After deployment, add your API keys:
+## Environment Variables
 
-```bash
-vercel env add OPENAI_API_KEY production
-vercel env add GOOGLE_GEMINI_API_KEY production
+The following should already be configured in Vercel:
+
+```
+OPENAI_API_KEY              # GPT-4o for 3D scene editing
+GOOGLE_GEMINI_API_KEY       # Gemini for textures & SVG
+NEXT_PUBLIC_SUPABASE_URL    # Supabase project URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY  # Supabase anon key
+ANTHROPIC_API_KEY           # Claude (optional)
+OPENROUTER_API_KEY          # Multi-model (optional)
 ```
 
-Or add them in Vercel dashboard:
-1. Go to https://vercel.com/dashboard
-2. Select your project
-3. Settings → Environment Variables
-4. Add each variable
-
-## Step 5: Deploy to Production
-
+To add or update:
 ```bash
-vercel --prod
+vercel env add VARIABLE_NAME production
 ```
 
-## Step 6: Fetch Build Logs (If Build Fails)
+Or use the dashboard: Vercel → bisect → Settings → Environment Variables
 
-```bash
-# Get latest deployment logs
-vercel logs --follow
-
-# Or for specific deployment
-vercel logs <deployment-url> --follow
-
-# List all deployments
-vercel ls
-```
+---
 
 ## Troubleshooting
 
-### If build fails, check logs:
+### Check build logs:
 ```bash
 vercel logs --follow
 ```
 
-### Common fixes:
-1. **Missing dependencies** → Check `package.json`
-2. **TypeScript errors** → Run `pnpm type-check` locally first
-3. **Environment variables** → Ensure they're set in Vercel
-4. **Build timeout** → Check for slow operations
+### List deployments:
+```bash
+vercel ls
+```
 
 ### Test build locally first:
 ```bash
 pnpm build
 ```
 
-If local build works but Vercel fails, check:
-- Environment variables
-- Node.js version (should be 18+)
-- Build command in `vercel.json`
+### Common issues:
 
+| Issue | Fix |
+|-------|-----|
+| Missing dependencies | Run `pnpm install` |
+| TypeScript errors | Run `pnpm tsc --noEmit` locally |
+| Environment variables | Check Vercel dashboard |
+| Build timeout | Check for slow operations |
+
+---
+
+## Development Workflow
+
+```bash
+# Start dev server
+pnpm dev
+
+# Run type check
+pnpm tsc --noEmit
+
+# Run lint
+pnpm lint
+
+# Build locally
+pnpm build
+
+# Deploy when ready
+vercel --prod
+```
+
+---
+
+*Last updated: Nov 30, 2025*

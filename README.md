@@ -1,8 +1,11 @@
-# Unified 3D Creator
+# Bisect
 
-A comprehensive no-code 3D creation platform merging **Prism** (3D scene editor) and **VectorCraft AI** (vector/texture tools) into one unified application. Built with VectorCraft's UI as the shell, bringing Prism's 3D capabilities as an additional canvas.
+A unified no-code 3D creator platform that merges three creative studios into a single application. Built with Next.js 14, React Three Fiber, and multi-model AI integration.
 
-## 🎯 Vision
+**Version**: 0.1.0 (Beta)
+**Live**: [bisect.app](https://bisect.app)
+
+## Vision
 
 Create a Spline-like tool with **zero learning curve** for:
 - **UI Development** - Create 3D UI components and interactions
@@ -11,29 +14,29 @@ Create a Spline-like tool with **zero learning curve** for:
 - **Website Enhancement** - Add 3D elements to websites
 - **AR/VR Flows** - Prepare content for immersive experiences
 
-## ✨ Features
+## Features
 
-### 🎨 Vector Studio
+### Vector Studio
 - Complete SVG editor with 15+ drawing tools
-- AI-powered vectorization (PNG/JPG → SVG)
-- 7 export formats (SVG, JSX, Animated SVG, Decal Pack, Blender Curves, Design Tokens)
-- Website screenshot import
+- AI-powered vectorization (PNG/JPG to SVG)
+- 7 export formats: SVG, JSX, Animated SVG, Decal Pack, Blender Curves, Design Tokens
+- Website screenshot import capability
 
-### 🖼️ Texture Studio
-- AI-powered MatCap and PBR texture generation
+### Texture Studio
+- AI-powered MatCap and PBR texture generation (Gemini)
 - Auto-generate normal and roughness maps
 - Real-time 3D preview
-- Quality modes (Fast/High)
+- Quality modes: Fast (1K) / High (2K)
 
-### 🎭 3D Studio
-- Universal format support (Spline, GLTF, GLB, FBX, OBJ)
-- 600+ PBR material presets
-- Natural language scene editing
-- Object transform controls
-- Scene hierarchy panel
-- Project persistence (IndexedDB)
+### 3D Studio
+- Universal format support: Spline, GLTF, GLB, FBX, OBJ
+- 600+ PBR material presets (Gold, Silver, Copper, Iron, Titanium)
+- Natural language scene editing via AI
+- Object transform controls (position, rotation, scale)
+- Scene hierarchy panel with tree view
+- Project persistence (IndexedDB + Supabase)
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js 18+
@@ -43,8 +46,8 @@ Create a Spline-like tool with **zero learning curve** for:
 
 ```bash
 # Clone the repository
-git clone <your-repo-url>
-cd unified-3d-creator
+git clone https://github.com/kpm34/bisect.git
+cd Bisect
 
 # Install dependencies
 pnpm install
@@ -64,72 +67,110 @@ pnpm dev
 # Open http://localhost:3000
 ```
 
-### Build
+### Build & Deploy
 
 ```bash
 # Build for production
 pnpm build
 
-# Start production server
-pnpm start
+# Deploy to Vercel (uses existing bisect project)
+vercel --prod
 ```
 
-## 🔧 Environment Variables
+## Environment Variables
 
-See `.env.example` for required API keys:
+```env
+# Required
+OPENAI_API_KEY              # GPT-4o for 3D scene editing
+GOOGLE_GEMINI_API_KEY       # Gemini for texture & SVG generation
+NEXT_PUBLIC_SUPABASE_URL    # Supabase project URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY  # Supabase anon key
 
-- **OPENAI_API_KEY** - For 3D scene editing (GPT-4o)
-- **GOOGLE_GEMINI_API_KEY** - For texture & SVG generation
-- **ANTHROPIC_API_KEY** - Optional, for complex reasoning
-- **OPENROUTER_API_KEY** - Optional, for multi-model access
+# Optional
+ANTHROPIC_API_KEY           # Claude for complex reasoning
+OPENROUTER_API_KEY          # Multi-model access
+```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
-unified-3d-creator/
+Bisect/
 ├── app/
-│   ├── studio/
-│   │   ├── vector/       # Vector Studio (SVG editing)
-│   │   ├── textures/     # Texture Studio (MatCap/PBR)
-│   │   └── scene/        # 3D Studio (Scene editing)
-│   └── ...
+│   ├── page.tsx                 # Landing page
+│   ├── api/                     # API routes
+│   │   ├── ai/                  # AI endpoints
+│   │   ├── materials/           # Material endpoints
+│   │   └── tex-factory/         # Texture generation
+│   └── studio/
+│       ├── 3d-canvas/           # 3D Studio
+│       ├── svg-canvas/          # Vector Studio
+│       └── tex-factory/         # Texture Studio
 ├── lib/
-│   ├── core/             # Prism core library
-│   │   ├── adapters/     # Format adapters
-│   │   ├── materials/    # 600+ material library
-│   │   ├── ai/           # AI agents + RAG
-│   │   └── scene/        # Scene manipulation
-│   ├── ai/               # Multi-agent orchestrator
-│   ├── store/            # Zustand state management
-│   └── drag-drop/        # Cross-studio asset transfer
-└── components/
-    └── shared/           # Shell component
+│   ├── core/                    # Core library
+│   │   ├── adapters/            # Format adapters (Spline, GLTF)
+│   │   ├── ai/                  # AI agents
+│   │   ├── materials/           # 600+ material library
+│   │   └── scene/               # Scene manipulation
+│   ├── store/                   # Zustand state
+│   ├── services/                # API services
+│   └── drag-drop/               # Cross-studio transfer
+├── components/
+│   ├── shared/                  # Shell, navigation
+│   └── studio/                  # Studio components
+├── hooks/                       # React hooks
+├── mcp-server/                  # MCP server implementation
+└── cli/                         # Command-line tool
 ```
 
-## 🛠️ Technology Stack
+## Tech Stack
 
-- **Framework:** Next.js 14 (App Router)
-- **3D Rendering:** Three.js, React Three Fiber
-- **AI:** OpenAI GPT-4o, Google Gemini, Anthropic Claude
-- **State:** Zustand
-- **Storage:** IndexedDB (browser), Supabase (cloud database & storage)
+| Category | Technologies |
+|----------|--------------|
+| **Framework** | Next.js 14, React 18, TypeScript |
+| **3D** | Three.js, React Three Fiber, Drei, Spline Runtime |
+| **AI** | OpenAI GPT-4o, Google Gemini, Anthropic Claude |
+| **State** | Zustand, React Query |
+| **Database** | Supabase (PostgreSQL), IndexedDB |
+| **Styling** | Tailwind CSS, Framer Motion |
 
-## 📚 Documentation
+## Documentation
 
-- [Integration Status](./INTEGRATION_STATUS.md) - Current status and remaining work
-- [Project Map](./PROJECT_MAP.md) - Cross-project navigation guide
-- [Deployment Checklist](./DEPLOYMENT_CHECKLIST.md) - Deployment steps
+| Document | Description |
+|----------|-------------|
+| [.memory.md](./.memory.md) | Project status and priorities |
+| [docs/material-system-flow.md](./docs/material-system-flow.md) | Material system architecture |
+| [PROJECT_MAP.md](./PROJECT_MAP.md) | Cross-project navigation |
+| [QUICK_DEPLOY.md](./QUICK_DEPLOY.md) | Deployment guide |
 
-## 🤝 Contributing
+## Material System
 
-This project merges:
-- **VectorCraft AI** - Vector Studio and Texture Studio foundation
-- **Prism** - 3D Studio and core library
+Bisect includes a comprehensive material library with Blender-rendered previews:
 
-## 📄 License
+```
+Database Structure:
+├── material_categories    (Gold, Silver, Copper, Iron, Titanium)
+├── material_presets       (Finishes, Tints, Aged variants)
+└── material_variations    (Fine-tuned variations per preset)
+
+Storage: Supabase bucket with 512x512 PNG previews
+```
+
+## Deployment
+
+- **Platform**: Vercel
+- **Project**: `bisect` (existing project)
+- **Domain**: bisect.app
+- **Auto-deploy**: Main branch pushes deploy automatically
+
+```bash
+# Manual deployment
+vercel --prod
+```
+
+## License
 
 MIT
 
 ---
 
-**Built with ❤️ to make 3D creation accessible to everyone**
+**Built to make 3D creation accessible to everyone**
