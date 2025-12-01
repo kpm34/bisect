@@ -115,6 +115,9 @@ type SelectionContextValue = {
   addObject: (type: SceneObjectType, url?: string, formula?: any) => void;
   removeObject: (id: string) => void;
   updateObject: (id: string, updates: Partial<SceneObject>) => void;
+
+  // Delete selected object (handles both added objects and scene objects)
+  deleteSelectedObject: () => void;
 };
 
 const SelectionContext = createContext<SelectionContextValue | null>(null);
@@ -562,6 +565,71 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
     setAddedObjects(prev => prev.map(o => o.id === id ? { ...o, ...updates } : o));
   }, []);
 
+  // Delete the currently selected object
+  const deleteSelectedObject = useCallback(() => {
+    if (!selectedObject) {
+      console.warn('⚠️ No object selected to delete');
+      return;
+    }
+
+    const objectName = selectedObject.name || 'Unnamed Object';
+    const objectUuid = selectedObject.uuid;
+
+    // Check if it's an added object (from addObject)
+    const addedObj = addedObjects.find(o => o.id === objectUuid);
+    if (addedObj) {
+      setAddedObjects(prev => prev.filter(o => o.id !== objectUuid));
+      console.log(`🗑️ Deleted added object: "${objectName}"`);
+    } else if (r3fScene) {
+      // Remove from R3F scene directly
+      const objToRemove = r3fScene.getObjectByProperty('uuid', objectUuid);
+      if (objToRemove && objToRemove.parent) {
+        objToRemove.parent.remove(objToRemove);
+        // Dispose of geometry and materials to free memory
+        objToRemove.traverse((child: any) => {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) {
+            if (Array.isArray(child.material)) {
+              child.material.forEach((mat: any) => mat.dispose());
+            } else {
+              child.material.dispose();
+            }
+          }
+        });
+        console.log(`🗑️ Deleted scene object: "${objectName}"`);
+      }
+    }
+
+    // Clear selection
+    setSelectedObject(null);
+    setSelectedObjects(prev => {
+      const next = new Set(prev);
+      next.delete(objectUuid);
+      return next;
+    });
+    setSelectionVersion(v => v + 1);
+  }, [selectedObject, addedObjects, r3fScene]);
+
+  // Keyboard shortcut for delete
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if user is typing in an input field
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
+      // Delete or Backspace key
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedObject) {
+        e.preventDefault();
+        deleteSelectedObject();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedObject, deleteSelectedObject]);
+
   const value = useMemo<SelectionContextValue>(
     () => ({
       universalEditor,
@@ -602,6 +670,7 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
       addObject,
       removeObject,
       updateObject,
+      deleteSelectedObject,
     }),
     [
       universalEditor,
@@ -639,6 +708,7 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
       addObject,
       removeObject,
       updateObject,
+      deleteSelectedObject,
     ]
   );
 
@@ -693,5 +763,6 @@ export function useSelection() {
     addObject: noop,
     removeObject: noop,
     updateObject: noop,
+    deleteSelectedObject: noop,
   };
 }

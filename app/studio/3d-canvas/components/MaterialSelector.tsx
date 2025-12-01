@@ -14,9 +14,9 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Grid3X3, ChevronRight, Loader2 } from 'lucide-react';
+import { ChevronRight, Loader2 } from 'lucide-react';
 import { useSelection } from '../r3f/SceneSelectionContext';
-import { MaterialPreviewOverlay } from './MaterialPreviewOverlay';
+import { VariationsDrawer } from './VariationsDrawer';
 import {
   MaterialConfig,
   MaterialCategory,
@@ -198,10 +198,9 @@ export function MaterialSelector() {
     category: string;
     id: string;
   } | null>(null);
-  const [isOverlayOpen, setIsOverlayOpen] = useState(false);
-  const [overlayCategory, setOverlayCategory] = useState<string>('gold');
-  const [footerPresets, setFooterPresets] = useState<MaterialPreset[]>([]);
-  const [isLoadingFooter, setIsLoadingFooter] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(null);
+  const [selectedCategoryName, setSelectedCategoryName] = useState<string>('');
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
   const { setColor, setRoughness, setMetalness, selectedObject } = useSelection();
 
@@ -346,41 +345,10 @@ export function MaterialSelector() {
 
     console.log(`✅ Applied "${material.name}" to "${selectedObject.name}"`);
 
-    // Clear footer presets for non-metal materials for now
-    setFooterPresets([]);
+    // Reset category/preset selection for non-subcategory materials
+    setSelectedCategorySlug(null);
+    setSelectedCategoryName('');
     setSelectedPresetId(null);
-  };
-
-  // Handler for applying preset from footer
-  const handlePresetClick = async (preset: MaterialPreset) => {
-    if (!selectedObject) return;
-
-    setSelectedPresetId(preset.id);
-
-    // Apply PBR properties
-    const colorHex = parseInt(preset.color.replace('#', ''), 16);
-    setColor(colorHex);
-    setRoughness(preset.roughness);
-    setMetalness(preset.metalness);
-
-    const THREE = await import('three');
-    const physicalProps = preset.physical_props as Record<string, number | string> | null;
-
-    selectedObject.traverse((child: any) => {
-      if (child.isMesh && child.material) {
-        const material = new THREE.MeshPhysicalMaterial({
-          color: colorHex,
-          metalness: preset.metalness,
-          roughness: preset.roughness,
-          clearcoat: preset.clearcoat ?? (preset.metalness > 0.5 && preset.roughness < 0.2 ? 0.5 : 0),
-          clearcoatRoughness: (physicalProps?.clearcoatRoughness as number) ?? 0.1,
-          envMapIntensity: (physicalProps?.envMapIntensity as number) ?? (preset.metalness > 0.5 ? 1.5 : 1.0),
-        });
-        child.material = material;
-      }
-    });
-
-    console.log(`Applied preset ${preset.name}`);
   };
 
   // Handler for applying subcategory (Metal, Stone, Fabric, Wood)
@@ -495,36 +463,44 @@ export function MaterialSelector() {
 
     console.log(`✅ Applied "${item.name}" to "${selectedObject.name}"`);
 
-    // Fetch presets for this subcategory
-    setIsLoadingFooter(true);
-    setOverlayCategory(item.slug);
+    // Store category info for variations drawer
+    setSelectedCategorySlug(item.slug);
+    setSelectedCategoryName(item.name);
+    setSelectedPresetId(null); // Reset preset selection when changing subcategory
+  };
 
-    try {
-      const { getCategoryWithPresets } = await import('@/lib/services/supabase/materials');
-      const result = await getCategoryWithPresets(item.slug);
+  // Handler for applying a preset from the drawer
+  const handleApplyPreset = async (preset: MaterialPreset) => {
+    if (!selectedObject) return;
 
-      if (result && result.presets) {
-        setFooterPresets(result.presets);
-      } else {
-        setFooterPresets([]);
+    setSelectedPresetId(preset.id);
+
+    const color = preset.color || '#cccccc';
+    const colorHex = parseInt(color.replace('#', ''), 16);
+
+    setColor(colorHex);
+    setRoughness(preset.roughness);
+    setMetalness(preset.metalness);
+
+    const THREE = await import('three');
+
+    const physicalProps = preset.physical_props;
+
+    selectedObject.traverse((child: any) => {
+      if (child.isMesh && child.material) {
+        const material = new THREE.MeshPhysicalMaterial({
+          color: colorHex,
+          metalness: preset.metalness,
+          roughness: preset.roughness,
+          clearcoat: preset.clearcoat ?? (preset.roughness < 0.2 ? 0.5 : 0),
+          clearcoatRoughness: physicalProps?.clearcoatRoughness ?? 0.1,
+          envMapIntensity: physicalProps?.envMapIntensity ?? 1.5,
+        });
+        child.material = material;
       }
-    } catch (error) {
-      console.error('Failed to fetch presets:', error);
-      setFooterPresets([]);
-    } finally {
-      setIsLoadingFooter(false);
-    }
-  };
+    });
 
-  // Handler for opening full overlay
-  const handleBrowseCategory = (categorySlug: string) => {
-    setOverlayCategory(categorySlug);
-    setIsOverlayOpen(true);
-  };
-
-  // Handler for closing overlay
-  const handleCloseOverlay = () => {
-    setIsOverlayOpen(false);
+    console.log(`✅ Applied preset "${preset.name}" to "${selectedObject.name}"`);
   };
 
   return (
@@ -660,94 +636,37 @@ export function MaterialSelector() {
                 <span style={styles.swatchLabel}>
                   {CATEGORIES[categoryId]?.label || categoryId}
                 </span>
-
-                {/* Browse more link on hover for subcategories */}
-                {hoveredCategory === categoryId && (isMetalCategory || isStoneCategory || isFabricCategory || isWoodCategory) && (
-                  <button
-                    style={styles.browseMoreButton}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Open with the center item's category
-                      const defaultSub = isMetalCategory ? 'gold' : isStoneCategory ? 'marble' : isFabricCategory ? 'cotton' : 'wood';
-                      handleBrowseCategory(defaultSub);
-                    }}
-                  >
-                    Browse all
-                  </button>
-                )}
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Footer with Presets or Browse All Button */}
+      {/* Footer with Browse Variations Button */}
       <div style={styles.footer}>
-        {isLoadingFooter ? (
-          <div className="flex items-center justify-center py-4">
-            <Loader2 className="w-5 h-5 text-zinc-400 animate-spin" />
-          </div>
-        ) : footerPresets.length > 0 ? (
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                {selectedMaterialId?.category === 'metal' || selectedMaterialId?.category === 'stone' || selectedMaterialId?.category === 'fabric'
-                  ? `${selectedMaterialId.id.replace(selectedMaterialId.category + '-', '')} Variations`
-                  : 'Variations'}
-              </p>
-              <button
-                onClick={() => handleBrowseCategory(overlayCategory)}
-                className="text-xs text-cta-orange hover:text-amber-400 transition-colors flex items-center gap-1"
-              >
-                View All <ChevronRight className="w-3 h-3" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(40px,1fr))] gap-2 pb-2">
-              {footerPresets.map((preset) => (
-                <button
-                  key={preset.id}
-                  onClick={() => handlePresetClick(preset)}
-                  className="group relative aspect-square rounded-full overflow-hidden border border-zinc-200 hover:border-cta-orange transition-all focus:outline-none focus:ring-2 focus:ring-cta-orange/50"
-                  title={preset.name}
-                >
-                  <img
-                    src={preset.preview_url || ''}
-                    alt={preset.name}
-                    className="w-full h-full object-cover"
-                  />
-                  {selectedPresetId === preset.id && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                      <div className="w-2 h-2 bg-white rounded-full shadow-sm" />
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
+        {selectedMaterialId ? (
+          <button
+            onClick={() => setIsDrawerOpen(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 transition-colors text-sm font-medium"
+          >
+            <span>Browse Variations</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
         ) : (
-          <>
-            <button
-              onClick={() => handleBrowseCategory('gold')}
-              style={styles.browseButton}
-              className="group"
-            >
-              <Grid3X3 style={{ width: 16, height: 16 }} />
-              <span>Browse All Materials</span>
-              <ChevronRight style={{ width: 14, height: 14, opacity: 0.5 }} className="group-hover:translate-x-0.5 transition-transform" />
-            </button>
-            <p style={styles.footerText}>
-              Hover over categories · Click to apply
-            </p>
-          </>
+          <p className="text-xs text-zinc-500 text-center py-2">
+            Select a material to browse variations
+          </p>
         )}
       </div>
 
-      {/* Material Preview Overlay */}
-      <MaterialPreviewOverlay
-        isOpen={isOverlayOpen}
-        onClose={handleCloseOverlay}
-        materialType={overlayCategory}
+      {/* Variations Drawer */}
+      <VariationsDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        categorySlug={selectedCategorySlug}
+        categoryName={selectedCategoryName}
+        onApplyPreset={handleApplyPreset}
+        selectedPresetId={selectedPresetId}
       />
     </div>
   );
@@ -825,6 +744,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
 
   // Wrapper for each category (popup + label) - responsive sizing
+  // Padding creates generous hover zone covering full popup height
   swatchWrapper: {
     position: 'relative',
     display: 'flex',
@@ -834,6 +754,13 @@ const styles: Record<string, React.CSSProperties> = {
     flex: '1 1 0', // Allow growing and shrinking equally
     minWidth: '46px', // Minimum width for smallest swatch
     maxWidth: '70px', // Maximum width to prevent over-expansion
+    // Add padding to create larger hover detection area
+    paddingTop: '110px', // Cover 2 items above (2 * 52px + buffer)
+    paddingBottom: '110px', // Cover 2 items below
+    paddingLeft: '8px',
+    paddingRight: '8px',
+    marginTop: '-110px', // Compensate for padding to maintain layout
+    marginBottom: '-110px',
   } as React.CSSProperties,
 
   // Vertical list of material variations (popup) - fixed height container
@@ -907,20 +834,6 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: '4px',
   } as React.CSSProperties,
 
-  // Browse more button
-  browseMoreButton: {
-    marginTop: '4px',
-    padding: '2px 8px',
-    fontSize: '10px',
-    fontWeight: 500,
-    color: '#f59e0b',
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
-    border: '1px solid rgba(245, 158, 11, 0.3)',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    transition: 'all 0.15s ease',
-  } as React.CSSProperties,
-
   // Tooltip on hover - subtle label
   tooltip: {
     position: 'absolute',
@@ -940,36 +853,10 @@ const styles: Record<string, React.CSSProperties> = {
     zIndex: 9999,
   } as React.CSSProperties,
 
-
   footer: {
     padding: '12px 24px',
     borderTop: '1px solid #e5e7eb',
     backgroundColor: '#f9fafb',
-  },
-
-  browseButton: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px',
-    width: '100%',
-    padding: '10px 16px',
-    marginBottom: '8px',
-    backgroundColor: '#18181b',
-    color: '#ffffff',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '13px',
-    fontWeight: 500,
-    cursor: 'pointer',
-    transition: 'background-color 0.2s',
-  } as React.CSSProperties,
-
-  footerText: {
-    margin: 0,
-    fontSize: '11px',
-    color: '#9ca3af',
-    textAlign: 'center',
   },
 };
 
