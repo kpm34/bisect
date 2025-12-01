@@ -606,6 +606,12 @@ export function MaterialSelector() {
                     const itemRoughness = isSubcategory ? (item as any).roughness : (item as MaterialConfig).properties.roughness;
                     const itemMetalness = isSubcategory ? (item as any).metalness : (item as MaterialConfig).properties.metallic;
 
+                    // Calculate top position: center (index 2) at 0, others offset above/below
+                    // Each item is 46px + 6px margin = 52px
+                    const itemHeight = 52;
+                    const centerIndex = 2;
+                    const topOffset = isCenter ? 0 : (displayIndex - centerIndex) * itemHeight;
+
                     return (
                       <li
                         key={itemId}
@@ -613,6 +619,7 @@ export function MaterialSelector() {
                           ...styles.variationItem,
                           opacity: isVisible ? 1 : 0,
                           pointerEvents: isVisible ? 'auto' : 'none',
+                          top: isCenter ? 0 : `${topOffset}px`,
                           ...(isCenter ? styles.variationItemCenter : {})
                         }}
                         onClick={() => {
@@ -828,7 +835,7 @@ const styles: Record<string, React.CSSProperties> = {
     maxWidth: '70px', // Maximum width to prevent over-expansion
   } as React.CSSProperties,
 
-  // Vertical list of material variations (popup)
+  // Vertical list of material variations (popup) - fixed height container
   variationList: {
     position: 'relative',
     listStyle: 'none',
@@ -839,6 +846,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     zIndex: 99,
     transition: 'z-index 0.2s',
+    height: '52px', // Fixed height = center swatch only (46px + 6px margin)
   } as React.CSSProperties,
 
   variationListHovered: {
@@ -850,13 +858,13 @@ const styles: Record<string, React.CSSProperties> = {
     width: '46px',
     height: '46px',
     margin: '3px 0',
-    position: 'relative',
+    position: 'absolute',
     cursor: 'pointer',
     transition: 'opacity 0.2s ease, transform 0.15s ease',
   } as React.CSSProperties,
 
   variationItemCenter: {
-    // Center variation always visible
+    position: 'relative', // Center stays in flow to maintain container height
   },
 
   // The circular swatch itself - flat sticker style
