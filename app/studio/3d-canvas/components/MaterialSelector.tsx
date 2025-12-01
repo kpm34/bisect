@@ -610,7 +610,7 @@ export function MaterialSelector() {
                     // Each item is 46px + 6px margin = 52px
                     const itemHeight = 52;
                     const centerIndex = 2;
-                    const topOffset = isCenter ? 0 : (displayIndex - centerIndex) * itemHeight;
+                    const topOffset = (displayIndex - centerIndex) * itemHeight;
 
                     return (
                       <li
@@ -619,8 +619,7 @@ export function MaterialSelector() {
                           ...styles.variationItem,
                           opacity: isVisible ? 1 : 0,
                           pointerEvents: isVisible ? 'auto' : 'none',
-                          top: isCenter ? 0 : `${topOffset}px`,
-                          ...(isCenter ? styles.variationItemCenter : {})
+                          top: `${topOffset}px`, // All items use absolute positioning now
                         }}
                         onClick={() => {
                           if (isSubcategory) {
@@ -760,6 +759,7 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     height: '100%',
     backgroundColor: '#ffffff',
+    overflow: 'visible', // Allow material popups to overflow container
   },
 
   header: {
@@ -799,6 +799,7 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     gap: '16px',
     padding: '24px',
+    overflow: 'visible', // Allow material popups to overflow
   },
 
   sectionTitle: {
@@ -814,13 +815,13 @@ const styles: Record<string, React.CSSProperties> = {
   swatchContainer: {
     display: 'flex',
     justifyContent: 'space-evenly', // Distribute evenly across available width
-    alignItems: 'flex-end',
+    alignItems: 'flex-start', // Align to top so all columns start at same point
     gap: '8px', // Minimum gap between items
-    paddingTop: '60px',
+    paddingTop: '120px', // Room for 2 items above center (2 * 52px = 104px + buffer)
     paddingBottom: '16px',
     flexWrap: 'nowrap', // Keep all in one row
     maxWidth: '100%',
-    overflow: 'hidden', // Prevent overflow
+    overflow: 'visible', // Allow popups to overflow
   },
 
   // Wrapper for each category (popup + label) - responsive sizing
@@ -845,8 +846,8 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     alignItems: 'center',
     zIndex: 99,
-    transition: 'z-index 0.2s',
-    height: '52px', // Fixed height = center swatch only (46px + 6px margin)
+    height: '52px', // Fixed height - center swatch only (46px + 6px margin)
+    overflow: 'visible', // Allow items to overflow above/below
   } as React.CSSProperties,
 
   variationListHovered: {
@@ -859,12 +860,14 @@ const styles: Record<string, React.CSSProperties> = {
     height: '46px',
     margin: '3px 0',
     position: 'absolute',
+    left: '50%',
+    transform: 'translateX(-50%)', // Center horizontally
     cursor: 'pointer',
-    transition: 'opacity 0.2s ease, transform 0.15s ease',
+    transition: 'opacity 0.2s ease',
   } as React.CSSProperties,
 
   variationItemCenter: {
-    position: 'relative', // Center stays in flow to maintain container height
+    // Center item also absolute - no longer relative to prevent layout shift
   },
 
   // The circular swatch itself - flat sticker style
