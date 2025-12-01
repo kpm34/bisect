@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -99,6 +101,7 @@ export default function DocsPage() {
               <ul className="space-y-2">
                 <li><a href="#3d-viewport" className="text-sm text-text-primary/70 hover:text-accent-purple transition-colors">Viewport Controls</a></li>
                 <li><a href="#3d-import" className="text-sm text-text-primary/70 hover:text-accent-purple transition-colors">Import Formats</a></li>
+                <li><a href="#3d-primitives" className="text-sm text-text-primary/70 hover:text-accent-purple transition-colors">Primitive Shapes</a></li>
                 <li><a href="#3d-ai" className="text-sm text-text-primary/70 hover:text-accent-purple transition-colors">AI Scene Editing</a></li>
                 <li><a href="#3d-materials" className="text-sm text-text-primary/70 hover:text-accent-purple transition-colors">Materials</a></li>
               </ul>
@@ -334,7 +337,7 @@ export default function DocsPage() {
               </div>
               <div>
                 <h2 className="text-2xl font-sans font-bold text-charcoal">3D Studio</h2>
-                <p className="text-sm text-text-primary/60">Three.js-powered 3D scene editing with AI</p>
+                <p className="text-sm text-text-primary/60">React Three Fiber-powered 3D scene editing with AI</p>
               </div>
             </div>
 
@@ -343,22 +346,59 @@ export default function DocsPage() {
               <div className="bg-white rounded-xl border border-charcoal/10 p-6">
                 <h3 className="text-lg font-semibold text-charcoal mb-4">Viewport Controls</h3>
                 <p className="text-text-primary/70 mb-4">
-                  Navigate the 3D viewport using mouse and keyboard controls.
+                  Navigate the 3D viewport using Blender-style mouse and keyboard controls.
                 </p>
 
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-charcoal/5 rounded-lg text-center">
-                    <div className="font-mono text-accent-purple mb-2">Left Click + Drag</div>
+                <div className="grid md:grid-cols-2 gap-4 mb-6">
+                  <div className="p-4 bg-charcoal/5 rounded-lg">
+                    <div className="font-mono text-accent-purple mb-2">Left Click</div>
+                    <p className="text-sm text-text-primary/60">Select objects in the scene</p>
+                  </div>
+                  <div className="p-4 bg-charcoal/5 rounded-lg">
+                    <div className="font-mono text-accent-purple mb-2">Middle Mouse Button</div>
                     <p className="text-sm text-text-primary/60">Orbit camera around scene</p>
                   </div>
-                  <div className="p-4 bg-charcoal/5 rounded-lg text-center">
-                    <div className="font-mono text-accent-purple mb-2">Right Click + Drag</div>
+                  <div className="p-4 bg-charcoal/5 rounded-lg">
+                    <div className="font-mono text-accent-purple mb-2">MMB + Shift</div>
                     <p className="text-sm text-text-primary/60">Pan camera</p>
                   </div>
-                  <div className="p-4 bg-charcoal/5 rounded-lg text-center">
+                  <div className="p-4 bg-charcoal/5 rounded-lg">
+                    <div className="font-mono text-accent-purple mb-2">Right Click + Drag</div>
+                    <p className="text-sm text-text-primary/60">Pan camera (alternative)</p>
+                  </div>
+                  <div className="p-4 bg-charcoal/5 rounded-lg">
                     <div className="font-mono text-accent-purple mb-2">Scroll Wheel</div>
                     <p className="text-sm text-text-primary/60">Zoom in/out</p>
                   </div>
+                  <div className="p-4 bg-charcoal/5 rounded-lg">
+                    <div className="font-mono text-accent-purple mb-2">H</div>
+                    <p className="text-sm text-text-primary/60">Toggle scene hierarchy panel</p>
+                  </div>
+                </div>
+
+                <h4 className="font-medium text-charcoal mb-3">Transform Controls (Blender-style)</h4>
+                <p className="text-text-primary/70 mb-3 text-sm">
+                  When an object is selected, use these keyboard shortcuts to switch transform modes:
+                </p>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="p-3 bg-accent-purple/10 rounded-lg text-center">
+                    <kbd className="px-2 py-1 bg-charcoal/10 rounded font-mono text-sm">G</kbd>
+                    <p className="text-xs text-text-primary/60 mt-1">Grab / Move</p>
+                  </div>
+                  <div className="p-3 bg-accent-purple/10 rounded-lg text-center">
+                    <kbd className="px-2 py-1 bg-charcoal/10 rounded font-mono text-sm">R</kbd>
+                    <p className="text-xs text-text-primary/60 mt-1">Rotate</p>
+                  </div>
+                  <div className="p-3 bg-accent-purple/10 rounded-lg text-center">
+                    <kbd className="px-2 py-1 bg-charcoal/10 rounded font-mono text-sm">S</kbd>
+                    <p className="text-xs text-text-primary/60 mt-1">Scale</p>
+                  </div>
+                </div>
+
+                <h4 className="font-medium text-charcoal mt-6 mb-3">Object Actions</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                  <div className="flex items-center gap-2"><kbd className="px-2 py-1 bg-charcoal/10 rounded">Delete</kbd> Remove object</div>
+                  <div className="flex items-center gap-2"><kbd className="px-2 py-1 bg-charcoal/10 rounded">Backspace</kbd> Remove object</div>
                 </div>
               </div>
 
@@ -368,23 +408,45 @@ export default function DocsPage() {
                   <Upload size={20} className="text-accent-purple" />
                   Import Formats
                 </h3>
+                <p className="text-text-primary/70 mb-4 text-sm">
+                  Drag and drop files onto the canvas or use the file picker. Models are auto-scaled and centered at origin.
+                </p>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="p-3 border border-accent-purple/20 rounded-lg bg-accent-purple/5">
-                    <code className="text-accent-purple font-mono">.gltf / .glb</code>
-                    <p className="text-sm text-text-primary/60 mt-1">Recommended. Full PBR material support.</p>
+                    <code className="text-accent-purple font-mono">.glb</code>
+                    <p className="text-sm text-text-primary/60 mt-1">Recommended. Binary GLTF with embedded textures.</p>
+                  </div>
+                  <div className="p-3 border border-accent-purple/20 rounded-lg bg-accent-purple/5">
+                    <code className="text-accent-purple font-mono">.gltf</code>
+                    <p className="text-sm text-text-primary/60 mt-1">JSON format with external textures. Full PBR support.</p>
                   </div>
                   <div className="p-3 border border-charcoal/10 rounded-lg">
                     <code className="text-accent-purple font-mono">.obj</code>
-                    <p className="text-sm text-text-primary/60 mt-1">With .mtl material file</p>
+                    <p className="text-sm text-text-primary/60 mt-1">Wavefront OBJ. Basic geometry without materials.</p>
                   </div>
                   <div className="p-3 border border-charcoal/10 rounded-lg">
-                    <code className="text-accent-purple font-mono">.fbx</code>
-                    <p className="text-sm text-text-primary/60 mt-1">Autodesk format (experimental)</p>
+                    <code className="text-accent-purple font-mono">.splinecode</code>
+                    <p className="text-sm text-text-primary/60 mt-1">Spline.design scenes with materials and animations.</p>
                   </div>
-                  <div className="p-3 border border-charcoal/10 rounded-lg">
-                    <code className="text-accent-purple font-mono">.spline</code>
-                    <p className="text-sm text-text-primary/60 mt-1">Spline.design project files</p>
-                  </div>
+                </div>
+                <p className="text-xs text-text-primary/40 mt-4">
+                  Export from Blender, Maya, Cinema 4D, Spline, or any 3D software.
+                </p>
+              </div>
+
+              {/* Primitive Shapes */}
+              <div id="3d-primitives" className="bg-white rounded-xl border border-charcoal/10 p-6">
+                <h3 className="text-lg font-semibold text-charcoal mb-4 flex items-center gap-2">
+                  <Cuboid size={20} className="text-accent-purple" />
+                  Primitive Shapes
+                </h3>
+                <p className="text-text-primary/70 mb-4 text-sm">
+                  Use the shape toolbar at the bottom of the canvas to add basic 3D primitives to your scene.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <span className="px-4 py-2 bg-charcoal/10 text-charcoal text-sm rounded-lg">Box</span>
+                  <span className="px-4 py-2 bg-charcoal/10 text-charcoal text-sm rounded-lg">Sphere</span>
+                  <span className="px-4 py-2 bg-charcoal/10 text-charcoal text-sm rounded-lg">Plane</span>
                 </div>
               </div>
 

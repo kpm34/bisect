@@ -172,7 +172,7 @@ function MCPBridgeConnector() {
 
 function EditorContent() {
   const searchParams = useSearchParams();
-  const projectId = searchParams?.get('project'); // Get project ID from URL
+  const projectId = searchParams?.get('project') ?? null; // Get project ID from URL
 
   const [sceneFile, setSceneFile] = useState<File | null>(null);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(projectId);
@@ -298,14 +298,14 @@ function EditorContent() {
 
   /**
    * Handle file upload
-   * Supports: .splinecode, .gltf, .glb
+   * Supports: .gltf, .glb, .obj, .splinecode
    */
   const handleFileUpload = async (file: File) => {
     const ext = file.name.toLowerCase().split('.').pop();
-    const supported = ['splinecode', 'gltf', 'glb', 'fbx', 'obj'];
+    const supported = ['gltf', 'glb', 'obj', 'splinecode'];
 
     if (!ext || !supported.includes(ext)) {
-      alert(`Please upload a supported 3D file:\n- GLTF/GLB (.gltf, .glb)\n- Spline (.splinecode)\n- FBX (.fbx)\n- OBJ (.obj)`);
+      alert(`Please upload a supported 3D file:\n- GLTF (.gltf)\n- GLB (.glb)\n- OBJ (.obj)\n- Spline (.splinecode)`);
       return;
     }
 

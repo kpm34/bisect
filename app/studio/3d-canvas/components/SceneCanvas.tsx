@@ -1,11 +1,13 @@
 'use client';
 
-import { Canvas, useThree } from '@react-three/fiber';
+import { Canvas, useThree, useLoader } from '@react-three/fiber';
 import { OrbitControls, Environment, Grid, PerspectiveCamera, useGLTF, TransformControls } from '@react-three/drei';
 import { EffectComposer, Outline, Bloom, Noise, Vignette, Glitch } from '@react-three/postprocessing';
 import { Physics, RigidBody } from '@react-three/rapier';
 import { Suspense, useState, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { useSelection } from '../r3f/SceneSelectionContext';
 import { ErrorBoundary } from './ErrorBoundary';
 import GlitchLoader from './GlitchLoader';
@@ -126,7 +128,7 @@ export default function R3FCanvas({
           <Suspense fallback={null}>
             <Physics gravity={[0, -9.81, 0]}>
               {fileUrl && sceneFile && (
-                <GLBScene
+                <SceneLoader
                   url={fileUrl}
                   fileName={sceneFile.name}
                   setIsSceneReady={setIsSceneReady}
@@ -506,6 +508,57 @@ function SceneOrbitControls() {
 }
 
 /**
+ * SceneLoader - Routes to appropriate loader based on file extension
+ */
+function SceneLoader({
+  url,
+  fileName,
+  setIsSceneReady,
+  setLoadingProgress
+}: {
+  url: string;
+  fileName: string;
+  setIsSceneReady?: (ready: boolean) => void;
+  setLoadingProgress?: (progress: number) => void;
+}) {
+  const ext = fileName.toLowerCase().split('.').pop();
+
+  switch (ext) {
+    case 'glb':
+    case 'gltf':
+      return (
+        <GLBScene
+          url={url}
+          fileName={fileName}
+          setIsSceneReady={setIsSceneReady}
+          setLoadingProgress={setLoadingProgress}
+        />
+      );
+    case 'obj':
+      return (
+        <OBJScene
+          url={url}
+          fileName={fileName}
+          setIsSceneReady={setIsSceneReady}
+          setLoadingProgress={setLoadingProgress}
+        />
+      );
+    case 'splinecode':
+      return (
+        <SplineScene
+          url={url}
+          fileName={fileName}
+          setIsSceneReady={setIsSceneReady}
+          setLoadingProgress={setLoadingProgress}
+        />
+      );
+    default:
+      console.warn(`⚠️ Unsupported file format: ${ext}`);
+      return null;
+  }
+}
+
+/**
  * GLBScene - GLTF/GLB loader with progress tracking
  */
 function GLBScene({
@@ -619,6 +672,205 @@ function GLBScene({
 }
 
 /**
+ * OBJScene - OBJ loader with progress tracking
+ */
+function OBJScene({
+  url,
+  fileName,
+  setIsSceneReady,
+  setLoadingProgress
+}: {
+  url: string;
+  fileName: string;
+  setIsSceneReady?: (ready: boolean) => void;
+  setLoadingProgress?: (progress: number) => void;
+}) {
+  const { setSelectedObject } = useSelection();
+  const [hasNotified, setHasNotified] = useState(false);
+  const groupRef = useRef<THREE.Group>(null);
+
+  // Reset when URL changes
+  useEffect(() => {
+    setLoadingProgress?.(0);
+    setHasNotified(false);
+  }, [url]);
+
+  // Load OBJ file
+  const obj = useLoader(OBJLoader, url, (loader) => {
+    loader.manager.onProgress = (item, loaded, total) => {
+      const progress = (loaded / total) * 100;
+      setLoadingProgress?.(progress);
+      console.log(`📦 Loading OBJ: ${progress.toFixed(0)}%`);
+    };
+    loader.manager.onError = (url: string) => {
+      console.warn('⚠️ OBJ load failed:', url);
+    };
+  });
+
+  // Process scene once loaded
+  useEffect(() => {
+    if (!obj || hasNotified) return;
+
+    console.log('✅ Processing OBJ scene');
+
+    // Calculate bounding box
+    const box = new THREE.Box3().setFromObject(obj);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+
+    // Scale to fit in view (max dimension = 5 units)
+    const maxDim = Math.max(size.x, size.y, size.z);
+    let scale = 1;
+    if (maxDim > 0) {
+      scale = 5 / maxDim;
+      obj.scale.setScalar(scale);
+    }
+
+    // Position at origin
+    const scaledCenterX = center.x * scale;
+    const scaledCenterZ = center.z * scale;
+    const scaledMinY = box.min.y * scale;
+
+    obj.position.set(-scaledCenterX, -scaledMinY, -scaledCenterZ);
+
+    // Add default material if none exists
+    obj.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const mesh = child as THREE.Mesh;
+        if (!mesh.material || (Array.isArray(mesh.material) && mesh.material.length === 0)) {
+          mesh.material = new THREE.MeshStandardMaterial({ color: 0x888888 });
+        }
+      }
+    });
+
+    console.log(`📍 OBJ positioned at origin, scale: ${scale.toFixed(3)}`);
+
+    setLoadingProgress?.(100);
+    setTimeout(() => {
+      setIsSceneReady?.(true);
+      console.log('✅ OBJ scene ready');
+    }, 100);
+
+    setHasNotified(true);
+  }, [obj, setIsSceneReady, setLoadingProgress, hasNotified]);
+
+  // Handle clicks
+  const handleClick = (event: any) => {
+    event.stopPropagation();
+    const object = event.object;
+    console.log('🖱️ Clicked OBJ object:', object.name || object.type);
+    setSelectedObject(object);
+  };
+
+  if (!obj) return null;
+
+  return <primitive ref={groupRef} object={obj} onClick={handleClick} />;
+}
+
+/**
+ * SplineScene - Spline (.splinecode) loader
+ * Uses @splinetool/runtime for loading Spline scenes
+ */
+function SplineScene({
+  url,
+  fileName,
+  setIsSceneReady,
+  setLoadingProgress
+}: {
+  url: string;
+  fileName: string;
+  setIsSceneReady?: (ready: boolean) => void;
+  setLoadingProgress?: (progress: number) => void;
+}) {
+  const { setSelectedObject } = useSelection();
+  const { scene } = useThree();
+  const containerRef = useRef<THREE.Group>(null);
+  const [splineScene, setSplineScene] = useState<THREE.Object3D | null>(null);
+  const [hasNotified, setHasNotified] = useState(false);
+
+  // Load Spline scene
+  useEffect(() => {
+    let mounted = true;
+    setLoadingProgress?.(10);
+
+    const loadSpline = async () => {
+      try {
+        console.log('📦 Loading Spline scene...');
+        setLoadingProgress?.(30);
+
+        // Dynamic import to avoid SSR issues
+        const { SplineLoader } = await import('@splinetool/loader');
+        const loader = new SplineLoader();
+
+        setLoadingProgress?.(50);
+
+        loader.load(
+          url,
+          (spline) => {
+            if (!mounted) return;
+            console.log('✅ Spline scene loaded');
+            setLoadingProgress?.(80);
+
+            // Process the loaded scene
+            const box = new THREE.Box3().setFromObject(spline);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+
+            // Scale to fit
+            const maxDim = Math.max(size.x, size.y, size.z);
+            if (maxDim > 0) {
+              const scale = 5 / maxDim;
+              spline.scale.setScalar(scale);
+
+              const scaledCenterX = center.x * scale;
+              const scaledCenterZ = center.z * scale;
+              const scaledMinY = box.min.y * scale;
+              spline.position.set(-scaledCenterX, -scaledMinY, -scaledCenterZ);
+            }
+
+            setSplineScene(spline);
+            setLoadingProgress?.(100);
+
+            setTimeout(() => {
+              setIsSceneReady?.(true);
+              console.log('✅ Spline scene ready');
+            }, 100);
+          },
+          (progress) => {
+            const percent = 50 + (progress.loaded / progress.total) * 30;
+            setLoadingProgress?.(percent);
+          },
+          (error) => {
+            console.error('❌ Spline load error:', error);
+            setLoadingProgress?.(0);
+          }
+        );
+      } catch (error) {
+        console.error('❌ Failed to load Spline:', error);
+      }
+    };
+
+    loadSpline();
+
+    return () => {
+      mounted = false;
+    };
+  }, [url, setIsSceneReady, setLoadingProgress]);
+
+  // Handle clicks
+  const handleClick = (event: any) => {
+    event.stopPropagation();
+    const object = event.object;
+    console.log('🖱️ Clicked Spline object:', object.name || object.type);
+    setSelectedObject(object);
+  };
+
+  if (!splineScene) return null;
+
+  return <primitive ref={containerRef} object={splineScene} onClick={handleClick} />;
+}
+
+/**
  * ErrorFallback - Error state for failed loads
  */
 function ErrorFallback({ error }: { error: Error }) {
@@ -668,7 +920,7 @@ function FileUploadOverlay({
     console.log('📁 Files dropped:', files.map(f => f.name));
 
     const validFile = files.find(f =>
-      /\.(glb|gltf|fbx|obj|splinecode)$/i.test(f.name)
+      /\.(glb|gltf|obj|splinecode)$/i.test(f.name)
     );
 
     if (validFile) {
@@ -676,7 +928,7 @@ function FileUploadOverlay({
       onFileSelect(validFile);
     } else if (files.length > 0) {
       console.warn('❌ No valid 3D file found. Dropped files:', files.map(f => f.name));
-      alert(`Unsupported file type: ${files[0].name}\n\nSupported formats: GLB, GLTF, FBX, OBJ, Spline`);
+      alert(`Unsupported file type: ${files[0].name}\n\nSupported formats: GLB, GLTF, OBJ, Spline`);
     }
   };
 
@@ -733,13 +985,13 @@ function FileUploadOverlay({
           Choose File
           <input
             type="file"
-            accept=".glb,.gltf,.fbx,.obj,.splinecode"
+            accept=".glb,.gltf,.obj,.splinecode"
             onChange={handleFileInput}
             className="hidden"
           />
         </label>
         <div className="text-gray-400 text-sm mt-4">
-          Supports: GLB, GLTF, FBX, OBJ, Spline
+          Supports: GLB, GLTF, OBJ, Spline
         </div>
       </div>
     </div>

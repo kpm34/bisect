@@ -1,0 +1,66 @@
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Search, Plus, Bell } from 'lucide-react';
+import { Sidebar } from './Sidebar';
+import { UserMenu } from '../shared/UserMenu';
+
+interface DashboardShellProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function DashboardShell({ children, className = '' }: DashboardShellProps) {
+  const pathname = usePathname() ?? '/dashboard';
+
+  return (
+    <div className={`flex h-screen bg-ash-grey-100 text-ash-grey-900 overflow-hidden ${className}`}>
+      {/* Sidebar */}
+      <Sidebar currentPath={pathname} />
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Header */}
+        <header className="h-14 border-b border-ash-grey-200 flex items-center px-6 justify-between bg-white shrink-0">
+          {/* Search Bar */}
+          <div className="flex-1 max-w-md">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ash-grey-400" />
+              <input
+                type="text"
+                placeholder="Search projects, assets..."
+                className="w-full pl-10 pr-4 py-2 bg-ash-grey-50 border border-ash-grey-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cta-orange focus:border-transparent placeholder:text-ash-grey-400"
+              />
+              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-xs bg-ash-grey-100 border border-ash-grey-200 rounded text-ash-grey-500">
+                K
+              </kbd>
+            </div>
+          </div>
+
+          {/* Right Actions */}
+          <div className="flex items-center gap-3">
+            <button className="flex items-center gap-2 px-4 py-2 bg-cta-orange hover:bg-cta-orange-hover text-white rounded-lg text-sm font-medium transition-colors">
+              <Plus className="w-4 h-4" />
+              <span>New Project</span>
+            </button>
+
+            <button className="p-2 hover:bg-ash-grey-100 rounded-lg transition-colors relative">
+              <Bell className="w-5 h-5 text-ash-grey-600" />
+            </button>
+
+            <div className="h-6 w-px bg-ash-grey-200 mx-1" />
+
+            <UserMenu />
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="flex-1 overflow-auto p-6 bg-ash-grey-50">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}

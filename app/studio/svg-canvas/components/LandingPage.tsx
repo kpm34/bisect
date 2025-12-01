@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import {
   ArrowRight,
   Box,
@@ -61,7 +62,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-cta-orange rounded-sm rotate-45"></div>
+              <Image src="/assets/bisect_logo.png" alt="Bisect" width={24} height={24} className="w-6 h-6" />
               <span className="font-sans font-semibold text-charcoal tracking-tight">VectorCraft</span>
             </div>
 
@@ -842,7 +843,7 @@ const LandingPage: React.FC<LandingPageProps> = ({
             {/* Brand Column */}
             <div className="md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-3 h-3 bg-cta-orange rounded-sm rotate-45"></div>
+                <Image src="/assets/bisect_logo.png" alt="Bisect" width={24} height={24} className="w-6 h-6" />
                 <span className="font-sans font-semibold text-charcoal tracking-tight">VectorCraft</span>
               </div>
               <p className="text-sm text-text-primary/60">

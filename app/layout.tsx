@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+// Force dynamic rendering to avoid static generation issues with React context
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: "Bisect - No-Code 3D Platform",
   description: "Connecting creative domains: 3D scenes, vector graphics, and textures with zero learning curve",
