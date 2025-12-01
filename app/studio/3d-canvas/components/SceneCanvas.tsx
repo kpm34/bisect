@@ -1,10 +1,10 @@
 'use client';
 
 import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, Environment, Grid, PerspectiveCamera, useGLTF } from '@react-three/drei';
+import { OrbitControls, Environment, Grid, PerspectiveCamera, useGLTF, TransformControls } from '@react-three/drei';
 import { EffectComposer, Outline, Bloom, Noise, Vignette, Glitch } from '@react-three/postprocessing';
 import { Physics, RigidBody } from '@react-three/rapier';
-import { Suspense, useState, useEffect, useMemo } from 'react';
+import { Suspense, useState, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useSelection } from '../r3f/SceneSelectionContext';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -121,9 +121,6 @@ export default function R3FCanvas({
         {/* Sync R3F scene to SelectionContext */}
         <SceneSync />
 
-        {/* Background click to deselect */}
-        <BackgroundClick />
-
         {/* Scene Content with Error Handling */}
         <ErrorBoundary fallback={(error) => <ErrorFallback error={error} />}>
           <Suspense fallback={null}>
@@ -163,8 +160,11 @@ export default function R3FCanvas({
 
 
 
-        {/* Camera Controls - Option+Drag to orbit, MMB to pan, Scroll to zoom */}
-        <ConditionalOrbitControls />
+        {/* Camera Controls - MMB to orbit, MMB+Shift to pan, Scroll to zoom */}
+        <SceneOrbitControls />
+
+        {/* Transform Gizmo for selected objects */}
+        <TransformGizmo />
 
         {/* Selection Outline */}
         <SelectionOutline />
@@ -293,29 +293,6 @@ function SceneSync() {
 }
 
 /**
- * BackgroundClick - Clears selection when clicking empty space
- */
-function BackgroundClick() {
-  const { setSelectedObject } = useSelection();
-
-  const handleBackgroundClick = () => {
-    console.log('🖱️ Clicked background, clearing selection');
-    setSelectedObject(null);
-  };
-
-  return (
-    <mesh
-      position={[0, 0, -100]}
-      onClick={handleBackgroundClick}
-      visible={false}
-    >
-      <planeGeometry args={[10000, 10000]} />
-      <meshBasicMaterial transparent opacity={0} />
-    </mesh>
-  );
-}
-
-/**
  * SelectionOutline - Professional Blender-style outline using @react-three/postprocessing v2.16.5
  *
  * Features from v3.0.4 API that work in v2.16.5:
@@ -421,26 +398,81 @@ function AddedObjectsRenderer() {
 }
 
 /**
- * ConditionalOrbitControls - Enables orbit only when Alt/Option key is held
+ * TransformGizmo - Blender-style transform controls for selected objects
+ * Shows translate/rotate/scale gizmo when an object is selected
  */
-function ConditionalOrbitControls() {
-  const [altPressed, setAltPressed] = useState(false);
+function TransformGizmo() {
+  const { selectedObject } = useSelection();
+  const [mode, setMode] = useState<'translate' | 'rotate' | 'scale'>('translate');
+  const transformRef = useRef<any>(null);
+
+  // Keyboard shortcuts for transform modes (G=grab/translate, R=rotate, S=scale)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip if typing in input
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
+      switch (e.key.toLowerCase()) {
+        case 'g': // Grab/Move
+          setMode('translate');
+          break;
+        case 'r': // Rotate
+          setMode('rotate');
+          break;
+        case 's': // Scale
+          setMode('scale');
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Don't render if no object selected
+  if (!selectedObject) {
+    return null;
+  }
+
+  return (
+    <TransformControls
+      ref={transformRef}
+      object={selectedObject}
+      mode={mode}
+      size={0.75}
+      showX={true}
+      showY={true}
+      showZ={true}
+    />
+  );
+}
+
+/**
+ * SceneOrbitControls - MMB to orbit, MMB+Shift to pan, scroll to zoom
+ * Left click is reserved for object selection
+ */
+function SceneOrbitControls() {
+  const [shiftPressed, setShiftPressed] = useState(false);
+  const controlsRef = useRef<any>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.altKey || e.key === 'Alt') {
-        setAltPressed(true);
+      if (e.shiftKey || e.key === 'Shift') {
+        setShiftPressed(true);
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (!e.altKey || e.key === 'Alt') {
-        setAltPressed(false);
+      if (!e.shiftKey || e.key === 'Shift') {
+        setShiftPressed(false);
       }
     };
 
-    // Also clear on window blur to avoid stuck Alt key
-    const handleBlur = () => setAltPressed(false);
+    // Clear on window blur to avoid stuck Shift key
+    const handleBlur = () => setShiftPressed(false);
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
@@ -455,19 +487,19 @@ function ConditionalOrbitControls() {
 
   return (
     <OrbitControls
+      ref={controlsRef}
       makeDefault
       enableDamping
       dampingFactor={0.05}
       minDistance={0.01}
       maxDistance={500}
-      maxPolarAngle={Math.PI / 2}
-      enableRotate={altPressed}
+      enableRotate={true}
       enableZoom={true}
       enablePan={true}
       mouseButtons={{
-        LEFT: altPressed ? THREE.MOUSE.ROTATE : THREE.MOUSE.PAN,
-        MIDDLE: THREE.MOUSE.PAN,
-        RIGHT: THREE.MOUSE.PAN,
+        LEFT: undefined, // Disable left click for orbit - reserved for selection
+        MIDDLE: shiftPressed ? THREE.MOUSE.PAN : THREE.MOUSE.ROTATE,
+        RIGHT: THREE.MOUSE.PAN, // Right click as fallback pan
       }}
     />
   );
