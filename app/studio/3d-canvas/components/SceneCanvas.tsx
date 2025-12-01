@@ -225,13 +225,6 @@ function EditorUIOverlay({
         </button>
       </div>
 
-      {/* Info Badge */}
-      <div className="absolute bottom-4 right-4 z-10 bg-black/80 text-white px-4 py-2 rounded-lg backdrop-blur-sm">
-        <div className="text-xs font-medium">Bisect - 3D Scene Editor</div>
-        <div className="text-xs text-gray-400 mt-1">
-          {selectedObject ? `Selected: ${selectedObject.name || selectedObject.type}` : 'Click to select'}
-        </div>
-      </div>
 
       {/* Shape Spawner Toolbar */}
       <ShapeSpawnerToolbar />

@@ -65,11 +65,6 @@ export function Shell({
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="text-xs text-neutral-500 font-mono">
-              v0.1.0-alpha
-            </div>
-          </div>
         </nav>
 
         {/* Canvas Area */}
