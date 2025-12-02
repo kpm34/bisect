@@ -155,3 +155,52 @@ export interface AIState {
   messages: ChatMessage[];
   isGenerating: boolean;
 }
+
+// ============== MARKERS ==============
+export interface Marker {
+  id: string;
+  time: number;
+  label: string;
+  color: string;
+}
+
+// ============== KEYFRAMES ==============
+export type KeyframeProperty =
+  | 'positionX' | 'positionY'
+  | 'scaleX' | 'scaleY'
+  | 'rotation'
+  | 'opacity'
+  | 'volume';
+
+export interface Keyframe {
+  id: string;
+  time: number;  // Time relative to clip start (0 = clip start)
+  property: KeyframeProperty;
+  value: number;
+  easing: 'linear' | 'ease-in' | 'ease-out' | 'ease-in-out' | 'bezier';
+  bezierHandles?: { x1: number; y1: number; x2: number; y2: number };
+}
+
+export interface ClipKeyframes {
+  [property: string]: Keyframe[];
+}
+
+// ============== AUDIO MIXING ==============
+export interface AudioMixerTrack {
+  trackId: string;
+  volume: number;       // 0-200
+  pan: number;          // -100 to 100 (left to right)
+  muted: boolean;
+  solo: boolean;
+  // Simple EQ
+  eqLow: number;        // -12 to 12 dB
+  eqMid: number;        // -12 to 12 dB
+  eqHigh: number;       // -12 to 12 dB
+}
+
+// ============== CLIPBOARD ==============
+export interface ClipboardItem {
+  type: 'clip' | 'clips';
+  data: Clip | Clip[];
+  sourceTrackId: string;
+}

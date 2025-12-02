@@ -1,122 +1,174 @@
 # Bisect
 
-**The Cursor of Creative Work** - A unified creative platform that connects AI, 3D, design, and video workflows into one intelligent system.
+**The Glue Between Blender and ComfyUI** - Bringing pro-level 3D and GenAI pipelines to everyday creators without the complexity.
 
-**Version**: 0.1.0 (Beta)
+**Version**: 0.2.0 (Beta)
 **Live**: [bisect.app](https://bisect.app)
 
 ---
 
 ## What is Bisect?
 
-Bisect is **not** another 3D editor competing feature-for-feature with Spline or Vectary. Instead, it's the **connective tissue across creative domains** - an AI-powered workflow orchestrator that lets creators move seamlessly between vector, 3D, texture, and video workflows.
+Bisect is **not** another 3D editor. It's the **bridge between professional tools** - connecting Blender's power and ComfyUI's generative capabilities through a visual interface that everyday creators can actually use.
 
-Think of it as **Cursor/Claude Code for creative professionals**.
+```
+            ┌──────────────┐
+            │   BISECT     │  ← Visual interface (no nodes, no code)
+            │  (The Glue)  │
+            └───────┬──────┘
+                    │
+      ┌─────────────┼─────────────┐
+      │             │             │
+      ▼             ▼             ▼
+┌─────────┐   ┌─────────┐   ┌─────────┐
+│ BLENDER │◄─►│ COMFYUI │◄─►│ BISECT  │
+│  (MCP)  │   │(Workflows)│  │(Studios)│
+└─────────┘   └─────────┘   └─────────┘
+```
 
-### The Problem We Solve
-
-Today's creative pipeline is fragmented:
-- Design a logo in Illustrator
-- Import to Blender for 3D
-- Render in a separate tool
-- Create video in Premiere
-- Export for web somewhere else
-
-Each tool is a silo. Each transition loses context. AI tools exist but don't talk to each other.
-
-### Our Solution
-
-Bisect provides:
-1. **Cross-domain studios** that share context and assets
-2. **AI agents** that understand the full creative pipeline
-3. **Blender bridge** for professional-grade 3D (our moat)
-4. **Generative integrations** (ComfyUI, Hyper3D, Runway)
-5. **Developer-friendly** CLI and APIs
+**The Gap We Fill:**
+- Blender = powerful but steep learning curve
+- ComfyUI = powerful but node complexity
+- Bisect = bridges BOTH for creators who want results, not pipelines
 
 ---
 
-## Example Workflows
+## The Creative Precision Stack
 
-### Product Launch Workflow
-```
-1. Vector Studio: Create/import product logo (AI vectorization)
-2. 3D Studio: Apply logo as decal to product model
-3. Texture Studio: Generate materials for product
-4. 3D Studio: Create immersive landing page scene
-5. Video Studio: Generate product reveal video
-6. Export: Deploy as interactive WebGL experience
-```
+We **build ON, not duplicate**:
 
-### Brand Asset Pipeline
-```
-1. Vector Studio: Design brand elements
-2. Texture Studio: Create branded materials
-3. 3D Studio: Build 3D brand kit (logo, icons, scenes)
-4. Export: React components, GLB files, video assets
-```
-
-### VR/AR Landing Page
-```
-1. 3D Studio: Build immersive scene with hotspots
-2. Configure interactions and animations
-3. Add product configurator with variants
-4. Export as embeddable React component
-5. Deploy with e-commerce integration
-```
+| What We Own | What We Bridge |
+|-------------|----------------|
+| Visual interface | Blender (rendering, physics, animation) |
+| 600+ material presets | ComfyUI (video, lip sync, style transfer) |
+| AI agents | Cloud GPUs (RunPod, Vast.ai) |
+| Cross-studio workflow | Cloud rendering (Render.st, Concierge) |
+| Code export (React, Three.js) | E-commerce (Shopify, WooCommerce) |
 
 ---
 
 ## Studios
 
-| Studio | Purpose | Key Features |
-|--------|---------|--------------|
-| **Vector Studio** | SVG/Logo creation | AI vectorization, 15+ tools, 7 export formats |
-| **Texture Studio** | Material generation | MatCap/PBR via Gemini, normal maps, Blender renders |
-| **3D Studio** | Scene editing | 600+ materials, AI editing, Blender bridge, physics |
-| **Video Studio** | Motion content | AI video generation, ComfyUI workflows (coming) |
-| **Audio Hub** | Music & SFX | AI music (Suno), SFX library, sync to video (coming) |
+| Studio | Purpose | Status |
+|--------|---------|--------|
+| **Vector Studio** | SVG/Logo creation, AI vectorization | 95% |
+| **Texture Studio** | MatCap/PBR generation via Gemini | 90% |
+| **3D Studio** | Scene editing, materials, events, cloner | 85% |
+| **Audio Hub** | Music/SFX library, AI generation | 15% |
+| **Video Studio** | AI video, ComfyUI workflows | 10% |
 
 ---
 
-## Competitive Position
+## Developer Tools
 
-| Category | Competitors | What They Lack |
-|----------|-------------|----------------|
-| **AI 3D Tools** | Meshy, Hyper3D, Tripo | No Blender integration, no agent system |
-| **Creative AI** | Runway, Pika, Kling | Video only, no 3D pipeline, no CLI |
-| **Node Workflows** | ComfyUI | Steep learning curve, no web UI |
-| **Design Tools** | Spline, Vectary | No AI agents, no Blender bridge, no CLI |
-| **Dev Tools** | Cursor, Claude Code | Not creative-focused |
+Bisect provides a complete developer toolkit - CLI, MCP server, and REST APIs.
 
-**Bisect's unique value**: We're the only platform with a live Blender bridge, AI agents that understand cross-domain context, and developer-friendly exports.
+### CLI Tool (v2.0)
+
+```bash
+# Install globally
+cd cli && npm link
+
+# Object operations
+bisect add box --position 0,1,0 --color #FF5500
+bisect select MyCube
+bisect delete
+
+# Transform
+bisect move 1,2,3
+bisect rotate 0,45,0
+bisect scale 2,2,2
+
+# Appearance
+bisect color #3498db
+bisect material gold-polished --category metal
+bisect opacity 0.8
+
+# AI-powered editing
+bisect ai "arrange all objects in a circle"
+bisect ai "make the cube look like marble" --vision
+bisect arrange grid --count 9 --spacing 2
+
+# Events and animation
+bisect event click scale --target OtherCube
+bisect animate bounce --speed 1.5
+
+# Cloner/instancing
+bisect clone --mode radial --count 8 --radius 5
+
+# Scene operations
+bisect scene --json
+bisect screenshot viewport.png
+bisect save myscene.json
+bisect load myscene.json
+
+# Import/export
+bisect import model.glb
+bisect export scene.glb
+bisect export --format react scene.jsx
+
+# Run script
+bisect run automation.bisect
+```
+
+### MCP Server (v2.1)
+
+AI-powered scene manipulation for Claude Code integration:
+
+```javascript
+// AI Tools
+smart_edit({ command: "arrange in a spiral pattern" })
+get_scene_analysis()
+get_screenshot()
+describe_scene()
+
+// Object Tools
+spawn_object({ type: "sphere" })
+select_object({ name: "MyCube" })
+set_material({ preset: "gold-polished" })
+
+// Arrangement Tools
+arrange_objects({ pattern: "circle", count: 8 })
+create_cloner({ mode: "grid", count: 25 })
+
+// Integration Tools
+configure_product({ productId: "helmet-pro", selections: {...} })
+trigger_blender({ operation: "render" })
+export_scene({ format: "react" })
+```
+
+### REST APIs
+
+```bash
+# Materials API (600+ presets)
+GET  /api/materials              # List all materials
+GET  /api/materials?category=metal
+POST /api/materials              # Get details, apply, recommend
+
+# AI API (Agent orchestration)
+GET  /api/ai                     # List capabilities
+POST /api/ai                     # smart_edit, analyze, suggest
+
+# Configurator API (E-commerce)
+POST /api/configurator           # calculate_price, add_to_cart, checkout
+
+# Webhooks API
+POST /api/webhooks/scene/:id     # Scene event notifications
+```
+
+> Full documentation: [docs/developer-tools.md](docs/developer-tools.md)
 
 ---
 
-## Key Differentiators
+## AI Agent System
 
-### 1. Blender Integration (Our Moat)
-- Live MCP bridge to Blender 4.5
-- Professional rendering pipeline
-- Asset round-tripping (Web ↔ Blender)
-- Headless batch rendering
-
-### 2. AI Agent System
-- Natural language scene editing
-- Material agent with 600+ preset knowledge
-- Cross-domain reasoning (SVG → 3D → Video)
-- Context-aware suggestions
-
-### 3. Cross-Domain Pipeline
-- Drag assets between studios
-- Shared state and context
-- Unified export system
-- Single project = all assets
-
-### 4. Developer Experience
-- CLI tools (like Cursor)
-- React/Three.js code export
-- Webhook/API system
-- Embeddable components
+| Agent | Purpose | Capabilities |
+|-------|---------|--------------|
+| **Gemini Spatial** | Arrangements | Grid, circle, spiral, scatter, align, distribute |
+| **Material Agent** | Material selection | RAG-powered, 600+ presets, recommendations |
+| **Scene Graph Builder** | Analysis | Semantic relationships, natural language summaries |
+| **Claude Blender** | Complex ops | Rendering, physics, animation via MCP |
+| **Agent Debate** | Complex decisions | Multi-model consensus (Gemini vs Claude) |
 
 ---
 
@@ -129,17 +181,11 @@ Bisect provides:
 ### Installation
 
 ```bash
-# Clone the repository
 git clone https://github.com/kpm34/bisect.git
 cd Bisect
-
-# Install dependencies
 pnpm install
-
-# Copy environment variables
 cp .env.example .env.local
-
-# Add your API keys to .env.local
+# Add your API keys
 pnpm dev
 ```
 
@@ -152,12 +198,30 @@ GOOGLE_GEMINI_API_KEY       # Gemini for textures & SVG
 NEXT_PUBLIC_SUPABASE_URL    # Supabase project URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-# Optional (unlock more features)
-ANTHROPIC_API_KEY           # Claude for complex reasoning
-OPENROUTER_API_KEY          # Multi-model access
+# Blender + ComfyUI (key integrations)
+COMFYUI_API_URL             # Local or cloud ComfyUI
+RUNPOD_API_KEY              # Cloud GPU (optional)
+
+# Optional
+ANTHROPIC_API_KEY           # Claude for reasoning
 HYPER3D_API_KEY             # AI 3D generation
-COMFYUI_API_URL             # Local ComfyUI instance
+SUNO_API_KEY                # AI music generation
+ELEVENLABS_API_KEY          # AI SFX generation
 ```
+
+---
+
+## Cloud-Native Architecture
+
+| Service | Local (Free) | Cloud |
+|---------|--------------|-------|
+| **Blender** | Local MCP | Render.st, SheepIt, Concierge |
+| **ComfyUI** | Local GPU | RunPod, Vast.ai, Modal |
+| **Audio** | - | Suno, ElevenLabs |
+| **3D Gen** | - | Hyper3D, Meshy, Tripo |
+| **Video** | - | Runway, Pika, Kling |
+
+> Hobbyist = local ($0) | Pro = burst to cloud | Enterprise = self-hosted
 
 ---
 
@@ -165,12 +229,12 @@ COMFYUI_API_URL             # Local ComfyUI instance
 
 | Layer | Technologies |
 |-------|--------------|
-| **Framework** | Next.js 14, React 18, TypeScript |
-| **3D** | Three.js, React Three Fiber, Drei, Rapier (physics) |
-| **AI** | OpenAI GPT-4o, Google Gemini, Claude, Hyper3D |
-| **State** | Zustand, React Query |
+| **Framework** | Next.js 14, React 18, TypeScript 5 |
+| **3D** | Three.js, React Three Fiber, Drei, Rapier |
+| **AI** | OpenAI GPT-4o, Gemini, Claude, Hyper3D |
+| **State** | Zustand 4.5, React Query |
 | **Database** | Supabase (PostgreSQL), IndexedDB |
-| **Bridge** | MCP Server, Blender Python API |
+| **Bridge** | MCP Server, WebSocket, Blender Python API |
 | **Generative** | ComfyUI integration |
 
 ---
@@ -184,65 +248,71 @@ Bisect/
 │   │   ├── 3d-canvas/          # 3D Studio
 │   │   ├── svg-canvas/         # Vector Studio
 │   │   ├── tex-factory/        # Texture Studio
+│   │   ├── audio-hub/          # Audio Hub
 │   │   └── video-studio/       # Video Studio (WIP)
 │   └── api/
-│       ├── ai/                 # AI endpoints
-│       ├── configurator/       # Product configurator API
+│       ├── ai/                 # AI agent endpoints
+│       ├── materials/          # Material library API
+│       ├── configurator/       # Product configurator
 │       └── webhooks/           # Automation webhooks
 ├── lib/
 │   ├── core/
 │   │   ├── ai/                 # AI agents
-│   │   ├── materials/          # 600+ material library
+│   │   ├── materials/          # 600+ material presets
 │   │   ├── cloner/             # Instancing system
 │   │   ├── configurator/       # Product config engine
-│   │   └── adapters/           # Format adapters
+│   │   └── audio/              # Audio system
 │   └── services/
-│       ├── mcp-bridge/         # Blender bridge
-│       └── supabase/           # Database services
-├── mcp-server/                 # MCP server for Blender
-└── cli/                        # Command-line tools
+│       ├── mcp-bridge-handler.ts
+│       └── supabase/
+├── mcp-server/                 # MCP server (v2.1)
+├── cli/                        # CLI tool (v2.0)
+└── docs/
+    ├── developer-tools.md      # CLI/API docs
+    ├── positioning.md          # Strategy
+    ├── comfyui-blender-workflows.md
+    └── feature-testing-tracker.md
 ```
 
 ---
 
-## Roadmap
+## Implementation Status
 
-### Phase 1: Foundation (Current)
-- [x] Vector Studio with AI vectorization
-- [x] Texture Studio with Gemini generation
-- [x] 3D Studio with materials and physics
-- [x] Blender MCP bridge
+### Fully Implemented
+- [x] Vector Studio (SVG editor, AI vectorization, 7 exports)
+- [x] Texture Studio (MatCap/PBR via Gemini, normal maps)
+- [x] 3D Studio (scene loading, transforms, hierarchy)
+- [x] Material system (600+ presets, Blender renders)
+- [x] Events system (15+ triggers, animations, states)
+- [x] Variables system (number, boolean, string, color)
+- [x] Cloner/Instancing (6 modes, 5 effectors)
+- [x] Product configurator (variants, pricing, cart)
+- [x] E-commerce adapters (Shopify, WooCommerce, BigCommerce)
+- [x] Hotspots (3D annotations, tooltips, media)
+- [x] Code export (React, vanilla Three.js)
 - [x] Scene persistence (IndexedDB + Supabase)
+- [x] Blender MCP bridge
+- [x] CLI tool v2.0 (30+ commands)
+- [x] MCP server v2.1 (20+ tools)
+- [x] REST APIs (materials, AI, configurator, webhooks)
 
-### Phase 2: Workflows
-- [x] Events/States/Variables system
-- [x] Cloner/Instancing system
-- [x] Product configurator
-- [x] E-commerce integration
+### In Progress
+- [ ] ComfyUI integration (video, lip sync, style transfer)
+- [ ] Audio Hub (music/SFX library, AI generation)
 - [ ] Cross-studio drag & drop
 - [ ] Video Studio foundation
-- [ ] Audio Hub (music/SFX library + AI generation)
 
-### Phase 3: Intelligence
-- [ ] AI workflow orchestrator
-- [ ] ComfyUI integration
-- [ ] Hyper3D generation pipeline
-- [ ] Multi-agent collaboration
-- [ ] Voice commands
-
-### Phase 4: Platform
-- [ ] CLI tool (`bisect create`, `bisect export`)
+### Planned
+- [ ] Audio-to-video sync
+- [ ] Hyper3D pipeline
 - [ ] Plugin system
-- [ ] Marketplace
 - [ ] Team collaboration
-- [ ] Self-hosted option
 
 ---
 
 ## Deployment
 
 ```bash
-# Deploy to Vercel (uses existing project)
 vercel --prod
 ```
 
@@ -252,9 +322,21 @@ vercel --prod
 
 ---
 
+## Documentation
+
+| Document | Purpose |
+|----------|---------|
+| [developer-tools.md](docs/developer-tools.md) | CLI, MCP, APIs |
+| [positioning.md](docs/positioning.md) | Strategy & competitive analysis |
+| [comfyui-blender-workflows.md](docs/comfyui-blender-workflows.md) | ComfyUI capabilities |
+| [feature-testing-tracker.md](docs/feature-testing-tracker.md) | Production readiness |
+| [material-system-flow.md](docs/material-system-flow.md) | Material architecture |
+
+---
+
 ## Contributing
 
-We're building the future of creative tools. Contributions welcome!
+We're building the glue between professional creative tools. Contributions welcome!
 
 1. Fork the repository
 2. Create your feature branch
@@ -269,4 +351,4 @@ MIT
 
 ---
 
-**Bisect: Where creative workflows converge.**
+**Bisect: Professional creative pipelines, simplified.**

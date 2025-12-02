@@ -5,8 +5,9 @@ const wss = new WebSocket.Server({ port: 8080 });
 // Connected clients
 let editorSocket = null;
 let mcpSocket = null;
+let cliSockets = new Set();
 
-console.log('Bisect Bridge Server running on ws://localhost:8080');
+console.log('Bisect Bridge Server v2.0 running on ws://localhost:8080');
 console.log('Waiting for connections...');
 
 wss.on('connection', function connection(ws) {
@@ -31,6 +32,12 @@ wss.on('connection', function connection(ws) {
         if (data.type === 'REGISTER_MCP') {
             console.log('✅ MCP server connected');
             mcpSocket = ws;
+            return;
+        }
+
+        if (data.type === 'REGISTER_CLI') {
+            console.log('✅ CLI client connected');
+            cliSockets.add(ws);
             return;
         }
 
@@ -99,6 +106,10 @@ wss.on('connection', function connection(ws) {
             console.log('❌ MCP server disconnected');
             mcpSocket = null;
         }
+        if (cliSockets.has(ws)) {
+            console.log('❌ CLI client disconnected');
+            cliSockets.delete(ws);
+        }
     });
 
     ws.on('error', (err) => {
@@ -111,13 +122,30 @@ setInterval(() => {
     const status = [];
     if (editorSocket && editorSocket.readyState === WebSocket.OPEN) status.push('Editor');
     if (mcpSocket && mcpSocket.readyState === WebSocket.OPEN) status.push('MCP');
+    if (cliSockets.size > 0) status.push(`CLI(${cliSockets.size})`);
     if (status.length > 0) {
-        // Only log if there are connections (reduce noise)
+        // Only log periodically if there are connections
+        // console.log(`Active: ${status.join(', ')}`);
     }
 }, 30000);
 
-console.log('\nUsage:');
+console.log('\n=== Bisect Developer Tools ===');
+console.log('');
+console.log('Usage:');
 console.log('  1. Start this server: node cli/server.js');
-console.log('  2. Open Next.js app: npm run dev, then visit /studio/3d-canvas');
-console.log('  3. Run MCP server: node mcp-server/index.js');
-console.log('  4. Test: node mcp-server/test-smart-edit.js\n');
+console.log('  2. Open Next.js app: pnpm dev, then visit /studio/3d-canvas');
+console.log('  3. Use CLI: bisect add box, bisect ai "arrange in circle"');
+console.log('  4. Or run MCP server: node mcp-server/index.js');
+console.log('');
+console.log('CLI Commands:');
+console.log('  bisect add <type>           Add primitive (box, sphere, plane, etc.)');
+console.log('  bisect color <hex>          Set object color');
+console.log('  bisect material <preset>    Apply material preset');
+console.log('  bisect event <trigger> <action>  Add event listener');
+console.log('  bisect ai "<instruction>"   AI-powered editing');
+console.log('  bisect scene                Get scene info');
+console.log('  bisect export <file>        Export scene');
+console.log('  bisect run <script.bisect>  Run script file');
+console.log('');
+console.log('For full CLI help: bisect --help');
+console.log('');

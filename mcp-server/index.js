@@ -135,7 +135,7 @@ function sendRequest(operation, payload = {}) {
 const server = new Server(
     {
         name: "bisect-mcp-server",
-        version: "2.0.0",
+        version: "2.1.0",
     },
     {
         capabilities: {
@@ -355,6 +355,163 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                         v_range: { type: "array", items: { type: "number" }, description: "[min, max] for v" },
                     },
                     required: ["x", "y", "z"],
+                },
+            },
+            // ============================================
+            // NEW: Extended Tools (v2.1.0)
+            // ============================================
+            {
+                name: "select_object",
+                description: "Select an object by name",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        name: { type: "string", description: "Object name to select" },
+                    },
+                    required: ["name"],
+                },
+            },
+            {
+                name: "delete_object",
+                description: "Delete the selected object or by name",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        name: { type: "string", description: "Optional object name (deletes selected if not provided)" },
+                    },
+                },
+            },
+            {
+                name: "set_material",
+                description: "Apply a material preset to the selected object from the 600+ material library",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        preset: { type: "string", description: "Material preset name (e.g., 'gold-polished', 'wood-oak', 'marble-white')" },
+                        category: { type: "string", description: "Material category (metal, wood, stone, fabric, plastic, glass)" },
+                    },
+                    required: ["preset"],
+                },
+            },
+            {
+                name: "create_cloner",
+                description: "Create a cloner for instancing the selected object",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        mode: {
+                            type: "string",
+                            enum: ["linear", "radial", "grid", "scatter", "spline", "object"],
+                            description: "Cloner distribution mode",
+                        },
+                        count: { type: "number", description: "Number of clones" },
+                        spacing: {
+                            type: "object",
+                            properties: {
+                                x: { type: "number" },
+                                y: { type: "number" },
+                                z: { type: "number" },
+                            },
+                            description: "Spacing between clones",
+                        },
+                        radius: { type: "number", description: "Radius for radial mode" },
+                    },
+                    required: ["mode", "count"],
+                },
+            },
+            {
+                name: "arrange_objects",
+                description: "Arrange multiple objects in a pattern using the Gemini Spatial Agent",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        pattern: {
+                            type: "string",
+                            enum: ["grid", "circle", "spiral", "scatter", "stack", "line"],
+                            description: "Arrangement pattern",
+                        },
+                        count: { type: "number", description: "Number of items in arrangement" },
+                        radius: { type: "number", description: "Radius for circular patterns" },
+                        spacing: { type: "number", description: "Spacing between items" },
+                        objects: { type: "array", items: { type: "string" }, description: "Object names to arrange (optional - uses selection if not provided)" },
+                    },
+                    required: ["pattern"],
+                },
+            },
+            {
+                name: "add_hotspot",
+                description: "Add a 3D hotspot annotation to the scene",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        position: {
+                            type: "object",
+                            properties: {
+                                x: { type: "number" },
+                                y: { type: "number" },
+                                z: { type: "number" },
+                            },
+                            description: "Hotspot position",
+                        },
+                        title: { type: "string", description: "Hotspot title" },
+                        content: { type: "string", description: "Tooltip content" },
+                        attachTo: { type: "string", description: "Object name to attach to" },
+                    },
+                    required: ["position", "title"],
+                },
+            },
+            {
+                name: "configure_product",
+                description: "Configure product variant for e-commerce integration",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        productId: { type: "string", description: "Product identifier" },
+                        selections: {
+                            type: "object",
+                            description: "Configuration selections (key-value pairs)",
+                        },
+                    },
+                    required: ["productId"],
+                },
+            },
+            {
+                name: "export_scene",
+                description: "Export scene to various formats (GLB, React component, Three.js code)",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        format: {
+                            type: "string",
+                            enum: ["glb", "gltf", "react", "threejs", "vanilla"],
+                            description: "Export format",
+                        },
+                        path: { type: "string", description: "Output file path" },
+                        options: {
+                            type: "object",
+                            description: "Export options (animations, materials, etc.)",
+                        },
+                    },
+                    required: ["format"],
+                },
+            },
+            {
+                name: "trigger_blender",
+                description: "Send command to connected Blender instance via MCP bridge for rendering, physics, or animation",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        operation: {
+                            type: "string",
+                            enum: ["render", "bake_physics", "export_glb", "apply_material", "run_animation"],
+                            description: "Blender operation to perform",
+                        },
+                        params: {
+                            type: "object",
+                            description: "Operation-specific parameters",
+                        },
+                    },
+                    required: ["operation"],
                 },
             },
         ],
@@ -591,6 +748,147 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 return {
                     content: [{ type: "text", text: "Generating parametric surface..." }],
                 };
+            }
+
+            // ============================================
+            // NEW: Extended Tool Handlers (v2.1.0)
+            // ============================================
+
+            case "select_object": {
+                const { name: objName } = args;
+                sendToEditor({ type: "SELECT_OBJECT", payload: { name: objName } });
+                return {
+                    content: [{ type: "text", text: `Selected object: ${objName}` }],
+                };
+            }
+
+            case "delete_object": {
+                const { name: delName } = args;
+                sendToEditor({ type: "DELETE_OBJECT", payload: { name: delName } });
+                return {
+                    content: [{ type: "text", text: `Deleted object: ${delName || 'selected'}` }],
+                };
+            }
+
+            case "set_material": {
+                const { preset, category } = args;
+                sendToEditor({ type: "SET_MATERIAL", payload: { preset, category } });
+                return {
+                    content: [{ type: "text", text: `Applied material: ${preset}${category ? ` (${category})` : ''}` }],
+                };
+            }
+
+            case "create_cloner": {
+                const { mode, count, spacing, radius } = args;
+                sendToEditor({ type: "CREATE_CLONER", payload: { mode, count, spacing, radius } });
+                return {
+                    content: [{ type: "text", text: `Created ${mode} cloner with ${count} instances` }],
+                };
+            }
+
+            case "arrange_objects": {
+                const { pattern, count: arrCount, radius: arrRadius, spacing: arrSpacing, objects } = args;
+                console.error(`Arranging objects in ${pattern} pattern...`);
+
+                try {
+                    const response = await sendRequest(OperationType.ARRANGE_OBJECTS || "ARRANGE_OBJECTS", {
+                        pattern,
+                        count: arrCount,
+                        radius: arrRadius,
+                        spacing: arrSpacing,
+                        objects
+                    });
+
+                    return {
+                        content: [{ type: "text", text: `Arranged objects in ${pattern} pattern: ${JSON.stringify(response)}` }],
+                    };
+                } catch (err) {
+                    // Fallback to fire-and-forget
+                    sendToEditor({ type: "ARRANGE_OBJECTS", payload: { pattern, count: arrCount, radius: arrRadius, spacing: arrSpacing, objects } });
+                    return {
+                        content: [{ type: "text", text: `Arranging objects in ${pattern} pattern...` }],
+                    };
+                }
+            }
+
+            case "add_hotspot": {
+                const { position, title, content: hsContent, attachTo } = args;
+                sendToEditor({ type: "ADD_HOTSPOT", payload: { position, title, content: hsContent, attachTo } });
+                return {
+                    content: [{ type: "text", text: `Added hotspot: "${title}" at [${position.x}, ${position.y}, ${position.z}]` }],
+                };
+            }
+
+            case "configure_product": {
+                const { productId, selections } = args;
+                console.error(`Configuring product: ${productId}...`);
+
+                try {
+                    const response = await sendRequest("CONFIGURE_PRODUCT", {
+                        productId,
+                        selections
+                    });
+
+                    return {
+                        content: [{
+                            type: "text",
+                            text: `Product configured:\n${JSON.stringify(response, null, 2)}`
+                        }],
+                    };
+                } catch (err) {
+                    sendToEditor({ type: "CONFIGURE_PRODUCT", payload: { productId, selections } });
+                    return {
+                        content: [{ type: "text", text: `Configuring product: ${productId}` }],
+                    };
+                }
+            }
+
+            case "export_scene": {
+                const { format, path: exportPath, options } = args;
+                console.error(`Exporting scene as ${format}...`);
+
+                try {
+                    const response = await sendRequest("EXPORT_SCENE", {
+                        format,
+                        path: exportPath,
+                        options
+                    });
+
+                    return {
+                        content: [{
+                            type: "text",
+                            text: `Scene exported:\nFormat: ${format}\nPath: ${response.path || exportPath || 'Generated'}`
+                        }],
+                    };
+                } catch (err) {
+                    sendToEditor({ type: "EXPORT_SCENE", payload: { format, path: exportPath, options } });
+                    return {
+                        content: [{ type: "text", text: `Exporting scene as ${format}...` }],
+                    };
+                }
+            }
+
+            case "trigger_blender": {
+                const { operation, params } = args;
+                console.error(`Triggering Blender: ${operation}...`);
+
+                try {
+                    const response = await sendRequest("BLENDER_COMMAND", {
+                        operation,
+                        params
+                    });
+
+                    return {
+                        content: [{
+                            type: "text",
+                            text: `Blender ${operation} completed:\n${JSON.stringify(response, null, 2)}`
+                        }],
+                    };
+                } catch (err) {
+                    return {
+                        content: [{ type: "text", text: `Blender ${operation} triggered (check Blender for result)` }],
+                    };
+                }
             }
 
             default:

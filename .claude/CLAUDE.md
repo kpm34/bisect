@@ -405,6 +405,77 @@ pnpm lint
 pnpm dev
 ```
 
+> See [docs/feature-testing-tracker.md](../docs/feature-testing-tracker.md) for production readiness status.
+
+---
+
+## Developer Tools
+
+> Full documentation: [docs/developer-tools.md](../docs/developer-tools.md)
+
+### CLI Tool (`cli/bisect.js`)
+
+```bash
+bisect add box              # Add primitive
+bisect color #FF5500        # Set color
+bisect event click spin     # Add event
+bisect animate bounce 1.5   # Play animation
+bisect run setup.bisect     # Run script file
+```
+
+### WebSocket Bridge (`cli/server.js`)
+
+```bash
+node cli/server.js          # Start bridge on ws://localhost:8080
+```
+
+Connects CLI ↔ Editor ↔ MCP Server for real-time communication.
+
+### MCP Server (`mcp-server/index.js`)
+
+AI-powered tools for Claude Code integration:
+
+| Tool | Purpose |
+|------|---------|
+| `smart_edit` | Natural language scene editing |
+| `get_scene_analysis` | AI analysis of current scene |
+| `spawn_object` | Create primitives |
+| `set_material` | Apply materials |
+| `attach_listener` | Add events |
+
+### REST APIs
+
+| Endpoint | Purpose |
+|----------|---------|
+| `/api/configurator` | Product config, pricing, e-commerce |
+| `/api/webhooks/scene/[id]` | Scene event notifications |
+| `/api/ai/edit` | AI scene editing |
+| `/api/tex-factory/*` | Texture generation |
+
+---
+
+## AI Agents System
+
+> See [docs/comfyui-blender-workflows.md](../docs/comfyui-blender-workflows.md) for AI capabilities.
+
+### Agents (`lib/core/ai/`)
+
+| Agent | File | Capabilities |
+|-------|------|--------------|
+| **Gemini Spatial** | `gemini-spatial-agent.ts` | Grid, circle, spiral, scatter, align, distribute |
+| **Material Agent** | `material-agent.ts` | PBR selection, RAG-powered recommendations |
+| **Claude Blender** | `claude-blender-agent.ts` | Complex Blender operations via MCP |
+| **Scene Graph Builder** | `scene-graph-builder.ts` | Semantic relationships ("on top of", "next to") |
+| **Agent Debate** | `agent-debate-system.ts` | Gemini vs Claude for complex decisions |
+
+### Analysis Tools
+
+| Tool | Purpose |
+|------|---------|
+| `visual-analysis-tools.ts` | Color resolution ("red" → #FF0000), UV calculations |
+| `scene-graph-builder.ts` | Spatial reasoning, natural language summaries |
+| `multi-model-router.ts` | Route tasks to optimal AI model |
+
 ---
 
 ## Quick Reference
@@ -426,8 +497,11 @@ pnpm tsc --noEmit     # Type check
 | File | Purpose |
 |------|---------|
 | `README.md` | Project overview & vision |
+| `docs/positioning.md` | Positioning strategy & competitive analysis |
+| `docs/developer-tools.md` | CLI, APIs, MCP, webhooks documentation |
+| `docs/comfyui-blender-workflows.md` | ComfyUI capabilities & AI agents |
+| `docs/feature-testing-tracker.md` | Production readiness status |
 | `docs/material-system-flow.md` | Material architecture |
-| `docs/feature-gap-analysis.csv` | Competitor analysis |
 
 ---
 

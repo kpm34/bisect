@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ProjectState, AIState, Track, Clip, ChatMessage, TrackType, Transition, TransitionType, ClipTransform, ClipAppearance, ClipPlayback, ClipAudio, ClipCamera } from './types';
+import { ProjectState, AIState, Track, Clip, ChatMessage, TrackType, Transition, TransitionType, ClipTransform, ClipAppearance, ClipPlayback, ClipAudio, ClipCamera, Marker, Keyframe, KeyframeProperty, ClipKeyframes, AudioMixerTrack, ClipboardItem } from './types';
 import { INITIAL_TRACKS, DEFAULT_TRANSITION, DEFAULT_CLIP_TRANSFORM, DEFAULT_CLIP_APPEARANCE, DEFAULT_CLIP_PLAYBACK, DEFAULT_CLIP_AUDIO, DEFAULT_CLIP_CAMERA } from './constants';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -17,7 +17,37 @@ interface HistoryState {
   maxHistory: number;
 }
 
-interface AppState extends ProjectState, AIState, HistoryState {
+// Phase 1 & 2 state types
+interface EditorSettingsState {
+  snappingEnabled: boolean;
+  snapToPlayhead: boolean;
+  snapToClips: boolean;
+  snapThreshold: number; // pixels
+  loopEnabled: boolean;
+  loopStart: number;
+  loopEnd: number;
+  frameRate: number; // for frame-by-frame navigation
+}
+
+interface MarkerState {
+  markers: Marker[];
+}
+
+interface ClipboardState {
+  clipboard: ClipboardItem | null;
+}
+
+interface KeyframeState {
+  clipKeyframes: Record<string, ClipKeyframes>; // clipId -> keyframes
+  selectedKeyframeIds: string[];
+}
+
+interface AudioMixerState {
+  mixerTracks: AudioMixerTrack[];
+  masterVolume: number;
+}
+
+interface AppState extends ProjectState, AIState, HistoryState, EditorSettingsState, MarkerState, ClipboardState, KeyframeState, AudioMixerState {
   // Actions
   setTime: (time: number) => void;
   setDuration: (duration: number) => void;
@@ -77,6 +107,62 @@ interface AppState extends ProjectState, AIState, HistoryState {
   canUndo: () => boolean;
   canRedo: () => boolean;
   clearHistory: () => void;
+
+  // Phase 1: Editor settings actions
+  toggleSnapping: () => void;
+  setSnapSettings: (settings: Partial<EditorSettingsState>) => void;
+  toggleLoop: () => void;
+  setLoopRange: (start: number, end: number) => void;
+  setFrameRate: (fps: number) => void;
+
+  // Phase 1: Frame navigation actions
+  stepFrame: (direction: 1 | -1) => void;
+  jumpToStart: () => void;
+  jumpToEnd: () => void;
+  jumpToNextClip: () => void;
+  jumpToPrevClip: () => void;
+
+  // Phase 1: Marker actions
+  addMarker: (time?: number, label?: string, color?: string) => void;
+  removeMarker: (markerId: string) => void;
+  updateMarker: (markerId: string, updates: Partial<Marker>) => void;
+  jumpToMarker: (markerId: string) => void;
+  jumpToNextMarker: () => void;
+  jumpToPrevMarker: () => void;
+  clearMarkers: () => void;
+
+  // Phase 1: Clipboard actions
+  copySelectedClips: () => void;
+  cutSelectedClips: () => void;
+  pasteClips: (trackId?: string) => void;
+
+  // Phase 1: Zoom actions
+  zoomToFit: () => void;
+  zoomToSelection: () => void;
+
+  // Phase 1: Ripple edit actions
+  rippleDelete: (trackId: string, clipId: string) => void;
+
+  // Phase 2: Keyframe actions
+  addKeyframe: (clipId: string, property: KeyframeProperty, time: number, value: number) => void;
+  removeKeyframe: (clipId: string, keyframeId: string) => void;
+  updateKeyframe: (clipId: string, keyframeId: string, updates: Partial<Keyframe>) => void;
+  selectKeyframe: (keyframeId: string, multiSelect?: boolean) => void;
+  clearKeyframeSelection: () => void;
+  getInterpolatedValue: (clipId: string, property: KeyframeProperty, time: number) => number | null;
+
+  // Phase 2: Audio mixer actions
+  updateMixerTrack: (trackId: string, updates: Partial<AudioMixerTrack>) => void;
+  setMasterVolume: (volume: number) => void;
+  soloTrack: (trackId: string) => void;
+  unsoloAllTracks: () => void;
+  resetMixer: () => void;
+
+  // Phase 2: Speed ramping actions
+  setClipSpeedRamp: (trackId: string, clipId: string, startSpeed: number, endSpeed: number) => void;
+
+  // Snapping helper (used by Timeline component)
+  getSnapPoint: (time: number, excludeClipId?: string) => number;
 }
 
 // Helper to deep clone tracks for history
@@ -97,6 +183,30 @@ export const useStore = create<AppState>((set, get) => ({
   past: [],
   future: [],
   maxHistory: 50,
+
+  // Phase 1: Editor Settings State
+  snappingEnabled: true,
+  snapToPlayhead: true,
+  snapToClips: true,
+  snapThreshold: 10, // pixels
+  loopEnabled: false,
+  loopStart: 0,
+  loopEnd: 10,
+  frameRate: 30,
+
+  // Phase 1: Marker State
+  markers: [],
+
+  // Phase 1: Clipboard State
+  clipboard: null,
+
+  // Phase 2: Keyframe State
+  clipKeyframes: {},
+  selectedKeyframeIds: [],
+
+  // Phase 2: Audio Mixer State
+  mixerTracks: [],
+  masterVolume: 100,
 
   // AI State
   messages: [
@@ -725,4 +835,519 @@ export const useStore = create<AppState>((set, get) => ({
   canRedo: () => get().future.length > 0,
 
   clearHistory: () => set({ past: [], future: [] }),
+
+  // ============== PHASE 1: EDITOR SETTINGS ==============
+
+  toggleSnapping: () => set((state) => ({ snappingEnabled: !state.snappingEnabled })),
+
+  setSnapSettings: (settings) => set((state) => ({ ...state, ...settings })),
+
+  toggleLoop: () => set((state) => ({ loopEnabled: !state.loopEnabled })),
+
+  setLoopRange: (start, end) => set({ loopStart: start, loopEnd: end }),
+
+  setFrameRate: (fps) => set({ frameRate: Math.max(1, Math.min(120, fps)) }),
+
+  // ============== PHASE 1: FRAME NAVIGATION ==============
+
+  stepFrame: (direction) => {
+    const state = get();
+    const frameTime = 1 / state.frameRate;
+    const newTime = state.currentTime + (direction * frameTime);
+    set({ currentTime: Math.max(0, Math.min(newTime, state.duration)) });
+  },
+
+  jumpToStart: () => set({ currentTime: 0 }),
+
+  jumpToEnd: () => set((state) => ({ currentTime: state.duration })),
+
+  jumpToNextClip: () => {
+    const state = get();
+    const allClipStarts = state.tracks
+      .flatMap((t) => t.clips.map((c) => c.start))
+      .filter((start) => start > state.currentTime + 0.001)
+      .sort((a, b) => a - b);
+
+    if (allClipStarts.length > 0) {
+      set({ currentTime: allClipStarts[0] });
+    }
+  },
+
+  jumpToPrevClip: () => {
+    const state = get();
+    const allClipStarts = state.tracks
+      .flatMap((t) => t.clips.map((c) => c.start))
+      .filter((start) => start < state.currentTime - 0.001)
+      .sort((a, b) => b - a);
+
+    if (allClipStarts.length > 0) {
+      set({ currentTime: allClipStarts[0] });
+    }
+  },
+
+  // ============== PHASE 1: MARKERS ==============
+
+  addMarker: (time, label, color) => {
+    const state = get();
+    const markerTime = time ?? state.currentTime;
+    const existingCount = state.markers.length;
+    const newMarker: Marker = {
+      id: uuidv4(),
+      time: markerTime,
+      label: label ?? `Marker ${existingCount + 1}`,
+      color: color ?? '#FFD700', // Gold color
+    };
+    set((state) => ({ markers: [...state.markers, newMarker].sort((a, b) => a.time - b.time) }));
+  },
+
+  removeMarker: (markerId) =>
+    set((state) => ({ markers: state.markers.filter((m) => m.id !== markerId) })),
+
+  updateMarker: (markerId, updates) =>
+    set((state) => ({
+      markers: state.markers.map((m) => (m.id === markerId ? { ...m, ...updates } : m)),
+    })),
+
+  jumpToMarker: (markerId) => {
+    const marker = get().markers.find((m) => m.id === markerId);
+    if (marker) {
+      set({ currentTime: marker.time });
+    }
+  },
+
+  jumpToNextMarker: () => {
+    const state = get();
+    const nextMarker = state.markers.find((m) => m.time > state.currentTime + 0.001);
+    if (nextMarker) {
+      set({ currentTime: nextMarker.time });
+    }
+  },
+
+  jumpToPrevMarker: () => {
+    const state = get();
+    const prevMarkers = state.markers.filter((m) => m.time < state.currentTime - 0.001);
+    if (prevMarkers.length > 0) {
+      set({ currentTime: prevMarkers[prevMarkers.length - 1].time });
+    }
+  },
+
+  clearMarkers: () => set({ markers: [] }),
+
+  // ============== PHASE 1: CLIPBOARD ==============
+
+  copySelectedClips: () => {
+    const state = get();
+    if (state.selectedClipIds.length === 0) return;
+
+    // Find all selected clips
+    const selectedClips: Clip[] = [];
+    let sourceTrackId = '';
+
+    for (const track of state.tracks) {
+      for (const clip of track.clips) {
+        if (state.selectedClipIds.includes(clip.id)) {
+          selectedClips.push({ ...clip });
+          if (!sourceTrackId) sourceTrackId = track.id;
+        }
+      }
+    }
+
+    if (selectedClips.length === 1) {
+      set({ clipboard: { type: 'clip', data: selectedClips[0], sourceTrackId } });
+    } else if (selectedClips.length > 1) {
+      set({ clipboard: { type: 'clips', data: selectedClips, sourceTrackId } });
+    }
+  },
+
+  cutSelectedClips: () => {
+    get().copySelectedClips();
+    get().deleteSelectedClips();
+  },
+
+  pasteClips: (targetTrackId) => {
+    const state = get();
+    if (!state.clipboard) return;
+
+    get().pushHistory('Paste clips');
+
+    const trackId = targetTrackId ?? state.clipboard.sourceTrackId;
+    const currentTime = state.currentTime;
+
+    if (state.clipboard.type === 'clip') {
+      const clip = state.clipboard.data as Clip;
+      const newClip: Clip = {
+        ...clip,
+        id: uuidv4(),
+        name: `${clip.name} (pasted)`,
+        start: currentTime,
+      };
+      set((state) => ({
+        tracks: state.tracks.map((t) =>
+          t.id === trackId ? { ...t, clips: [...t.clips, newClip] } : t
+        ),
+        selectedClipIds: [newClip.id],
+      }));
+    } else {
+      const clips = state.clipboard.data as Clip[];
+      // Find the earliest start time to calculate relative positions
+      const minStart = Math.min(...clips.map((c) => c.start));
+      const newClips: Clip[] = clips.map((clip) => ({
+        ...clip,
+        id: uuidv4(),
+        name: `${clip.name} (pasted)`,
+        start: currentTime + (clip.start - minStart),
+      }));
+
+      set((state) => ({
+        tracks: state.tracks.map((t) =>
+          t.id === trackId ? { ...t, clips: [...t.clips, ...newClips] } : t
+        ),
+        selectedClipIds: newClips.map((c) => c.id),
+      }));
+    }
+  },
+
+  // ============== PHASE 1: ZOOM ==============
+
+  zoomToFit: () => {
+    const state = get();
+    // Find the extent of all clips
+    let maxEnd = 0;
+    for (const track of state.tracks) {
+      for (const clip of track.clips) {
+        maxEnd = Math.max(maxEnd, clip.start + clip.duration);
+      }
+    }
+    if (maxEnd === 0) maxEnd = state.duration;
+
+    // Assume timeline width ~1200px, calculate zoom to fit
+    const timelineWidth = 1200;
+    const newZoom = timelineWidth / (maxEnd * 1.1); // 10% padding
+    set({ zoomLevel: Math.max(5, Math.min(200, newZoom)) });
+  },
+
+  zoomToSelection: () => {
+    const state = get();
+    if (state.selectedClipIds.length === 0) return;
+
+    let minStart = Infinity;
+    let maxEnd = 0;
+
+    for (const track of state.tracks) {
+      for (const clip of track.clips) {
+        if (state.selectedClipIds.includes(clip.id)) {
+          minStart = Math.min(minStart, clip.start);
+          maxEnd = Math.max(maxEnd, clip.start + clip.duration);
+        }
+      }
+    }
+
+    if (minStart === Infinity) return;
+
+    const selectionDuration = maxEnd - minStart;
+    const timelineWidth = 1200;
+    const newZoom = timelineWidth / (selectionDuration * 1.2); // 20% padding
+    set({
+      zoomLevel: Math.max(5, Math.min(200, newZoom)),
+      currentTime: minStart, // Jump to selection start
+    });
+  },
+
+  // ============== PHASE 1: RIPPLE EDIT ==============
+
+  rippleDelete: (trackId, clipId) => {
+    const state = get();
+    const track = state.tracks.find((t) => t.id === trackId);
+    const clip = track?.clips.find((c) => c.id === clipId);
+    if (!clip) return;
+
+    get().pushHistory('Ripple delete');
+
+    const clipEnd = clip.start + clip.duration;
+    const gapDuration = clip.duration;
+
+    set((state) => ({
+      tracks: state.tracks.map((t) => {
+        if (t.id !== trackId) return t;
+        return {
+          ...t,
+          clips: t.clips
+            .filter((c) => c.id !== clipId)
+            .map((c) => {
+              // Shift clips that come after the deleted clip
+              if (c.start >= clipEnd) {
+                return { ...c, start: c.start - gapDuration };
+              }
+              return c;
+            }),
+        };
+      }),
+      selectedClipIds: state.selectedClipIds.filter((id) => id !== clipId),
+    }));
+  },
+
+  // ============== PHASE 2: KEYFRAMES ==============
+
+  addKeyframe: (clipId, property, time, value) => {
+    const newKeyframe: Keyframe = {
+      id: uuidv4(),
+      time,
+      property,
+      value,
+      easing: 'ease-in-out',
+    };
+
+    set((state) => {
+      const clipKf = state.clipKeyframes[clipId] || {};
+      const propertyKfs = clipKf[property] || [];
+
+      // Remove existing keyframe at same time if any
+      const filtered = propertyKfs.filter((kf) => Math.abs(kf.time - time) > 0.001);
+
+      return {
+        clipKeyframes: {
+          ...state.clipKeyframes,
+          [clipId]: {
+            ...clipKf,
+            [property]: [...filtered, newKeyframe].sort((a, b) => a.time - b.time),
+          },
+        },
+      };
+    });
+  },
+
+  removeKeyframe: (clipId, keyframeId) => {
+    set((state) => {
+      const clipKf = state.clipKeyframes[clipId];
+      if (!clipKf) return state;
+
+      const newClipKf: ClipKeyframes = {};
+      for (const [prop, kfs] of Object.entries(clipKf)) {
+        newClipKf[prop] = kfs.filter((kf) => kf.id !== keyframeId);
+      }
+
+      return {
+        clipKeyframes: {
+          ...state.clipKeyframes,
+          [clipId]: newClipKf,
+        },
+        selectedKeyframeIds: state.selectedKeyframeIds.filter((id) => id !== keyframeId),
+      };
+    });
+  },
+
+  updateKeyframe: (clipId, keyframeId, updates) => {
+    set((state) => {
+      const clipKf = state.clipKeyframes[clipId];
+      if (!clipKf) return state;
+
+      const newClipKf: ClipKeyframes = {};
+      for (const [prop, kfs] of Object.entries(clipKf)) {
+        newClipKf[prop] = kfs.map((kf) =>
+          kf.id === keyframeId ? { ...kf, ...updates } : kf
+        );
+      }
+
+      return {
+        clipKeyframes: {
+          ...state.clipKeyframes,
+          [clipId]: newClipKf,
+        },
+      };
+    });
+  },
+
+  selectKeyframe: (keyframeId, multiSelect = false) => {
+    set((state) => {
+      if (multiSelect) {
+        if (state.selectedKeyframeIds.includes(keyframeId)) {
+          return { selectedKeyframeIds: state.selectedKeyframeIds.filter((id) => id !== keyframeId) };
+        }
+        return { selectedKeyframeIds: [...state.selectedKeyframeIds, keyframeId] };
+      }
+      return { selectedKeyframeIds: [keyframeId] };
+    });
+  },
+
+  clearKeyframeSelection: () => set({ selectedKeyframeIds: [] }),
+
+  getInterpolatedValue: (clipId, property, time) => {
+    const state = get();
+    const clipKf = state.clipKeyframes[clipId];
+    if (!clipKf) return null;
+
+    const keyframes = clipKf[property];
+    if (!keyframes || keyframes.length === 0) return null;
+
+    // Find surrounding keyframes
+    const before = keyframes.filter((kf) => kf.time <= time);
+    const after = keyframes.filter((kf) => kf.time > time);
+
+    if (before.length === 0) return keyframes[0].value;
+    if (after.length === 0) return before[before.length - 1].value;
+
+    const kf1 = before[before.length - 1];
+    const kf2 = after[0];
+
+    // Linear interpolation (could be extended for different easing)
+    const t = (time - kf1.time) / (kf2.time - kf1.time);
+
+    // Apply easing
+    let easedT = t;
+    switch (kf2.easing) {
+      case 'ease-in':
+        easedT = t * t;
+        break;
+      case 'ease-out':
+        easedT = t * (2 - t);
+        break;
+      case 'ease-in-out':
+        easedT = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+        break;
+      case 'bezier':
+        // Use bezier handles if available, otherwise fallback to linear
+        if (kf2.bezierHandles) {
+          // Cubic bezier approximation
+          const { x1, y1, x2, y2 } = kf2.bezierHandles;
+          // Simple approximation - for full accuracy would need bezier solving
+          easedT = 3 * (1 - t) * (1 - t) * t * y1 + 3 * (1 - t) * t * t * y2 + t * t * t;
+        }
+        break;
+    }
+
+    return kf1.value + (kf2.value - kf1.value) * easedT;
+  },
+
+  // ============== PHASE 2: AUDIO MIXER ==============
+
+  updateMixerTrack: (trackId, updates) => {
+    set((state) => {
+      const existingTrack = state.mixerTracks.find((t) => t.trackId === trackId);
+      if (existingTrack) {
+        return {
+          mixerTracks: state.mixerTracks.map((t) =>
+            t.trackId === trackId ? { ...t, ...updates } : t
+          ),
+        };
+      }
+      // Create new mixer track with defaults
+      const newMixerTrack: AudioMixerTrack = {
+        trackId,
+        volume: 100,
+        pan: 0,
+        muted: false,
+        solo: false,
+        eqLow: 0,
+        eqMid: 0,
+        eqHigh: 0,
+        ...updates,
+      };
+      return { mixerTracks: [...state.mixerTracks, newMixerTrack] };
+    });
+  },
+
+  setMasterVolume: (volume) => set({ masterVolume: Math.max(0, Math.min(200, volume)) }),
+
+  soloTrack: (trackId) => {
+    set((state) => ({
+      mixerTracks: state.mixerTracks.map((t) => ({
+        ...t,
+        solo: t.trackId === trackId ? !t.solo : t.solo,
+      })),
+    }));
+  },
+
+  unsoloAllTracks: () => {
+    set((state) => ({
+      mixerTracks: state.mixerTracks.map((t) => ({ ...t, solo: false })),
+    }));
+  },
+
+  resetMixer: () => {
+    set((state) => ({
+      mixerTracks: state.mixerTracks.map((t) => ({
+        ...t,
+        volume: 100,
+        pan: 0,
+        muted: false,
+        solo: false,
+        eqLow: 0,
+        eqMid: 0,
+        eqHigh: 0,
+      })),
+      masterVolume: 100,
+    }));
+  },
+
+  // ============== PHASE 2: SPEED RAMPING ==============
+
+  setClipSpeedRamp: (trackId, clipId, startSpeed, endSpeed) => {
+    get().pushHistory('Set speed ramp');
+    set((state) => ({
+      tracks: state.tracks.map((t) =>
+        t.id === trackId
+          ? {
+              ...t,
+              clips: t.clips.map((c) =>
+                c.id === clipId
+                  ? {
+                      ...c,
+                      playback: {
+                        ...(c.playback || { playbackRate: 1, reverse: false }),
+                        playbackRate: startSpeed, // Store start speed as base
+                        // Store end speed in a custom property (extend type if needed)
+                      },
+                    }
+                  : c
+              ),
+            }
+          : t
+      ),
+    }));
+  },
+
+  // ============== SNAPPING HELPER ==============
+
+  getSnapPoint: (time, excludeClipId) => {
+    const state = get();
+    if (!state.snappingEnabled) return time;
+
+    const snapPoints: number[] = [];
+
+    // Add playhead position
+    if (state.snapToPlayhead) {
+      snapPoints.push(state.currentTime);
+    }
+
+    // Add clip edges
+    if (state.snapToClips) {
+      for (const track of state.tracks) {
+        for (const clip of track.clips) {
+          if (clip.id === excludeClipId) continue;
+          snapPoints.push(clip.start);
+          snapPoints.push(clip.start + clip.duration);
+        }
+      }
+    }
+
+    // Add markers
+    for (const marker of state.markers) {
+      snapPoints.push(marker.time);
+    }
+
+    // Find closest snap point within threshold
+    const threshold = state.snapThreshold / state.zoomLevel; // Convert to time
+    let closestPoint = time;
+    let minDistance = Infinity;
+
+    for (const point of snapPoints) {
+      const distance = Math.abs(time - point);
+      if (distance < threshold && distance < minDistance) {
+        minDistance = distance;
+        closestPoint = point;
+      }
+    }
+
+    return closestPoint;
+  },
 }));
