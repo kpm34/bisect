@@ -7,6 +7,7 @@ import {
   Home,
   FolderOpen,
   Layers,
+  Palette,
   Settings,
   ChevronRight,
   ChevronDown,
@@ -35,7 +36,8 @@ interface FolderItem {
 const navItems: NavItem[] = [
   { href: '/dashboard', label: 'Home', icon: Home },
   { href: '/dashboard/projects', label: 'Projects', icon: FolderOpen },
-  { href: '/dashboard/library', label: 'Asset Library', icon: Layers },
+  { href: '/dashboard/assets', label: 'Asset Library', icon: Layers },
+  { href: '/dashboard/materials', label: 'Materials', icon: Palette },
 ];
 
 // Placeholder folders - will be replaced with data from Supabase
