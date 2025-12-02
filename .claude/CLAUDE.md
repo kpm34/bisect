@@ -1,43 +1,157 @@
-# Bisect Project Configuration
+# Bisect - The Cursor of Creative Work
 
-## RAG Knowledge System (AUTO-QUERY)
+## Vision & Positioning
 
-**MCP Tools Available** - Use these proactively!
+**Bisect is NOT another 3D editor.** It's the **connective tissue across creative domains** - an AI-powered workflow orchestrator for creative professionals.
 
-| Tool | When to Use |
-|------|-------------|
-| `auto_context(prompt)` | Any technical question - auto-detects relevant knowledge |
-| `search_knowledge(query, "threejs")` | Three.js/R3F questions |
-| `search_knowledge(query, "blender")` | Blender material/render questions |
-| `search_knowledge(query, "database")` | Supabase/database patterns |
-| `search_knowledge(query, "api")` | REST/API patterns |
-| `get_project_context("bisect")` | Bisect-specific patterns |
+### What We Are
+| Identity | Description |
+|----------|-------------|
+| Creative workflow orchestrator | Not another Spline clone |
+| AI agent system for 3D/design | Like Cursor but for creative work |
+| Blender ↔ Web bridge | Our unique moat |
+| Cross-domain connector | Vector → 3D → Video pipeline |
 
-**Relevant Knowledge Domains:**
-- `threejs` - React Three Fiber, Drei, materials, shaders, HDRI
-- `blender` - Material rendering, GLB export
-- `database` - Supabase patterns, PostgreSQL
-- `api` - REST patterns, Next.js API routes
+### Competitive Landscape
+| Category | Competitors | What They Lack (Our Opportunity) |
+|----------|-------------|----------------------------------|
+| AI 3D Tools | Meshy, Hyper3D, Tripo | No Blender integration, no agent system |
+| Creative AI | Runway, Pika, Kling | Video only, no 3D pipeline, no CLI |
+| Node Workflows | ComfyUI | Steep learning curve, no web UI, no real-time collab |
+| Design Tools | Spline, Vectary | No AI agents, no Blender bridge, no CLI |
+| Dev Tools | Cursor, Claude Code | Not creative-focused |
 
-**Quick CLI Query:**
-```bash
-python3 ~/Blender-Workspace/rag/query/query_rag.py "your query"
+### Key Differentiators to Protect
+1. **Blender MCP Bridge** - Live connection to professional 3D (no competitor has this)
+2. **AI Agents** - Cross-domain reasoning (SVG → 3D → Video)
+3. **Developer Experience** - CLI, code export, webhooks, APIs
+4. **Cross-Studio Pipeline** - Single project across all creative domains
+
+---
+
+## Target Workflows
+
+When building features, optimize for these complete workflows:
+
+### Product Launch (Primary)
+```
+Vector Studio: Create/import logo → 3D Studio: Apply to product →
+Texture Studio: Generate materials → 3D Studio: Build landing page →
+Video Studio: Create reveal video → Export: Deploy WebGL experience
+```
+
+### Brand Asset Pipeline
+```
+Vector Studio: Design elements → Texture Studio: Create materials →
+3D Studio: Build 3D brand kit → Export: React components, GLB, video
+```
+
+### VR/AR Landing Page
+```
+3D Studio: Build scene with hotspots → Configure interactions →
+Add product configurator → Export: Embeddable React component
+```
+
+### E-commerce 3D
+```
+Import product model → Apply materials → Add configurator variants →
+Connect Shopify/WooCommerce → Deploy: Interactive product page
 ```
 
 ---
 
-## Project Overview
+## RAG Knowledge System
 
-**Bisect** (v0.1.0 Beta) is a unified 3D creator platform with three studios:
+**MCP Tools Available** - Use proactively for technical questions!
 
+| Tool | When to Use |
+|------|-------------|
+| `auto_context(prompt)` | Any technical question - auto-detects domain |
+| `search_knowledge(query, "threejs")` | Three.js/R3F patterns |
+| `search_knowledge(query, "blender")` | Blender scripts, materials |
+| `search_knowledge(query, "database")` | Supabase, PostgreSQL |
+| `search_knowledge(query, "api")` | REST, webhooks, API design |
+| `get_project_context("bisect")` | Bisect-specific patterns |
+
+---
+
+## Development Priorities
+
+### Always Prioritize
+1. **Cross-domain connectivity** - Features that connect studios
+2. **Blender bridge improvements** - Our moat
+3. **AI agent capabilities** - Natural language workflows
+4. **Export quality** - React, Three.js, GLB exports
+5. **Developer experience** - CLI, APIs, webhooks
+
+### Avoid
+1. Feature-for-feature competition with Spline/Vectary
+2. Isolated features that don't connect to other studios
+3. Complex UI that increases learning curve
+4. Features without clear workflow integration
+
+---
+
+## Architecture Overview
+
+### Studios
 | Studio | Purpose | Status |
 |--------|---------|--------|
-| **Vector Studio** | SVG editor + AI vectorization | 95% complete |
-| **Texture Studio** | MatCap/PBR generation (Gemini) | 90% complete |
-| **3D Studio** | Scene editor + materials | 85% complete |
+| **Vector Studio** | SVG/Logo creation, AI vectorization | 95% |
+| **Texture Studio** | MatCap/PBR generation via Gemini | 90% |
+| **3D Studio** | Scene editing, materials, physics, events | 85% |
+| **Video Studio** | AI video, ComfyUI workflows | 10% |
 
-**Live Domain**: [bisect.app](https://bisect.app)
-**Repository**: https://github.com/kpm34/bisect
+### Core Systems
+| System | Location | Purpose |
+|--------|----------|---------|
+| AI Agents | `lib/core/ai/` | Scene editing, material selection |
+| Materials | `lib/core/materials/` | 600+ PBR presets |
+| Configurator | `lib/core/configurator/` | Product variants, e-commerce |
+| Cloner | `lib/core/cloner/` | Instancing, arrays, effectors |
+| Events | `app/studio/3d-canvas/components/InteractiveObject.tsx` | 15+ event types |
+| MCP Bridge | `lib/services/mcp-bridge-handler.ts` | Blender connection |
+
+### Key Entry Points
+| File | Purpose |
+|------|---------|
+| `app/studio/3d-canvas/page.tsx` | 3D Studio entry |
+| `app/studio/svg-canvas/page.tsx` | Vector Studio entry |
+| `app/studio/tex-factory/page.tsx` | Texture Studio entry |
+| `lib/store/unified-store.ts` | Central Zustand state |
+| `app/api/configurator/route.ts` | Configurator API |
+
+---
+
+## Tech Stack
+
+### Core
+- **Next.js** 14.2.33 (App Router)
+- **React** 18.3.1
+- **TypeScript** 5.9.0
+- **Tailwind CSS** 3.4.1
+
+### 3D & Graphics
+- **Three.js** 0.160.0
+- **React Three Fiber** 8.15.0
+- **@react-three/drei** 9.88.0
+- **@react-three/rapier** (physics)
+
+### AI Integration
+- **OpenAI** GPT-4o (scene editing)
+- **Google Gemini** (textures, SVG)
+- **Anthropic Claude** (complex reasoning)
+- **Hyper3D** (3D generation)
+
+### Data
+- **Zustand** 4.5.0 (state)
+- **Supabase** 2.84.0 (database + storage)
+- **idb** 8.0.0 (IndexedDB)
+
+### Integrations
+- **Blender MCP** - Live bridge to Blender 4.5
+- **ComfyUI** - Generative workflows
+- **Shopify/WooCommerce/BigCommerce** - E-commerce
 
 ---
 
@@ -54,33 +168,31 @@ vercel --prod
 
 - **Platform**: Vercel
 - **Project**: `bisect` (existing)
+- **Domain**: bisect.app
 - **Auto-deploy**: Main branch → production
 
 ---
 
-## Tech Stack
+## Environment Variables
 
-### Core
-- **Next.js** 14.2.33 (App Router)
-- **React** 18.3.1
-- **TypeScript** 5.9.0
-- **Tailwind CSS** 3.4.1
+```env
+# Required
+OPENAI_API_KEY              # GPT-4o for scene editing
+GOOGLE_GEMINI_API_KEY       # Gemini for textures & SVG
+NEXT_PUBLIC_SUPABASE_URL    # Supabase project URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-### 3D & Graphics
-- **Three.js** 0.160.0
-- **React Three Fiber** 8.15.0
-- **@react-three/drei** 9.88.0
-- **@splinetool/runtime** 1.10.99
+# Optional (unlock more features)
+ANTHROPIC_API_KEY           # Claude for reasoning
+OPENROUTER_API_KEY          # Multi-model access
+HYPER3D_API_KEY             # AI 3D generation
+COMFYUI_API_URL             # Local ComfyUI instance
 
-### AI Integration
-- **OpenAI** 4.67.0 (GPT-4o for scene editing)
-- **@google/generative-ai** 0.21.0 (Gemini for textures)
-- **@anthropic-ai/sdk** 0.32.0 (Claude for reasoning)
-
-### Data
-- **Zustand** 4.5.0 (state)
-- **Supabase** 2.84.0 (database + storage)
-- **idb** 8.0.0 (IndexedDB)
+# E-commerce (optional)
+SHOPIFY_STOREFRONT_TOKEN
+WOOCOMMERCE_API_KEY
+BIGCOMMERCE_API_TOKEN
+```
 
 ---
 
@@ -89,162 +201,141 @@ vercel --prod
 ```
 Bisect/
 ├── app/
-│   ├── page.tsx                    # Landing page
-│   ├── api/                        # API routes
-│   │   ├── ai/                     # AI endpoints
-│   │   ├── materials/              # Material queries
-│   │   └── tex-factory/            # Texture generation
-│   └── studio/
-│       ├── 3d-canvas/              # 3D Studio
-│       │   └── components/
-│       │       └── MaterialPreviewOverlay.tsx  # Material selector
-│       ├── svg-canvas/             # Vector Studio
-│       └── tex-factory/            # Texture Studio
+│   ├── studio/
+│   │   ├── 3d-canvas/              # 3D Studio
+│   │   │   ├── components/         # Scene components
+│   │   │   │   ├── InteractiveObject.tsx  # Event system
+│   │   │   │   ├── Cloner3D.tsx    # Instancing
+│   │   │   │   ├── Hotspot3D.tsx   # Annotations
+│   │   │   │   └── ClonerPanel.tsx # Cloner UI
+│   │   │   ├── hooks/              # Scene hooks
+│   │   │   └── r3f/                # R3F context
+│   │   ├── svg-canvas/             # Vector Studio
+│   │   ├── tex-factory/            # Texture Studio
+│   │   └── video-studio/           # Video Studio (WIP)
+│   └── api/
+│       ├── ai/                     # AI endpoints
+│       ├── configurator/           # Product config API
+│       │   ├── route.ts            # Main API
+│       │   └── webhook/route.ts    # E-commerce webhooks
+│       └── webhooks/               # Automation webhooks
 ├── lib/
-│   ├── core/                       # Core library
-│   │   ├── adapters/               # Format adapters (Spline, GLTF)
+│   ├── core/
 │   │   ├── ai/                     # AI agents
-│   │   │   ├── unified-spline-agent.ts
-│   │   │   ├── gemini-spatial-agent.ts
-│   │   │   └── material-agent.ts
-│   │   ├── materials/              # Material system
-│   │   │   └── material-manifest.ts  # 600+ presets
-│   │   └── scene/                  # Scene utilities
-│   ├── store/
-│   │   └── unified-store.ts        # Zustand state
+│   │   ├── materials/              # 600+ material library
+│   │   ├── cloner/                 # Instancing system
+│   │   ├── configurator/           # Product configurator
+│   │   │   ├── types.ts
+│   │   │   ├── pricing-calculator.ts
+│   │   │   └── ecommerce-adapters.ts
+│   │   └── adapters/               # Format adapters
 │   ├── services/
-│   │   └── mcp-bridge-handler.ts   # MCP integration
-│   └── drag-drop/                  # Cross-studio transfer
-├── components/
-│   └── shared/
-│       └── Shell.tsx               # Navigation shell
-├── hooks/
-│   ├── useMaterials.ts
-│   └── useSceneSession.ts
-├── mcp-server/                     # MCP server
-└── cli/                            # CLI tool
+│   │   ├── mcp-bridge-handler.ts   # Blender bridge
+│   │   └── supabase/               # Database services
+│   └── store/
+│       └── unified-store.ts        # Zustand state
+├── mcp-server/                     # MCP server for Blender
+└── cli/                            # Command-line tools
 ```
 
 ---
 
-## Material System Architecture
+## Feature Implementation Status
 
-### Two-Tier Selection Flow
-```
-Select Object → Open Material Panel → Choose Preset (applied immediately)
-                                              ↓
-                                    Click "Browse" in footer
-                                              ↓
-                              Fine-tuned variations of selected preset
-```
+### Fully Implemented
+- [x] Vector Studio (SVG editor, AI vectorization, 7 exports)
+- [x] Texture Studio (MatCap/PBR, normal maps)
+- [x] 3D Studio (scene loading, transforms, hierarchy)
+- [x] Material system (600+ presets, Blender renders)
+- [x] Events system (15+ triggers, animations, states)
+- [x] Variables system (number, boolean, string, color)
+- [x] Cloner/Instancing (6 modes, 5 effectors)
+- [x] Product configurator (variants, pricing, cart)
+- [x] E-commerce adapters (Shopify, WooCommerce, BigCommerce)
+- [x] Hotspots (3D annotations, tooltips, media)
+- [x] Code export (React, vanilla Three.js)
+- [x] Scene persistence (IndexedDB + Supabase cloud sync)
+- [x] Blender MCP bridge
 
-### Supabase Structure
-```
-Database: PostgreSQL (vmawsauglaejrwfajnht)
-├── material_categories    (Gold, Silver, Copper, Iron, Titanium)
-├── material_presets       (Finishes, Tints, Aged per category)
-└── material_variations    (Browse variations for each preset)
+### In Progress
+- [ ] Cross-studio drag & drop
+- [ ] AI workflow orchestrator
+- [ ] Video Studio foundation
 
-Storage Bucket: material-previews
-└── {category}/{preset}/{variation}.png (512x512 Blender renders)
-```
-
-### Key Files
-| File | Purpose |
-|------|---------|
-| `lib/core/materials/material-manifest.ts` | 600+ material definitions |
-| `app/studio/3d-canvas/components/MaterialPreviewOverlay.tsx` | Material UI |
-| `lib/services/supabase/material-queries.ts` | Database queries |
-| `scripts/render-gold-variations.py` | Blender headless render |
-| `docs/material-system-flow.md` | Full documentation |
+### Planned
+- [ ] ComfyUI integration
+- [ ] Hyper3D pipeline
+- [ ] CLI tool (`bisect create`, `bisect export`)
+- [ ] Plugin system
+- [ ] Team collaboration
 
 ---
 
-## Key Entry Points
+## Code Style Guidelines
 
-| File | Purpose |
-|------|---------|
-| `app/page.tsx` | Landing page |
-| `app/studio/3d-canvas/page.tsx` | 3D Studio entry |
-| `app/studio/svg-canvas/page.tsx` | Vector Studio entry |
-| `app/studio/tex-factory/page.tsx` | Texture Studio entry |
-| `lib/store/unified-store.ts` | Central state |
-
----
-
-## Environment Variables
-
-```env
-# Required
-OPENAI_API_KEY              # GPT-4o for 3D scene editing
-GOOGLE_GEMINI_API_KEY       # Gemini for textures & SVG
-NEXT_PUBLIC_SUPABASE_URL    # Supabase project URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY  # Supabase anon key
-
-# Optional
-ANTHROPIC_API_KEY           # Claude for reasoning
-OPENROUTER_API_KEY          # Multi-model access
+### Component Structure
+```typescript
+// 1. Imports
+// 2. Types/Interfaces
+// 3. Constants
+// 4. Helper functions
+// 5. Component
+// 6. Exports
 ```
 
+### Naming Conventions
+- Components: PascalCase (`ClonerPanel.tsx`)
+- Hooks: camelCase with `use` prefix (`useCloner.ts`)
+- Utils: camelCase (`cloner-calculator.ts`)
+- Types: PascalCase, suffix with type (`ClonerConfig`, `EventTrigger`)
+
+### State Management
+- Use Zustand for global state (`lib/store/`)
+- Use React state for component-local state
+- Persist critical state to IndexedDB + Supabase
+
 ---
 
-## Development Commands
+## Testing & Validation
 
 ```bash
-# Start dev server
-pnpm dev
-
-# Build for production
-pnpm build
-
-# Deploy to Vercel
-vercel --prod
-
 # Type check
 pnpm tsc --noEmit
 
+# Build (catches most errors)
+pnpm build
+
 # Lint
 pnpm lint
+
+# Local dev
+pnpm dev
 ```
 
 ---
 
-## Current Implementation Status
+## Quick Reference
 
-### Fully Implemented
-- Vector Studio (SVG editor, AI vectorization, exports)
-- Texture Studio (MatCap/PBR generation, normal maps)
-- 3D scene loading & format adapters
-- Material system with 600+ presets
-- Scene hierarchy & transform controls
-- Project persistence (IndexedDB + Supabase)
+### Common Commands
+```bash
+pnpm dev              # Start dev server
+pnpm build            # Production build
+vercel --prod         # Deploy
+pnpm tsc --noEmit     # Type check
+```
 
-### In Progress
-- MCP bridge smart edit integration
-- AI orchestrator API completions
-- Cross-studio drag & drop handlers
+### Key URLs
+- **Production**: https://bisect.app
+- **Supabase**: https://supabase.com/dashboard/project/vmawsauglaejrwfajnht
+- **Vercel**: https://vercel.com/bisect
 
-### Not Started
-- Object creation tools (primitives)
-- Boolean operations
-- Animation timeline
-- Scene lighting/camera controls
-- AR/VR support (WebXR)
-- Material editor UI
-- Export hub
-
----
-
-## Documentation Files
-
-| File | Description |
-|------|-------------|
-| `.memory.md` | Project status & priorities |
-| `README.md` | Project overview |
+### Documentation
+| File | Purpose |
+|------|---------|
+| `README.md` | Project overview & vision |
 | `docs/material-system-flow.md` | Material architecture |
-| `PROJECT_MAP.md` | Cross-project navigation |
-| `QUICK_DEPLOY.md` | Deployment guide |
+| `docs/feature-gap-analysis.csv` | Competitor analysis |
 
 ---
 
-*Last updated: Nov 30, 2025*
+*Last updated: Dec 2, 2025*
