@@ -1,13 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import Toolbar from './Toolbar';
-import TopBar from './TopBar';
-import Footer from './Footer';
 import AiPromptModal from './AiPromptModal';
 import VectorizationModal from './VectorizationModal';
 import CodeExportModal from './CodeExportModal';
 import UrlImportModal from './UrlImportModal';
+import { SaveAssetModal } from './SaveAssetModal';
 import LandingPage from './LandingPage';
-import { Shell } from '@/components/shared/Shell';
+import { uploadAsset, svgToBlob, generateThumbnail } from '@/lib/services/supabase/storage';
+import { VectorStudioLayout } from './VectorStudioLayout';
 import { Tool, PathData, Point, ShapeType } from '../lib/types/types';
 import {
   pointsToLinedPath,
@@ -25,7 +24,7 @@ import {
   scalePoint
 } from '../utils/geometry';
 import { processSvgWithAi, bitmapToSvg, VectorizeConfig } from '../lib/services/gemini';
-import { traceBitmap } from '../lib/services/tracer';
+import { traceBitmap, resizeImageForTracing } from '../lib/services/tracer';
 import { Upload, Copy, Trash2, RotateCw, FlipHorizontal } from 'lucide-react';
 import { useDragDrop, DragDropBridge, DropTarget, StudioType } from '../../../../lib/drag-drop/bridge';
 import { Asset } from '../../../../lib/store/unified-store';
@@ -98,6 +97,9 @@ export default function VectorEditor() {
   // URL Import State
   const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
 
+  // Save to Library State
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+
   // Drag & Drop State
   // Drag & Drop State
   const [isFileDragging, setIsFileDragging] = useState(false);
@@ -113,6 +115,7 @@ export default function VectorEditor() {
   const [viewBox, setViewBox] = useState({ x: 0, y: 0, w: 1920, h: 1080 });
 
   const svgRef = useRef<SVGSVGElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const CANVAS_BG_COLOR = '#f3f4f6'; // Matches bg-gray-100
 
   // --- Derived State ---
@@ -932,16 +935,35 @@ export default function VectorEditor() {
 
     const reader = new FileReader();
     reader.onload = async (e) => {
-      const base64Data = (e.target?.result as string).split(',')[1];
-      setLoadingText(config.complexity === 'low' ? 'Creating Icon...' : 'Vectorizing Art...');
+      let dataUri = e.target?.result as string;
+      setLoadingText('Preparing image...');
       setIsAiProcessing(true);
 
       try {
-        const svgContent = await bitmapToSvg(base64Data, pendingFile.type, config);
+        // Resize large images to prevent performance issues
+        dataUri = await resizeImageForTracing(dataUri, 1024);
+
+        // Map config to tracer options
+        // complexity: 'low' = fewer colors, less detail
+        // complexity: 'medium' = balanced
+        // complexity: 'high' = more colors, more detail
+        const numColors = config.complexity === 'low' ? 8 : config.complexity === 'high' ? 24 : 16;
+        const precision = config.complexity === 'low' ? 2 : config.complexity === 'high' ? 0.5 : 1;
+
+        setLoadingText('Tracing Geometry...');
+        const svgContent = await traceBitmap(dataUri, {
+          numberofcolors: config.maxColors || numColors,
+          pathomit: config.complexity === 'low' ? 8 : 4,
+          ltres: precision,
+          qtres: precision,
+          timeout: 30000
+        });
+
         saveStateToUndo();
         handleImportedSvg(svgContent);
       } catch (error) {
-        alert("Failed to vectorize image.");
+        console.error('[VectorEditor] Vectorize error:', error);
+        alert("Failed to vectorize image: " + (error instanceof Error ? error.message : 'Unknown error'));
       } finally {
         setIsAiProcessing(false);
         setPendingFile(null);
@@ -952,14 +974,49 @@ export default function VectorEditor() {
 
   const processFile = (file: File) => {
     if (!file) return;
+    console.log('[VectorEditor] processFile called:', file.name, file.type);
 
+    // Handle bitmap images (PNG, JPEG, WEBP) - trace to SVG algorithmically
     if (file.type.startsWith('image/') && !file.type.includes('svg')) {
-      setPendingFile(file);
-      setIsVecModalOpen(true);
+      console.log('[VectorEditor] Processing bitmap image...');
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        let dataUri = ev.target?.result as string;
+        console.log('[VectorEditor] FileReader loaded for processFile');
+        setLoadingText('Preparing image...');
+        setIsAiProcessing(true);
+
+        try {
+          // Resize large images to prevent performance issues
+          dataUri = await resizeImageForTracing(dataUri, 1024);
+
+          setLoadingText('Tracing Geometry...');
+          const svgContent = await traceBitmap(dataUri, {
+            numberofcolors: 16,
+            pathomit: 4,
+            ltres: 1,
+            qtres: 1,
+            timeout: 30000
+          });
+          console.log('[VectorEditor] Trace complete, SVG length:', svgContent?.length);
+
+          saveStateToUndo();
+          handleImportedSvg(svgContent);
+        } catch (error) {
+          console.error('[VectorEditor] processFile trace error:', error);
+          alert("Failed to trace image: " + (error instanceof Error ? error.message : 'Unknown error'));
+        } finally {
+          setIsAiProcessing(false);
+        }
+      };
+      reader.onerror = (err) => console.error('[VectorEditor] FileReader error:', err);
+      reader.readAsDataURL(file);
       return;
     }
 
+    // Handle SVG files directly
     if (file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')) {
+      console.log('[VectorEditor] Processing SVG file...');
       const reader = new FileReader();
       reader.onload = (ev) => {
         const content = ev.target?.result as string;
@@ -971,17 +1028,23 @@ export default function VectorEditor() {
       return;
     }
 
-    console.warn('Unsupported file type');
+    console.warn('[VectorEditor] Unsupported file type:', file.type);
   };
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('[VectorEditor] handleUpload triggered');
     const file = e.target.files?.[0];
+    console.log('[VectorEditor] File selected:', file?.name, file?.type);
     if (file) {
-      // Bypass modal for PNG/JPG and go straight to vectorization if desired, 
-      // OR just set default config to skip the modal step.
-      // For now, just opening modal as per existing logic but can be streamlined.
       processFile(file);
     }
+    // Reset input so same file can be selected again
+    e.target.value = '';
+  };
+
+  // Trigger file input programmatically
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
   };
 
   // --- Drag & Drop Handlers ---
@@ -1014,15 +1077,18 @@ export default function VectorEditor() {
     e.preventDefault();
     e.stopPropagation();
     setIsFileDragging(false);
+    console.log('[VectorEditor] handleDrop called');
 
     // 1. Handle Bridge Drop (Internal Asset)
     if (isBridgeDragging && draggedAsset) {
+      console.log('[VectorEditor] Handling bridge drop');
       await handleBridgeDrop(e);
       return;
     }
 
     // 2. Handle File Drop (OS)
     const file = e.dataTransfer.files?.[0];
+    console.log('[VectorEditor] File from drop:', file?.name, file?.type);
     if (file) {
       // Direct processing bypass
       if (file.type.startsWith('image/') && !file.type.includes('svg')) {
@@ -1034,31 +1100,45 @@ export default function VectorEditor() {
           maxColors: 16
         };
 
+        console.log('[VectorEditor] Starting image trace for:', file.name, file.type);
         const reader = new FileReader();
         reader.onload = async (ev) => {
-          const dataUri = ev.target?.result as string;
-          setLoadingText('Tracing Geometry...');
+          let dataUri = ev.target?.result as string;
+          console.log('[VectorEditor] FileReader loaded, dataUri length:', dataUri?.length);
+          setLoadingText('Preparing image...');
           setIsAiProcessing(true);
 
           try {
+            // Resize large images to prevent performance issues
+            console.log('[VectorEditor] Resizing image if needed...');
+            dataUri = await resizeImageForTracing(dataUri, 1024);
+            console.log('[VectorEditor] Image ready, dataUri length:', dataUri?.length);
+
             // Use local algorithmic tracer instead of AI
             // This provides deterministic geometry detection and lines
+            setLoadingText('Tracing Geometry...');
+            console.log('[VectorEditor] Calling traceBitmap...');
             const svgContent = await traceBitmap(dataUri, {
               numberofcolors: 16,
-              pathomit: 2, // Keep small details
-              ltres: 0.5,  // High precision
-              qtres: 0.5   // High precision
+              pathomit: 4, // Filter small noise
+              ltres: 1,    // Medium precision (faster)
+              qtres: 1,    // Medium precision (faster)
+              timeout: 30000 // 30 second timeout
             });
+            console.log('[VectorEditor] traceBitmap returned SVG, length:', svgContent?.length);
 
             saveStateToUndo();
             handleImportedSvg(svgContent);
           } catch (error) {
-            console.error(error);
-            alert("Failed to trace image.");
+            console.error('[VectorEditor] traceBitmap error:', error);
+            alert("Failed to trace image: " + (error instanceof Error ? error.message : 'Unknown error'));
           } finally {
             setIsAiProcessing(false);
             setPendingFile(null);
           }
+        };
+        reader.onerror = (err) => {
+          console.error('[VectorEditor] FileReader error:', err);
         };
         reader.readAsDataURL(file);
       } else {
@@ -1162,6 +1242,37 @@ export default function VectorEditor() {
     img.src = `data:image/png;base64,${screenshotData}`;
   };
 
+  // Save to Library handler
+  const handleSaveToLibrary = async (name: string, tags: string[]) => {
+    const svgString = getFullSvgString();
+    if (!svgString) {
+      throw new Error('No content to save');
+    }
+
+    // Create SVG blob
+    const svgBlob = svgToBlob(svgString);
+
+    // Generate thumbnail
+    const thumbnail = await generateThumbnail(svgString, 256);
+
+    // Upload to Supabase
+    const result = await uploadAsset({
+      name,
+      category: 'svg',
+      file: svgBlob,
+      thumbnail: thumbnail || undefined,
+      tags,
+      data: {
+        pathCount: paths.length,
+        viewBox: viewBox,
+      },
+    });
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to save');
+    }
+  };
+
   // Eraser visual size
   const eraserPixelSize = eraserSize * getZoomScale();
 
@@ -1196,51 +1307,24 @@ export default function VectorEditor() {
   const rotationHandleDist = 20 / getZoomScale();
 
   return (
-    <Shell
-      topBar={
-        <TopBar
-          onUndo={handleUndo}
-          onRedo={handleRedo}
-          onClear={handleClear}
-          onUrlImport={() => setIsUrlModalOpen(true)}
-          canUndo={undoStack.length > 0}
-          canRedo={redoStack.length > 0}
-        />
-      }
-      leftPanel={
-        <Toolbar
-          currentTool={tool}
-          setTool={setTool}
-          currentShapeType={shapeType}
-          setShapeType={setShapeType}
-          color={color}
-          setColor={setColor}
-          strokeWidth={strokeWidth}
-          setStrokeWidth={setStrokeWidth}
-          eraserSize={eraserSize}
-          setEraserSize={setEraserSize}
-          smoothingLevel={smoothingLevel}
-          setSmoothingLevel={handleSmoothingChange}
-          // Text Props
-          fontSize={fontSize}
-          setFontSize={setFontSize}
-          fontFamily={fontFamily}
-          setFontFamily={setFontFamily}
-          textAlign={textAlign}
-          setTextAlign={setTextAlign}
-          onAiEdit={() => setIsAiModalOpen(true)}
-          onSmoothAll={handleSmoothAll}
-          isAiLoading={isAiProcessing}
-          extractedColors={extractedColors}
-        />
-      }
-      bottomPanel={
-        <Footer
-          onUpload={handleUpload}
-          onDownload={handleDownload}
-          onExportCode={() => setIsCodeModalOpen(true)}
-        />
-      }
+    <VectorStudioLayout
+      currentTool={tool}
+      onToolChange={setTool}
+      strokeWidth={strokeWidth}
+      strokeColor={color}
+      fillColor={color}
+      onStrokeWidthChange={setStrokeWidth}
+      onStrokeColorChange={setColor}
+      onFillColorChange={setColor}
+      onUndo={handleUndo}
+      onRedo={handleRedo}
+      onClear={handleClear}
+      onImport={triggerFileUpload}
+      onExportSvg={handleDownload}
+      onExportCode={() => setIsCodeModalOpen(true)}
+      onSaveToLibrary={() => setIsSaveModalOpen(true)}
+      canUndo={undoStack.length > 0}
+      canRedo={redoStack.length > 0}
     >
       <div
         className="w-full h-full bg-zinc-900 overflow-hidden flex flex-col relative"
@@ -1283,6 +1367,23 @@ export default function VectorEditor() {
           isOpen={isUrlModalOpen}
           onClose={() => setIsUrlModalOpen(false)}
           onImport={handleUrlImport}
+        />
+
+        <SaveAssetModal
+          isOpen={isSaveModalOpen}
+          onClose={() => setIsSaveModalOpen(false)}
+          onSave={handleSaveToLibrary}
+          defaultName="My Vector"
+          assetType="svg"
+        />
+
+        {/* Hidden file input for programmatic import */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".svg,.png,.jpg,.jpeg,.webp"
+          onChange={handleUpload}
+          className="hidden"
         />
 
         {/* Context Menu */}
@@ -1537,7 +1638,7 @@ export default function VectorEditor() {
           </div>
         )}
       </div>
-    </Shell>
+    </VectorStudioLayout>
   );
 }
 

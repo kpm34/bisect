@@ -28,6 +28,8 @@ import { GeneratedTextureSet, GenerationConfig, TextureMode, ModelQuality } from
 import { generateTextureImage } from './matcap-&-pbr-genai/services/geminiService';
 import { generateNormalMap, generateRoughnessMap } from './matcap-&-pbr-genai/services/imageProcessing';
 import { Aperture, ArrowRight, Lock, Sparkles } from 'lucide-react';
+import { SaveAssetModal } from '../svg-canvas/components/SaveAssetModal';
+import { uploadAsset, dataUrlToBlob } from '@/lib/services/supabase/storage';
 
 // Rate limiting constants
 const COOLDOWN_DURATION_MS = 10000; // 10 second cooldown between generations
@@ -76,6 +78,10 @@ export default function App() {
 
   // Lifted state for "Live Preview" functionality
   const [prompt, setPrompt] = useState('');
+
+  // Save to Library state
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [mode, setMode] = useState<TextureMode>(TextureMode.MATCAP);
   const [quality, setQuality] = useState<ModelQuality>(ModelQuality.HIGH);
   const [geometryType, setGeometryType] = useState<'sphere' | 'box' | 'torus' | 'plane'>('sphere');
@@ -304,6 +310,48 @@ export default function App() {
     }
   };
 
+  const handleSaveToLibrary = async (name: string, tags: string[]) => {
+    if (!currentTexture) return;
+
+    setIsSaving(true);
+    try {
+      // Convert albedo data URL to blob
+      const albedoBlob = dataUrlToBlob(currentTexture.albedo);
+
+      // Use albedo as thumbnail (it's already the right format)
+      const thumbnailBlob = dataUrlToBlob(currentTexture.albedo);
+
+      // Prepare metadata
+      const textureData: Record<string, unknown> = {
+        mode: currentTexture.mode,
+        prompt: currentTexture.prompt,
+        resolution: currentTexture.resolution,
+        hasNormal: !!currentTexture.normal,
+        hasRoughness: !!currentTexture.roughness,
+      };
+
+      // Upload the main albedo/matcap texture
+      const result = await uploadAsset({
+        name,
+        category: currentTexture.mode === TextureMode.MATCAP ? 'material' : 'texture',
+        file: albedoBlob,
+        thumbnail: thumbnailBlob,
+        tags: [...tags, currentTexture.mode.toLowerCase(), currentTexture.resolution || '1K'],
+        data: textureData,
+      });
+
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
+      setIsSaveModalOpen(false);
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (!hasApiKey) {
     return (
       <div className="flex flex-col items-center justify-center h-screen w-screen bg-neutral-950 text-white p-4 relative overflow-hidden">
@@ -364,6 +412,9 @@ export default function App() {
           // Rate limiting
           cooldownRemaining={cooldownRemaining}
           fromCache={fromCache}
+          // Save to Library
+          onSaveToLibrary={() => setIsSaveModalOpen(true)}
+          isSaving={isSaving}
         />
       }
     >
@@ -390,6 +441,15 @@ export default function App() {
           )}
         </div>
       </div>
+
+      {/* Save to Library Modal */}
+      <SaveAssetModal
+        isOpen={isSaveModalOpen}
+        onClose={() => setIsSaveModalOpen(false)}
+        onSave={handleSaveToLibrary}
+        defaultName={currentTexture?.prompt || 'My Texture'}
+        assetType={currentTexture?.mode === TextureMode.MATCAP ? 'material' : 'texture'}
+      />
     </Shell>
   );
 }

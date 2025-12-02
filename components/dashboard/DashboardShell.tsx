@@ -1,19 +1,56 @@
 'use client';
 
-import React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import React, { useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { Search, Plus, Bell } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { UserMenu } from '../shared/UserMenu';
+import { NewProjectModal } from './NewProjectModal';
+import { createProject } from '@/lib/services/supabase/projects';
+import { createClient } from '@/utils/supabase/client';
 
 interface DashboardShellProps {
   children: React.ReactNode;
   className?: string;
 }
 
+type ProjectType = '3d' | 'svg' | 'texture';
+
 export function DashboardShell({ children, className = '' }: DashboardShellProps) {
   const pathname = usePathname() ?? '/dashboard';
+  const router = useRouter();
+  const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  async function handleCreateProject(data: { name: string; type: ProjectType }) {
+    setCreating(true);
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const project = await createProject({
+        name: data.name,
+        type: data.type,
+        user_id: user?.id,
+        thumbnail_url: null,
+        description: null,
+        is_public: false,
+        tags: [],
+      });
+
+      if (project) {
+        // Navigate to the appropriate studio based on project type
+        const studioPath = data.type === '3d' ? '3d-canvas'
+          : data.type === 'svg' ? 'svg-canvas'
+          : 'tex-factory';
+        router.push(`/studio/${studioPath}?project=${project.id}`);
+      }
+    } catch (error) {
+      console.error('Failed to create project:', error);
+    } finally {
+      setCreating(false);
+    }
+  }
 
   return (
     <div className={`flex h-screen bg-ash-grey-100 text-ash-grey-900 overflow-hidden ${className}`}>
@@ -41,9 +78,13 @@ export function DashboardShell({ children, className = '' }: DashboardShellProps
 
           {/* Right Actions */}
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-cta-orange hover:bg-cta-orange-hover text-white rounded-lg text-sm font-medium transition-colors">
+            <button
+              onClick={() => setIsNewProjectModalOpen(true)}
+              disabled={creating}
+              className="flex items-center gap-2 px-4 py-2 bg-cta-orange hover:bg-cta-orange-hover disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
+            >
               <Plus className="w-4 h-4" />
-              <span>New Project</span>
+              <span>{creating ? 'Creating...' : 'New Project'}</span>
             </button>
 
             <button className="p-2 hover:bg-ash-grey-100 rounded-lg transition-colors relative">
@@ -61,6 +102,13 @@ export function DashboardShell({ children, className = '' }: DashboardShellProps
           {children}
         </main>
       </div>
+
+      {/* New Project Modal */}
+      <NewProjectModal
+        isOpen={isNewProjectModalOpen}
+        onClose={() => setIsNewProjectModalOpen(false)}
+        onSubmit={handleCreateProject}
+      />
     </div>
   );
 }

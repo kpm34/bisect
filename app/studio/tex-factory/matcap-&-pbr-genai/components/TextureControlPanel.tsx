@@ -1,6 +1,6 @@
 import React from 'react';
 import { TextureMode, ModelQuality, GeneratedTextureSet } from '../types';
-import { Wand2, Download, Layers, Circle, Box as BoxIcon, Palette, Loader2, Sparkles, CheckCircle2, Donut, Clock, Zap } from 'lucide-react';
+import { Wand2, Download, Layers, Circle, Box as BoxIcon, Palette, Loader2, Sparkles, CheckCircle2, Donut, Clock, Zap, FolderPlus } from 'lucide-react';
 
 interface TextureControlPanelProps {
   isGenerating: boolean;
@@ -22,6 +22,10 @@ interface TextureControlPanelProps {
   // Rate limiting
   cooldownRemaining?: number;
   fromCache?: boolean;
+
+  // Save to Library
+  onSaveToLibrary?: () => void;
+  isSaving?: boolean;
 }
 
 export function TextureControlPanel({
@@ -39,7 +43,9 @@ export function TextureControlPanel({
   quality,
   setQuality,
   cooldownRemaining = 0,
-  fromCache = false
+  fromCache = false,
+  onSaveToLibrary,
+  isSaving = false
 }: TextureControlPanelProps) {
   const isOnCooldown = cooldownRemaining > 0;
   const cooldownSeconds = Math.ceil(cooldownRemaining / 1000);
@@ -237,6 +243,27 @@ export function TextureControlPanel({
                     <Download className="w-4 h-4 text-neutral-500 group-hover:text-white" />
                 </button>
                </>
+             )}
+
+             {/* Save to Library */}
+             {onSaveToLibrary && (
+               <button
+                 onClick={onSaveToLibrary}
+                 disabled={isSaving}
+                 className="w-full flex items-center justify-center gap-2 p-3 bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 rounded-lg text-violet-400 transition-colors mt-4 disabled:opacity-50"
+               >
+                 {isSaving ? (
+                   <>
+                     <Loader2 className="w-4 h-4 animate-spin" />
+                     Saving...
+                   </>
+                 ) : (
+                   <>
+                     <FolderPlus className="w-4 h-4" />
+                     Add to Library
+                   </>
+                 )}
+               </button>
              )}
            </div>
         )}

@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "bridge": "node bridge-server/server.js",
+    "bridge:dev": "node --watch bridge-server/server.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.0",
@@ -22,6 +24,7 @@
     "@splinetool/loader": "^1.12.5",
     "@splinetool/r3f-spline": "^1.0.2",
     "@splinetool/runtime": "^1.10.99",
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.84.0",
     "@tanstack/react-query": "^5.0.0",
     "@types/node": "^20",

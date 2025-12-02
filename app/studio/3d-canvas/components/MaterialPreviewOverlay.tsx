@@ -15,7 +15,7 @@ export function MaterialPreviewOverlay({ isOpen, onClose, materialType = 'gold' 
   const [category, setCategory] = useState<MaterialCategory | null>(null);
   const [presets, setPresets] = useState<MaterialPreset[]>([]);
   const [selectedPreset, setSelectedPreset] = useState<MaterialPreset | null>(null);
-  const [activeTab, setActiveTab] = useState<'finishes' | 'tints' | 'aged'>('finishes');
+  const [activeTab, setActiveTab] = useState<string>('finishes');
   const [isLoading, setIsLoading] = useState(false);
   const [showBrowse, setShowBrowse] = useState(false);
   const [browseVariations, setBrowseVariations] = useState<MaterialVariation[]>([]);
@@ -34,13 +34,20 @@ export function MaterialPreviewOverlay({ isOpen, onClose, materialType = 'gold' 
           setPresets(result.presets);
 
           // Set initial tab based on available presets (for tabs mode)
-          if (result.category.display_mode === 'tabs' && result.grouped) {
-            if (result.grouped.finishes.length > 0) {
-              setActiveTab('finishes');
-            } else if (result.grouped.tints.length > 0) {
-              setActiveTab('tints');
-            } else if (result.grouped.aged.length > 0) {
-              setActiveTab('aged');
+          if (result.category.display_mode === 'tabs' && result.presets.length > 0) {
+            // Get unique tabs and set the first one as active
+            const availableTabs = Array.from(new Set(result.presets.map((p: MaterialPreset) => p.tab).filter(Boolean)));
+            if (availableTabs.length > 0) {
+              // Use custom order for known tab types
+              const glassOrder = ['Clear', 'Tinted', 'Frosted', 'MatCap', 'Specialty'];
+              const metalOrder = ['finishes', 'tints', 'aged'];
+              const sortedTabs = availableTabs.sort((a, b) => {
+                const orderA = glassOrder.indexOf(a as string) !== -1 ? glassOrder.indexOf(a as string) : metalOrder.indexOf(a as string);
+                const orderB = glassOrder.indexOf(b as string) !== -1 ? glassOrder.indexOf(b as string) : metalOrder.indexOf(b as string);
+                if (orderA !== -1 && orderB !== -1) return orderA - orderB;
+                return (a as string).localeCompare(b as string);
+              });
+              setActiveTab(sortedTabs[0] as string);
             }
           }
         }
@@ -102,16 +109,56 @@ export function MaterialPreviewOverlay({ isOpen, onClose, materialType = 'gold' 
     const THREE = await import('three');
     const physicalProps = preset.physical_props as Record<string, number | string> | null;
 
+    // Check if this is a glass material (has transmission property)
+    const isGlass = physicalProps?.transmission !== undefined && (physicalProps.transmission as number) > 0;
+
     selectedObject.traverse((child: any) => {
       if (child.isMesh && child.material) {
-        const material = new THREE.MeshPhysicalMaterial({
+        const materialConfig: Record<string, any> = {
           color: colorHex,
           metalness: preset.metalness,
           roughness: preset.roughness,
           clearcoat: preset.clearcoat ?? (preset.metalness > 0.5 && preset.roughness < 0.2 ? 0.5 : 0),
           clearcoatRoughness: (physicalProps?.clearcoatRoughness as number) ?? 0.1,
           envMapIntensity: (physicalProps?.envMapIntensity as number) ?? (preset.metalness > 0.5 ? 1.5 : 1.0),
-        });
+        };
+
+        // Add glass-specific properties
+        if (isGlass) {
+          materialConfig.transmission = physicalProps?.transmission ?? 0.95;
+          materialConfig.thickness = (physicalProps?.thickness as number) ?? 0.5;
+          materialConfig.ior = (physicalProps?.ior as number) ?? 1.5;
+          materialConfig.transparent = true;
+          materialConfig.opacity = 1;
+
+          // Attenuation for tinted glass
+          if (physicalProps?.attenuationColor) {
+            materialConfig.attenuationColor = new THREE.Color(physicalProps.attenuationColor as string);
+            materialConfig.attenuationDistance = (physicalProps?.attenuationDistance as number) ?? 0.5;
+          }
+
+          // Iridescence for specialty glass
+          if (physicalProps?.iridescence !== undefined) {
+            materialConfig.iridescence = physicalProps.iridescence as number;
+            materialConfig.iridescenceIOR = (physicalProps?.iridescenceIOR as number) ?? 1.3;
+          }
+
+          // Emissive for neon glass
+          if (physicalProps?.emissive) {
+            materialConfig.emissive = new THREE.Color(physicalProps.emissive as string);
+            materialConfig.emissiveIntensity = (physicalProps?.emissiveIntensity as number) ?? 0.3;
+          }
+
+          // Sheen for aurora effect
+          if (physicalProps?.sheen !== undefined) {
+            materialConfig.sheen = physicalProps.sheen as number;
+            if (physicalProps?.sheenColor) {
+              materialConfig.sheenColor = new THREE.Color(physicalProps.sheenColor as string);
+            }
+          }
+        }
+
+        const material = new THREE.MeshPhysicalMaterial(materialConfig);
         child.material = material;
       }
     });
@@ -149,12 +196,25 @@ export function MaterialPreviewOverlay({ isOpen, onClose, materialType = 'gold' 
     console.log(`Applied variation ${variation.name} to ${selectedObject.name}`);
   };
 
-  // Build tabs array (only for tabs display_mode)
-  const tabs = category?.display_mode === 'tabs' ? [
-    { id: 'finishes' as const, label: 'Finishes', count: presets.filter(p => p.tab === 'finishes').length },
-    { id: 'tints' as const, label: 'Tints', count: presets.filter(p => p.tab === 'tints').length },
-    { id: 'aged' as const, label: 'Aged', count: presets.filter(p => p.tab === 'aged').length },
-  ].filter(tab => tab.count > 0) : [];
+  // Build tabs array dynamically from presets (only for tabs display_mode)
+  const tabs = category?.display_mode === 'tabs'
+    ? Array.from(new Set(presets.map(p => p.tab).filter(Boolean)))
+        .map(tabName => ({
+          id: tabName as string,
+          label: tabName as string,
+          count: presets.filter(p => p.tab === tabName).length
+        }))
+        .filter(tab => tab.count > 0)
+        .sort((a, b) => {
+          // Custom sort order for glass tabs
+          const glassOrder = ['Clear', 'Tinted', 'Frosted', 'MatCap', 'Specialty'];
+          const metalOrder = ['finishes', 'tints', 'aged'];
+          const orderA = glassOrder.indexOf(a.id) !== -1 ? glassOrder.indexOf(a.id) : metalOrder.indexOf(a.id);
+          const orderB = glassOrder.indexOf(b.id) !== -1 ? glassOrder.indexOf(b.id) : metalOrder.indexOf(b.id);
+          if (orderA !== -1 && orderB !== -1) return orderA - orderB;
+          return a.label.localeCompare(b.label);
+        })
+    : [];
 
   // Browse view for variations
   if (showBrowse && selectedPreset) {
@@ -244,9 +304,9 @@ export function MaterialPreviewOverlay({ isOpen, onClose, materialType = 'gold' 
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-[800px] max-h-[85vh] overflow-hidden border border-zinc-700">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-zinc-700 bg-gradient-to-r from-amber-900/20 to-zinc-900">
+        <div className={`flex items-center justify-between px-4 sm:px-6 py-4 border-b border-zinc-700 bg-gradient-to-r ${materialType === 'glass' ? 'from-cyan-900/20' : 'from-amber-900/20'} to-zinc-900`}>
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <Sparkles className="w-5 h-5 text-amber-400 flex-shrink-0" />
+            <Sparkles className={`w-5 h-5 ${materialType === 'glass' ? 'text-cyan-400' : 'text-amber-400'} flex-shrink-0`} />
             <h2 className="text-lg sm:text-xl font-semibold text-white capitalize truncate">
               {category?.name || materialType} {category?.display_mode === 'flat' ? '' : 'Variations'}
             </h2>
@@ -271,7 +331,9 @@ export function MaterialPreviewOverlay({ isOpen, onClose, materialType = 'gold' 
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                   activeTab === tab.id
-                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                    ? materialType === 'glass'
+                      ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                      : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                     : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
                 }`}
               >
@@ -299,7 +361,9 @@ export function MaterialPreviewOverlay({ isOpen, onClose, materialType = 'gold' 
                     onClick={() => handleApplyPreset(preset)}
                     className={`group relative aspect-square rounded-xl overflow-hidden transition-all duration-200 ${
                       isSelected
-                        ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-zinc-900 scale-105'
+                        ? materialType === 'glass'
+                          ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-zinc-900 scale-105'
+                          : 'ring-2 ring-amber-400 ring-offset-2 ring-offset-zinc-900 scale-105'
                         : 'hover:scale-105 hover:ring-1 hover:ring-zinc-600'
                     }`}
                   >
@@ -326,7 +390,7 @@ export function MaterialPreviewOverlay({ isOpen, onClose, materialType = 'gold' 
 
                     {/* Selected checkmark */}
                     {isSelected && (
-                      <div className="absolute top-2 right-2 w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center">
+                      <div className={`absolute top-2 right-2 w-6 h-6 ${materialType === 'glass' ? 'bg-cyan-500' : 'bg-amber-500'} rounded-full flex items-center justify-center`}>
                         <Check className="w-4 h-4 text-white" />
                       </div>
                     )}
@@ -375,7 +439,9 @@ export function MaterialPreviewOverlay({ isOpen, onClose, materialType = 'gold' 
                 disabled={!selectedPreset}
                 className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
                   selectedPreset
-                    ? 'bg-amber-500 text-white hover:bg-amber-600'
+                    ? materialType === 'glass'
+                      ? 'bg-cyan-500 text-white hover:bg-cyan-600'
+                      : 'bg-amber-500 text-white hover:bg-amber-600'
                     : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
                 }`}
               >

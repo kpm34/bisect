@@ -1,37 +1,34 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { ProjectCard } from '@/components/dashboard/ProjectCard';
-import { FolderOpen } from 'lucide-react';
-
-// Placeholder data - will be replaced with Supabase data
-const mockProjects = [
-  {
-    id: '1',
-    name: 'Product Render',
-    thumbnail: undefined,
-    updatedAt: new Date(Date.now() - 1000 * 60 * 30), // 30 mins ago
-    sceneCount: 2
-  },
-  {
-    id: '2',
-    name: 'Logo Design v2',
-    thumbnail: undefined,
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-    sceneCount: 1
-  },
-  {
-    id: '3',
-    name: 'Brand Assets',
-    thumbnail: undefined,
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3 days ago
-    sceneCount: 4
-  },
-];
+import { FolderOpen, Loader2 } from 'lucide-react';
+import type { Project } from '@/lib/services/supabase/types';
 
 export default function DashboardPage() {
-  const hasProjects = mockProjects.length > 0;
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        const { getRecentProjects } = await import('@/lib/services/supabase/projects');
+        const data = await getRecentProjects(8);
+        setProjects(data);
+      } catch (err) {
+        console.error('Failed to fetch projects:', err);
+        setError('Failed to load projects');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProjects();
+  }, []);
+
+  const hasProjects = projects.length > 0;
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -65,16 +62,24 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {hasProjects ? (
+        {loading ? (
+          <div className="bg-white rounded-xl border border-ash-grey-200 p-12 text-center">
+            <Loader2 className="w-8 h-8 text-ash-grey-400 mx-auto mb-3 animate-spin" />
+            <p className="text-ash-grey-500">Loading projects...</p>
+          </div>
+        ) : error ? (
+          <div className="bg-white rounded-xl border border-red-200 p-12 text-center">
+            <p className="text-red-600">{error}</p>
+          </div>
+        ) : hasProjects ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {mockProjects.map((project) => (
+            {projects.map((project) => (
               <ProjectCard
                 key={project.id}
                 id={project.id}
                 name={project.name}
-                thumbnail={project.thumbnail}
-                updatedAt={project.updatedAt}
-                sceneCount={project.sceneCount}
+                thumbnail={project.thumbnail_url || undefined}
+                updatedAt={new Date(project.updated_at || project.created_at || Date.now())}
               />
             ))}
           </div>

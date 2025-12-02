@@ -11,7 +11,7 @@ import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { useSelection } from '../r3f/SceneSelectionContext';
 import { ErrorBoundary } from './ErrorBoundary';
 import GlitchLoader from './GlitchLoader';
-import { GoldVariations } from './GoldVariations';
+// GlassPresetTesting - using MaterialPreviewOverlay with glass category
 import { IconGenerator } from './IconGenerator';
 import { MaterialPreviewOverlay } from './MaterialPreviewOverlay';
 import { InteractiveObject } from './InteractiveObject';
@@ -53,7 +53,7 @@ export default function R3FCanvas({
   const [cameraPosition] = useState<[number, number, number]>([0, 5, 10]);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
-  const [showGoldPreview, setShowGoldPreview] = useState(false);
+  const [showPresetTesting, setShowPresetTesting] = useState(false);
 
   // Create and manage object URL for the file
   useEffect(() => {
@@ -186,15 +186,15 @@ export default function R3FCanvas({
 
       {/* Editor UI Overlay */}
       <EditorUIOverlay
-        showPreview={showGoldPreview}
-        onTogglePreview={() => setShowGoldPreview(!showGoldPreview)}
+        showPreview={showPresetTesting}
+        onTogglePreview={() => setShowPresetTesting(!showPresetTesting)}
       />
 
-      {/* Material Preview Overlay Modal */}
+      {/* Material Preview Overlay Modal - Glass Preset Testing */}
       <MaterialPreviewOverlay
-        isOpen={showGoldPreview}
-        onClose={() => setShowGoldPreview(false)}
-        materialType="gold"
+        isOpen={showPresetTesting}
+        onClose={() => setShowPresetTesting(false)}
+        materialType="glass"
       />
     </div>
   );
@@ -214,16 +214,16 @@ function EditorUIOverlay({
 
   return (
     <>
-      {/* Preview Toggle Button */}
+      {/* Preset Testing Toggle Button */}
       <div className="absolute top-4 right-4 z-10">
         <button
           onClick={onTogglePreview}
           className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${showPreview
-            ? 'bg-amber-500 text-white'
+            ? 'bg-cyan-500 text-white'
             : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
             }`}
         >
-          {showPreview ? 'Close Preview' : 'Gold Variations'}
+          {showPreview ? 'Close Preview' : 'Preset Testing'}
         </button>
       </div>
 
