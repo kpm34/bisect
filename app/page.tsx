@@ -39,8 +39,8 @@ export default function HomePage() {
                 Docs
               </Link>
               <a href="#extensions" className="text-sm text-text-primary/60 hover:text-text-primary transition-colors flex items-center gap-1">
-                <Sparkles size={14} />
-                Extensions
+                <Plug size={14} />
+                Add-ons
               </a>
               <a href="#dev-tools" className="text-sm text-text-primary/60 hover:text-text-primary transition-colors flex items-center gap-1">
                 <Terminal size={14} />
@@ -101,8 +101,8 @@ export default function HomePage() {
                 href="#extensions"
                 className="group px-8 py-4 bg-white border border-charcoal/20 text-charcoal rounded-xl font-medium hover:border-cta-orange hover:shadow-lg transition-all flex items-center gap-2"
               >
-                <Sparkles size={16} />
-                Explore Extensions
+                <Plug size={16} />
+                Browse Add-ons
               </a>
             </div>
 
@@ -140,18 +140,13 @@ export default function HomePage() {
                 <div className="text-center">
                   <Cuboid size={64} className="text-cta-orange mx-auto mb-4 opacity-80" />
                   <p className="text-white/60 text-sm">Drop a 3D file to start</p>
-                  <p className="text-white/30 text-xs mt-1">.glb, .gltf, .spline</p>
+                  <p className="text-white/30 text-xs mt-1">All 3D formats supported</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Scroll Down Indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce">
-          <span className="text-xs font-mono text-text-primary/40 uppercase tracking-wider">Scroll</span>
-          <ChevronDown size={20} className="text-text-primary/40" />
-        </div>
       </section>
 
       {/* Core Features - 3D Editor Capabilities */}
@@ -185,7 +180,7 @@ export default function HomePage() {
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 size={14} className="text-cta-orange" />
-                  PBR-ready exports
+                  Ready for any platform
                 </li>
               </ul>
             </div>
@@ -220,18 +215,18 @@ export default function HomePage() {
               <div className="w-12 h-12 rounded-xl bg-cta-orange/10 flex items-center justify-center mb-6">
                 <Layers className="text-cta-orange" size={24} />
               </div>
-              <h3 className="text-xl font-sans font-semibold text-charcoal mb-2">Universal Format Support</h3>
+              <h3 className="text-xl font-sans font-semibold text-charcoal mb-2">Works With Any 3D File</h3>
               <p className="text-text-primary/60 text-sm mb-4">
-                Import from anywhere, export to any platform. GLB, GLTF, Spline, and more with optimized settings.
+                Import from any design tool, export anywhere. Automatic optimization for web and mobile.
               </p>
               <ul className="space-y-2 text-sm text-text-primary/50">
                 <li className="flex items-center gap-2">
                   <CheckCircle2 size={14} className="text-cta-orange" />
-                  GLB/GLTF import & export
+                  All major 3D formats
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 size={14} className="text-cta-orange" />
-                  Spline file support
+                  Design tool imports
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 size={14} className="text-cta-orange" />
@@ -255,15 +250,15 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Extensions Section - SVG & Texture as add-ons */}
+      {/* Add-ons Section - SVG & Texture tools */}
       <section id="extensions" className="py-24 max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-teal/10 border border-accent-teal/20 text-[10px] font-mono text-accent-teal uppercase tracking-wider mb-6">
-            Integrated Extensions
+            Built-in Tools
           </div>
-          <h2 className="text-4xl font-sans font-bold text-charcoal mb-4">Powerful Extensions Built-In</h2>
+          <h2 className="text-4xl font-sans font-bold text-charcoal mb-4">Powerful Add-ons Built-In</h2>
           <p className="text-text-primary/70 text-lg max-w-2xl mx-auto">
-            Create assets directly in Bisect that flow seamlessly into your 3D workflow
+            Create assets directly in Bisect that flow seamlessly into your projects
           </p>
         </div>
 
@@ -277,11 +272,11 @@ export default function HomePage() {
               <div className="w-14 h-14 rounded-xl bg-accent-teal/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Palette className="text-accent-teal" size={28} />
               </div>
-              <span className="text-xs font-mono text-accent-teal bg-accent-teal/10 px-2 py-1 rounded">EXTENSION</span>
+              <span className="text-xs font-mono text-accent-teal bg-accent-teal/10 px-2 py-1 rounded">ADD-ON</span>
             </div>
             <h3 className="text-2xl font-sans font-semibold text-charcoal mb-3">Texture Generator</h3>
             <p className="text-text-primary/60 mb-6">
-              Generate MatCap and PBR textures with AI prompts. Creates normal maps automatically for realistic lighting.
+              Generate realistic textures with AI prompts. Creates depth maps automatically for lifelike lighting.
             </p>
             <ul className="space-y-2 text-sm text-text-primary/50 mb-6">
               <li className="flex items-center gap-2">
@@ -290,7 +285,7 @@ export default function HomePage() {
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle2 size={14} className="text-accent-teal" />
-                Automatic normal map creation
+                Automatic depth and detail maps
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle2 size={14} className="text-accent-teal" />
@@ -316,7 +311,7 @@ export default function HomePage() {
               <div className="w-14 h-14 rounded-xl bg-cta-orange/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Zap className="text-cta-orange" size={28} />
               </div>
-              <span className="text-xs font-mono text-cta-orange bg-cta-orange/10 px-2 py-1 rounded">EXTENSION</span>
+              <span className="text-xs font-mono text-cta-orange bg-cta-orange/10 px-2 py-1 rounded">ADD-ON</span>
             </div>
             <h3 className="text-2xl font-sans font-semibold text-charcoal mb-3">Vector Editor</h3>
             <p className="text-text-primary/60 mb-6">
@@ -563,9 +558,9 @@ export default function HomePage() {
               </ul>
             </div>
 
-            {/* Extensions Column */}
+            {/* Add-ons Column */}
             <div>
-              <h3 className="font-sans font-semibold text-charcoal mb-4">Extensions</h3>
+              <h3 className="font-sans font-semibold text-charcoal mb-4">Add-ons</h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <Link href="/studio/tex-factory" className="text-text-primary/60 hover:text-cta-orange transition-colors">
