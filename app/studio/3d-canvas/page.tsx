@@ -47,6 +47,9 @@ const LeftSidebarPanel = dynamic(() => import('./components/LeftSidebarPanel'), 
   ssr: false,
 });
 
+// TopNav for studio navigation
+import { TopNav } from './components/TopNav';
+
 
 
 /**

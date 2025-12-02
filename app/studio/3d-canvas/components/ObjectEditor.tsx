@@ -146,7 +146,7 @@ export default function ObjectEditor() {
         selectedObject.scale.set(newScl.x, newScl.y, newScl.z);
     };
 
-    const handleBoolean = () => {
+    const handleBoolean = useCallback(() => {
         if (!selectedObject || !targetObjectId || !r3fScene) {
             setBooleanStatus('error');
             setBooleanMessage('Select a target object first');
@@ -169,20 +169,20 @@ export default function ObjectEditor() {
         }
 
         try {
-            sourceObj.updateMatrixWorld();
-            targetObj.updateMatrixWorld();
+            // Ensure world matrices are up to date
+            sourceObj.updateMatrixWorld(true);
+            targetObj.updateMatrixWorld(true);
 
-            const brushA = new Brush(sourceObj.geometry.clone(), sourceObj.material);
-            brushA.position.copy(sourceObj.position);
-            brushA.rotation.copy(sourceObj.rotation);
-            brushA.scale.copy(sourceObj.scale);
-            brushA.updateMatrixWorld();
+            // Clone geometries and bake world transforms into them
+            const sourceGeom = sourceObj.geometry.clone();
+            sourceGeom.applyMatrix4(sourceObj.matrixWorld);
 
-            const brushB = new Brush(targetObj.geometry.clone(), targetObj.material);
-            brushB.position.copy(targetObj.position);
-            brushB.rotation.copy(targetObj.rotation);
-            brushB.scale.copy(targetObj.scale);
-            brushB.updateMatrixWorld();
+            const targetGeom = targetObj.geometry.clone();
+            targetGeom.applyMatrix4(targetObj.matrixWorld);
+
+            // Create brushes with identity transforms (geometry already has transforms baked)
+            const brushA = new Brush(sourceGeom, sourceObj.material);
+            const brushB = new Brush(targetGeom, targetObj.material);
 
             const evaluator = new Evaluator();
             let resultBrush;
@@ -192,13 +192,36 @@ export default function ObjectEditor() {
             else if (booleanOp === 'intersect') resultBrush = evaluator.evaluate(brushA, brushB, INTERSECTION);
 
             if (resultBrush) {
+                // Create result mesh - geometry already in world space
                 const resultMesh = new THREE.Mesh(resultBrush.geometry, sourceObj.material);
                 resultMesh.name = `${sourceObj.name || 'Object'}-${booleanOp}-${targetObj.name || 'Target'}`;
-                resultMesh.position.set(0, 0, 0);
 
-                sourceObj.parent?.add(resultMesh);
-                sourceObj.visible = false;
-                targetObj.visible = false;
+                // Store original UUIDs for potential undo
+                resultMesh.userData.booleanSource = sourceObj.uuid;
+                resultMesh.userData.booleanTarget = targetObj.uuid;
+                resultMesh.userData.booleanOp = booleanOp;
+
+                // Add to scene at root level (geometry is in world space)
+                r3fScene.add(resultMesh);
+
+                // Store history entry for undo
+                const historyEntry: BooleanHistoryEntry = {
+                    type: 'boolean',
+                    operation: booleanOp,
+                    sourceUuid: sourceObj.uuid,
+                    targetUuid: targetObj.uuid,
+                    resultUuid: resultMesh.uuid,
+                    sourceVisible: sourceObj.visible,
+                    targetVisible: targetObj.visible,
+                    sourceParentUuid: sourceObj.parent?.uuid || null
+                };
+                setBooleanHistory(prev => [...prev, historyEntry]);
+
+                // Hide or keep originals based on preference
+                if (!preserveOriginals) {
+                    sourceObj.visible = false;
+                    targetObj.visible = false;
+                }
 
                 setBooleanStatus('success');
                 setBooleanMessage(`Created: ${resultMesh.name}`);
@@ -209,7 +232,36 @@ export default function ObjectEditor() {
             setBooleanStatus('error');
             setBooleanMessage('Operation failed - meshes may be incompatible');
         }
-    };
+    }, [selectedObject, targetObjectId, r3fScene, booleanOp, preserveOriginals]);
+
+    // Undo the last boolean operation
+    const handleBooleanUndo = useCallback(() => {
+        if (booleanHistory.length === 0 || !r3fScene) return;
+
+        const lastEntry = booleanHistory[booleanHistory.length - 1];
+
+        // Find and remove the result mesh
+        const resultMesh = r3fScene.getObjectByProperty('uuid', lastEntry.resultUuid);
+        if (resultMesh) {
+            resultMesh.parent?.remove(resultMesh);
+            // Dispose geometry and material to free memory
+            if ((resultMesh as THREE.Mesh).geometry) {
+                (resultMesh as THREE.Mesh).geometry.dispose();
+            }
+        }
+
+        // Restore visibility of original objects
+        const sourceObj = r3fScene.getObjectByProperty('uuid', lastEntry.sourceUuid);
+        const targetObj = r3fScene.getObjectByProperty('uuid', lastEntry.targetUuid);
+
+        if (sourceObj) sourceObj.visible = lastEntry.sourceVisible;
+        if (targetObj) targetObj.visible = lastEntry.targetVisible;
+
+        // Remove from history
+        setBooleanHistory(prev => prev.slice(0, -1));
+        setBooleanStatus('idle');
+        setBooleanMessage('Undo successful');
+    }, [booleanHistory, r3fScene]);
 
     // Handle physics for imported objects
     const handleImportedPhysicsChange = (updates: Partial<typeof importedPhysics>) => {
@@ -504,7 +556,7 @@ export default function ObjectEditor() {
                     <div className="space-y-4">
                         <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Boolean Operation</h4>
                         <p className="text-xs text-gray-500">
-                            Combine <strong className="text-gray-700">{selectedObject.name || 'Selected'}</strong> with another mesh
+                            Combine <strong className="text-gray-700">{selectedObject?.name || 'Selected'}</strong> with another mesh
                         </p>
 
                         {/* Object Picker Dropdown */}
@@ -563,6 +615,20 @@ export default function ObjectEditor() {
                             ))}
                         </div>
 
+                        {/* Preserve Originals Checkbox */}
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="preserve-originals"
+                                checked={preserveOriginals}
+                                onChange={(e) => setPreserveOriginals(e.target.checked)}
+                                className="rounded"
+                            />
+                            <label htmlFor="preserve-originals" className="text-xs text-gray-600">
+                                Keep original objects visible
+                            </label>
+                        </div>
+
                         {/* Status Message */}
                         {booleanStatus !== 'idle' && (
                             <div className={`p-2 rounded text-xs ${
@@ -574,17 +640,39 @@ export default function ObjectEditor() {
                             </div>
                         )}
 
-                        <button
-                            onClick={handleBoolean}
-                            disabled={!targetObjectId}
-                            className={`w-full py-2 rounded text-sm font-medium transition-colors ${
-                                targetObjectId
-                                    ? 'bg-blue-500 text-white hover:bg-blue-600'
-                                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                            }`}
-                        >
-                            Execute {booleanOp}
-                        </button>
+                        {/* Execute and Undo Buttons */}
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleBoolean}
+                                disabled={!targetObjectId}
+                                className={`flex-1 py-2 rounded text-sm font-medium transition-colors ${
+                                    targetObjectId
+                                        ? 'bg-blue-500 text-white hover:bg-blue-600'
+                                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                }`}
+                            >
+                                Execute {booleanOp}
+                            </button>
+                            <button
+                                onClick={handleBooleanUndo}
+                                disabled={booleanHistory.length === 0}
+                                className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
+                                    booleanHistory.length > 0
+                                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        : 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                                }`}
+                                title="Undo last boolean operation"
+                            >
+                                <Undo2 size={16} />
+                            </button>
+                        </div>
+
+                        {/* History Info */}
+                        {booleanHistory.length > 0 && (
+                            <p className="text-xs text-gray-400">
+                                {booleanHistory.length} operation{booleanHistory.length > 1 ? 's' : ''} in history
+                            </p>
+                        )}
                     </div>
                 )}
 

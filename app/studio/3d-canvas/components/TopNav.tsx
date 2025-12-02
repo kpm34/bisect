@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Cuboid, Home, LayoutDashboard, Video } from 'lucide-react';
+import { Pencil, Home, LayoutDashboard, Video } from 'lucide-react';
 
 /**
- * Minimal top navigation bar for Vector Studio
- * Provides quick access to Home, Dashboard, 3D Editor, and Video Studio
+ * Minimal top navigation bar for 3D Canvas Editor
+ * Provides quick access to Home, Dashboard, Vector Studio, and Video Studio
  */
 export function TopNav() {
   const pathname = usePathname();
@@ -14,7 +14,7 @@ export function TopNav() {
   const navItems = [
     { href: '/', label: 'Home', icon: Home },
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/studio/3d-canvas', label: '3D Editor', icon: Cuboid },
+    { href: '/studio/svg-canvas', label: 'Vector Studio', icon: Pencil },
     { href: '/studio/video-studio', label: 'Video Studio', icon: Video },
   ];
 

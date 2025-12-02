@@ -123,7 +123,7 @@ type SelectionContextValue = {
 
   // Scene Objects
   addedObjects: SceneObject[];
-  addObject: (type: SceneObjectType, url?: string, formula?: any) => void;
+  addObject: (type: SceneObjectType, url?: string, formula?: any, text?: string) => void;
   removeObject: (id: string) => void;
   updateObject: (id: string, updates: Partial<SceneObject>) => void;
   setAddedObjects: (objects: SceneObject[]) => void; // For state restoration
