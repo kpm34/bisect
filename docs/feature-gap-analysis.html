@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bisect Feature Gap Analysis - December 2025</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px;
+            background: #fff;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 3px solid #2563eb;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            color: #1e3a5f;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            font-size: 18px;
+            color: #64748b;
+        }
+
+        .header .date {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-top: 8px;
+        }
+
+        h2 {
+            font-size: 24px;
+            color: #1e3a5f;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        h3 {
+            font-size: 18px;
+            color: #334155;
+            margin: 25px 0 12px 0;
+        }
+
+        h4 {
+            font-size: 16px;
+            color: #475569;
+            margin: 20px 0 10px 0;
+        }
+
+        p {
+            margin-bottom: 12px;
+            color: #475569;
+        }
+
+        .executive-summary {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 4px solid #2563eb;
+        }
+
+        .executive-summary h2 {
+            margin-top: 0;
+            border: none;
+            padding-bottom: 0;
+        }
+
+        .priority-high {
+            background: #fef2f2;
+            border-left: 4px solid #dc2626;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .priority-medium {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .priority-low {
+            background: #f0fdf4;
+            border-left: 4px solid #22c55e;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .priority-label {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .priority-label.high {
+            background: #dc2626;
+            color: white;
+        }
+
+        .priority-label.medium {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .priority-label.low {
+            background: #22c55e;
+            color: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #1e3a5f;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        tr:hover {
+            background: #f1f5f9;
+        }
+
+        .check {
+            color: #22c55e;
+            font-weight: bold;
+        }
+
+        .cross {
+            color: #dc2626;
+            font-weight: bold;
+        }
+
+        .partial {
+            color: #f59e0b;
+            font-weight: bold;
+        }
+
+        .feature-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .feature-card h4 {
+            margin-top: 0;
+            color: #1e3a5f;
+        }
+
+        .competitor-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .tag-spline {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .tag-vectary {
+            background: #fce7f3;
+            color: #be185d;
+        }
+
+        .tag-blender {
+            background: #fed7aa;
+            color: #c2410c;
+        }
+
+        ul {
+            margin: 10px 0 10px 25px;
+            color: #475569;
+        }
+
+        li {
+            margin: 6px 0;
+        }
+
+        .roadmap {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .roadmap-phase {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .roadmap-phase h4 {
+            color: #2563eb;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .roadmap-phase ol {
+            margin-left: 20px;
+            color: #475569;
+        }
+
+        .roadmap-phase li {
+            margin: 8px 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card .number {
+            font-size: 36px;
+            font-weight: 700;
+        }
+
+        .stat-card .label {
+            font-size: 12px;
+            opacity: 0.9;
+            text-transform: uppercase;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+
+        @media print {
+            body {
+                padding: 20px;
+            }
+
+            .page-break {
+                page-break-before: always;
+            }
+        }
+
+        .toc {
+            background: #f8fafc;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .toc h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .toc ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .toc li {
+            padding: 5px 0;
+            border-bottom: 1px dotted #e2e8f0;
+        }
+
+        .toc a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 2px solid #e2e8f0;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Bisect Feature Gap Analysis</h1>
+        <div class="subtitle">Competitive Analysis: Bisect vs Spline vs Vectary vs Blender</div>
+        <div class="date">December 2, 2025</div>
+    </div>
+
+    <div class="toc">
+        <h3>Table of Contents</h3>
+        <ul>
+            <li>1. Executive Summary</li>
+            <li>2. Platform Overview & Current State</li>
+            <li>3. High Priority Feature Gaps</li>
+            <li>4. Medium Priority Feature Gaps</li>
+            <li>5. Lower Priority Feature Gaps</li>
+            <li>6. Complete Feature Comparison Matrix</li>
+            <li>7. Recommended Roadmap</li>
+            <li>8. Sources & References</li>
+        </ul>
+    </div>
+
+    <div class="executive-summary">
+        <h2>1. Executive Summary</h2>
+        <p>This analysis compares Bisect's current feature set against three major competitors: <strong>Spline</strong> (browser-based 3D design with interactivity), <strong>Vectary</strong> (3D configurators and AR), and <strong>Blender</strong> (professional 3D with web export).</p>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="number">25</div>
+                <div class="label">Total Feature Gaps</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">8</div>
+                <div class="label">High Priority</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">9</div>
+                <div class="label">Medium Priority</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">8</div>
+                <div class="label">Lower Priority</div>
+            </div>
+        </div>
+
+        <p><strong>Key Finding:</strong> Bisect excels in AI-powered texture generation and has a comprehensive vector studio, but lacks critical interactivity features (events, states, variables) that define modern web-based 3D tools. The absence of AR export and 3D configurator capabilities limits enterprise/e-commerce applications.</p>
+    </div>
+
+    <h2>2. Platform Overview & Current State</h2>
+
+    <h3>Bisect Current Capabilities</h3>
+    <table>
+        <tr>
+            <th>Studio</th>
+            <th>Status</th>
+            <th>Key Features</th>
+        </tr>
+        <tr>
+            <td><strong>3D Studio</strong></td>
+            <td>85% Complete</td>
+            <td>Scene editing, 8 primitives, 600+ materials, physics (Rapier3D), boolean ops, transform gizmos, environment presets, post-processing</td>
+        </tr>
+        <tr>
+            <td><strong>Vector Studio</strong></td>
+            <td>95% Complete</td>
+            <td>15+ drawing tools, AI vectorization, path editing, SVG/JSX export, undo/redo, color extraction</td>
+        </tr>
+        <tr>
+            <td><strong>Texture Studio</strong></td>
+            <td>90% Complete</td>
+            <td>AI MatCap/PBR generation (Gemini), normal maps, roughness maps, 3D preview</td>
+        </tr>
+        <tr>
+            <td><strong>Video Studio</strong></td>
+            <td>80% Complete</td>
+            <td>Multi-track timeline, 15+ transitions, audio controls, Ken Burns effect, clip transforms</td>
+        </tr>
+    </table>
+
+    <h3>Competitor Positioning</h3>
+    <table>
+        <tr>
+            <th>Platform</th>
+            <th>Primary Focus</th>
+            <th>Target Audience</th>
+            <th>Pricing</th>
+        </tr>
+        <tr>
+            <td><strong>Spline</strong></td>
+            <td>Interactive 3D for web</td>
+            <td>Web designers, developers, no-code creators</td>
+            <td>Free / $12/mo Pro</td>
+        </tr>
+        <tr>
+            <td><strong>Vectary</strong></td>
+            <td>3D configurators & AR</td>
+            <td>E-commerce, product teams, marketers</td>
+            <td>Free / $15/mo Pro</td>
+        </tr>
+        <tr>
+            <td><strong>Blender</strong></td>
+            <td>Professional 3D creation</td>
+            <td>3D artists, animators, game devs</td>
+            <td>Free (Open Source)</td>
+        </tr>
+    </table>
+
+    <div class="page-break"></div>
+
+    <h2>3. High Priority Feature Gaps</h2>
+    <p>These features represent major competitive disadvantages and should be prioritized for development.</p>
+
+    <div class="priority-high">
+        <span class="priority-label high">High Priority</span>
+
+        <div class="feature-card">
+            <h4>3.1 State-Based Animation System <span class="competitor-tag tag-spline">Spline</span></h4>
+            <p><strong>What Bisect Lacks:</strong></p>
+            <ul>
+                <li>Object states (base state, hover state, click state, custom states)</li>
+                <li>Automatic state transitions with easing</li>
+                <li>State-triggered animations</li>
+                <li>Property interpolation between states</li>
+            </ul>
+            <p><strong>Competitor Implementation:</strong> In Spline, each object can have multiple defined states. Events trigger transitions between states, and all properties animate automatically. This is fundamental to creating interactive web experiences.</p>
+            <p><strong>Business Impact:</strong> Critical for interactive web content - users cannot create hover effects, click responses, or animated UI without this feature.</p>
+        </div>
+
+        <div class="feature-card">
+            <h4>3.2 Interactive Events System <span class="competitor-tag tag-spline">Spline</span></h4>
+            <p><strong>Event Types Bisect is Missing:</strong></p>
+            <table>
+                <tr>
+                    <th>Event Type</th>
+                    <th>Bisect</th>
+                    <th>Spline</th>
+                    <th>Use Case</th>
+                </tr>
+                <tr>
+                    <td>Mouse Hover</td>
+                    <td class="cross">&#10007;</td>
+                    <td class="check">&#10003;</td>
+                    <td>Highlight objects on hover</td>
+                </tr>
+                <tr>
+                    <td>Mouse Click/Down/Up</td>
+                    <td class="cross">&#10007;</td>
+                    <td class="check">&#10003;</td>
+                    <td>Interactive buttons, triggers</td>
+                </tr>
+                <tr>
+                    <td>Key Press/Up/Down</td>
+                    <td class="cross">&#10007;</td>
+                    <td class="check">&#10003;</td>
+                    <td>Keyboard shortcuts, games</td>
+                </tr>
+                <tr>
+                    <td>Scroll Event</td>
+                    <td class="cross">&#10007;</td>
+                    <td class="check">&#10003;</td>
+                    <td>Parallax, scroll animations</td>
+                </tr>
+                <tr>
+                    <td>Drag & Drop</td>
+                    <td class="cross">&#10007;</td>
+                    <td class="check">&#10003;</td>
+                    <td>Interactive configurators</td>
+                </tr>
+                <tr>
+                    <td>Collision Event</td>
+                    <td class="cross">&#10007;</td>
+                    <td class="check">&#10003;</td>
+                    <td>Games, physics triggers</td>
+                </tr>
+                <tr>
+                    <td>Game Controls</td>
+                    <td class="cross">&#10007;</td>
+                    <td class="check">&#10003;</td>
+                    <td>WASD movement, jump</td>
+                </tr>
+                <tr>
+                    <td>Start Event</td>
+                    <td class="cross">&#10007;</td>
+                    <td class="check">&#10003;</td>
+                    <td>Auto-play animations</td>
+                </tr>
+                <tr>
+                    <td>Look At Event</td>
+                    <td class="cross">&#10007;</td>
+                    <td class="check">&#10003;</td>
+                    <td>Object tracking</td>
+                </tr>
+                <tr>
+                    <td>Follow Event</td>
+                    <td class="cross">&#10007;</td>
+                    <td class="check">&#10003;</td>
+                    <td>Camera/object following</td>
+                </tr>
+            </table>
+            <p><strong>Business Impact:</strong> Without events, Bisect cannot compete for interactive web 3D projects. This is the #1 reason users choose Spline.</p>
+        </div>
+
+        <div class="feature-card">
+            <h4>3.3 Variables & Data Binding <span class="competitor-tag tag-spline">Spline</span></h4>
+            <p><strong>What Bisect Lacks:</strong></p>
+            <ul>
+                <li>Scene variables (boolean, number, string types)</li>
+                <li>Variable actions (set, toggle, increment, decrement)</li>
+                <li>Conditional logic based on variable values</li>
+                <li>Real-time API data integration</li>
+                <li>Webhooks for external data push/pull</li>
+                <li>Variable-driven animations and states</li>
+            </ul>
+            <p><strong>Business Impact:</strong> Cannot create data-driven 3D experiences, dashboards, or dynamic content.</p>
+        </div>
+
+        <div class="feature-card">
+            <h4>3.4 3D Product Configurator Builder <span class="competitor-tag tag-vectary">Vectary</span></h4>
+            <p><strong>What Bisect Lacks:</strong></p>
+            <ul>
+                <li>Visual no-code configurator builder</li>
+                <li>Material/color switcher UI components</li>
+                <li>Hotspots with annotations and tooltips</li>
+                <li>Variant-based pricing calculator</li>
+                <li>E-commerce integration (Shopify, WooCommerce, BigCommerce)</li>
+                <li>API for custom configurator logic</li>
+                <li>Checkout flow integration</li>
+            </ul>
+            <p><strong>Business Impact:</strong> Massive market opportunity in e-commerce 3D. Vectary's primary revenue driver is enterprise configurators.</p>
+        </div>
+
+        <div class="feature-card">
+            <h4>3.5 Augmented Reality (AR) Export <span class="competitor-tag tag-vectary">Vectary</span></h4>
+            <p><strong>What Bisect Lacks:</strong></p>
+            <ul>
+                <li>One-click AR preview in browser</li>
+                <li>QR code generation for mobile AR</li>
+                <li>USDZ export for iOS AR Quick Look</li>
+                <li>WebXR/WebAR support</li>
+                <li>Apple Vision Pro integration</li>
+                <li>AR configurator variants</li>
+            </ul>
+            <p><strong>Business Impact:</strong> AR is increasingly expected for product visualization. Missing this excludes furniture, fashion, and retail clients.</p>
+        </div>
+
+        <div class="feature-card">
+            <h4>3.6 AI 3D Object Generation <span class="competitor-tag tag-spline">Spline</span></h4>
+            <p><strong>What Bisect Has:</strong> AI scene editing via text commands, AI texture generation</p>
+            <p><strong>What Bisect Lacks:</strong></p>
+            <ul>
+                <li>Text-to-3D mesh generation</li>
+                <li>Image-to-3D model conversion</li>
+                <li>AI variant generation (generate 4 variations from one prompt)</li>
+                <li>Remix/iterate on AI-generated results</li>
+                <li>In-editor AI mesh generation (currently only in separate Texture Studio)</li>
+            </ul>
+            <p><strong>Business Impact:</strong> AI generation is a major differentiator. Spline's AI features are prominently marketed.</p>
+        </div>
+
+        <div class="feature-card">
+            <h4>3.7 Advanced 3D Animation Timeline <span class="competitor-tag tag-spline">Spline</span></h4>
+            <p><strong>What Bisect Has:</strong> Video Studio with timeline (for video editing)</p>
+            <p><strong>What Bisect Lacks in 3D Studio:</strong></p>
+            <ul>
+                <li>3D keyframe timeline for scene objects</li>
+                <li>Graph/curve editor for custom easing</li>
+                <li>Property-level keyframe control (animate position, rotation, scale, materials independently)</li>
+                <li>Multiple timelines per scene</li>
+                <li>Animation blending and layering</li>
+                <li>Video export directly from 3D scene</li>
+                <li>GIF export</li>
+                <li>Image sequence export</li>
+            </ul>
+            <p><strong>Business Impact:</strong> Cannot create animated 3D content for marketing, social media, or presentations.</p>
+        </div>
+
+        <div class="feature-card">
+            <h4>3.8 Game Controls & Character Navigation <span class="competitor-tag tag-spline">Spline</span></h4>
+            <p><strong>What Bisect Lacks:</strong></p>
+            <ul>
+                <li>WASD keyboard movement controls</li>
+                <li>Jump and run actions</li>
+                <li>Character controller component</li>
+                <li>Navigation mesh for pathfinding</li>
+                <li>First-person / third-person camera modes</li>
+                <li>Mobile joystick and button controls</li>
+                <li>Gravity and collision-based movement</li>
+            </ul>
+            <p><strong>Business Impact:</strong> Cannot create 3D games, virtual tours, or explorable environments.</p>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <h2>4. Medium Priority Feature Gaps</h2>
+    <p>Important features that enhance capabilities but aren't blocking core use cases.</p>
+
+    <div class="priority-medium">
+        <span class="priority-label medium">Medium Priority</span>
+
+        <div class="feature-card">
+            <h4>4.1 Advanced Material Layers <span class="competitor-tag tag-spline">Spline</span></h4>
+            <p><strong>Bisect Has:</strong> 600+ material presets, PBR support</p>
+            <p><strong>Bisect Lacks:</strong></p>
+            <table>
+                <tr>
+                    <th>Material Layer</th>
+                    <th>Bisect</th>
+                    <th>Spline</th>
+                </tr>
+                <tr><td>Depth/3D Gradient</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+                <tr><td>Video Layer</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+                <tr><td>Fresnel Layer</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+                <tr><td>Rainbow Layer</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+                <tr><td>Noise Layer</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+                <tr><td>Pattern Layer</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+                <tr><td>Layer Masking</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+                <tr><td>Displace Layer</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+                <tr><td>Toon Layer</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+            </table>
+        </div>
+
+        <div class="feature-card">
+            <h4>4.2 3D Path/Spline Tools <span class="competitor-tag tag-spline">Spline</span></h4>
+            <p><strong>What Bisect Lacks:</strong></p>
+            <ul>
+                <li>3D path/spline creation with bezier curves</li>
+                <li>Extrude 2D shapes along 3D paths</li>
+                <li>Clone/distribute objects along paths</li>
+                <li>Animate objects along paths</li>
+                <li>Cable, rope, pipe generation</li>
+                <li>Path-based motion paths</li>
+            </ul>
+        </div>
+
+        <div class="feature-card">
+            <h4>4.3 Cloner/Scatter System <span class="competitor-tag tag-spline">Spline</span></h4>
+            <p><strong>What Bisect Lacks:</strong></p>
+            <ul>
+                <li>Cloner with grid, radial, linear distribution modes</li>
+                <li>Random scatter distribution</li>
+                <li>Animation of cloned instances</li>
+                <li>Instance effectors (scale, rotation, color variation)</li>
+                <li>Count and spacing controls</li>
+            </ul>
+        </div>
+
+        <div class="feature-card">
+            <h4>4.4 Particle System <span class="competitor-tag tag-spline">Spline</span></h4>
+            <p><strong>What Bisect Lacks:</strong></p>
+            <ul>
+                <li>Particle emitters (point, surface, volume)</li>
+                <li>Particle physics (gravity, wind, turbulence)</li>
+                <li>Particle materials and sprites</li>
+                <li>Particle events and triggers</li>
+                <li>Particle trails</li>
+            </ul>
+        </div>
+
+        <div class="feature-card">
+            <h4>4.5 3D Sculpting <span class="competitor-tag tag-spline">Spline</span></h4>
+            <p><strong>What Bisect Lacks:</strong></p>
+            <ul>
+                <li>Sculpt brushes (push, pull, smooth, pinch)</li>
+                <li>Subdivision surface editing</li>
+                <li>Vertex-level manipulation</li>
+                <li>Dynamic topology</li>
+            </ul>
+        </div>
+
+        <div class="feature-card">
+            <h4>4.6 Shape Blend / SDF Operations <span class="competitor-tag tag-spline">Spline</span></h4>
+            <p><strong>Bisect Has:</strong> Basic boolean operations (union, subtract, intersect)</p>
+            <p><strong>Bisect Lacks:</strong></p>
+            <ul>
+                <li>Smooth blend between shapes using SDF (Signed Distance Fields)</li>
+                <li>Real-time SDF preview</li>
+                <li>Blend radius/smoothness control</li>
+                <li>Organic shape merging</li>
+            </ul>
+        </div>
+
+        <div class="feature-card">
+            <h4>4.7 Code Export Options <span class="competitor-tag tag-spline">Spline</span></h4>
+            <p><strong>Bisect Has:</strong> GLB/GLTF export, SVG export</p>
+            <p><strong>Bisect Lacks:</strong></p>
+            <table>
+                <tr>
+                    <th>Export Type</th>
+                    <th>Bisect</th>
+                    <th>Spline</th>
+                </tr>
+                <tr><td>Vanilla JS Code</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+                <tr><td>React Component</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+                <tr><td>Next.js SSR Component</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+                <tr><td>Vue Component</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+                <tr><td>Iframe Embed Code</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+                <tr><td>Video (MP4/WebM)</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+                <tr><td>Animated GIF</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+                <tr><td>Image Sequence</td><td class="cross">&#10007;</td><td class="check">&#10003;</td></tr>
+            </table>
+        </div>
+
+        <div class="feature-card">
+            <h4>4.8 Photorealistic Path-Traced Renderer <span class="competitor-tag tag-vectary">Vectary</span></h4>
+            <p><strong>Bisect Has:</strong> Real-time React Three Fiber rendering</p>
+            <p><strong>Bisect Lacks:</strong></p>
+            <ul>
+                <li>Path-traced rendering option</li>
+                <li>One-click 4K render export</li>
+                <li>Render queue for batch rendering</li>
+                <li>Photon-level accuracy (Vectary Photon/Luxcore)</li>
+            </ul>
+        </div>
+
+        <div class="feature-card">
+            <h4>4.9 Custom HDRI Upload <span class="competitor-tag tag-vectary">Vectary</span></h4>
+            <p><strong>Bisect Has:</strong> Environment presets (city, studio, sunset, etc.)</p>
+            <p><strong>Bisect Lacks:</strong></p>
+            <ul>
+                <li>Upload custom HDRI files</li>
+                <li>HDRI library browser</li>
+                <li>HDRI rotation control</li>
+                <li>HDRI exposure adjustment</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <h2>5. Lower Priority Feature Gaps</h2>
+    <p>Nice-to-have features that would enhance the platform but aren't critical differentiators.</p>
+
+    <div class="priority-low">
+        <span class="priority-label low">Lower Priority</span>
+
+        <div class="feature-card">
+            <h4>5.1 Component/Symbol System <span class="competitor-tag tag-spline">Spline</span></h4>
+            <ul>
+                <li>Reusable component definitions</li>
+                <li>Component instances with property overrides</li>
+                <li>Nested components</li>
+                <li>Component library</li>
+            </ul>
+        </div>
+
+        <div class="feature-card">
+            <h4>5.2 Real-time Collaboration Cursors <span class="competitor-tag tag-spline">Spline</span></h4>
+            <ul>
+                <li>See collaborator cursors in real-time</li>
+                <li>Multiplayer editing mode</li>
+                <li>Live presence indicators</li>
+                <li>User avatars in scene</li>
+            </ul>
+        </div>
+
+        <div class="feature-card">
+            <h4>5.3 Comments System <span class="competitor-tag tag-spline">Spline</span></h4>
+            <ul>
+                <li>Pin comments to specific objects</li>
+                <li>Comment threads with replies</li>
+                <li>@mentions for team members</li>
+                <li>Resolve/archive comments</li>
+            </ul>
+        </div>
+
+        <div class="feature-card">
+            <h4>5.4 Version History <span class="competitor-tag tag-spline">Spline</span> <span class="competitor-tag tag-vectary">Vectary</span></h4>
+            <ul>
+                <li>Automatic version snapshots</li>
+                <li>Named version saves</li>
+                <li>Visual version comparison</li>
+                <li>Restore to previous version</li>
+            </ul>
+        </div>
+
+        <div class="feature-card">
+            <h4>5.5 Fog & Volumetric Effects <span class="competitor-tag tag-spline">Spline</span></h4>
+            <ul>
+                <li>Volumetric fog</li>
+                <li>Fog density and falloff control</li>
+                <li>Fog color and gradient</li>
+                <li>Height-based fog</li>
+            </ul>
+        </div>
+
+        <div class="feature-card">
+            <h4>5.6 Camera Depth of Field <span class="competitor-tag tag-spline">Spline</span></h4>
+            <ul>
+                <li>Focus distance control</li>
+                <li>Aperture/bokeh settings</li>
+                <li>Focus on specific object</li>
+                <li>Rack focus animation</li>
+            </ul>
+        </div>
+
+        <div class="feature-card">
+            <h4>5.7 2D Design Canvas (Hana-style) <span class="competitor-tag tag-spline">Spline</span></h4>
+            <ul>
+                <li>Infinite 2D canvas alongside 3D</li>
+                <li>2D to 3D projection</li>
+                <li>Liquid glass effects</li>
+                <li>Auto layout for 2D elements</li>
+                <li>AI image generation in canvas</li>
+            </ul>
+        </div>
+
+        <div class="feature-card">
+            <h4>5.8 Animation Loops & Blending <span class="competitor-tag tag-vectary">Vectary</span></h4>
+            <ul>
+                <li>Seamless loop animations</li>
+                <li>Ping-pong playback mode</li>
+                <li>Animation ease presets library</li>
+                <li>Animation blending between clips</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <h2>6. Complete Feature Comparison Matrix</h2>
+
+    <table>
+        <tr>
+            <th>Category</th>
+            <th>Feature</th>
+            <th>Bisect</th>
+            <th>Spline</th>
+            <th>Vectary</th>
+        </tr>
+        <tr>
+            <td rowspan="6"><strong>3D Modeling</strong></td>
+            <td>Primitive shapes</td>
+            <td class="check">&#10003; 8 types</td>
+            <td class="check">&#10003;</td>
+            <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+            <td>Boolean operations</td>
+            <td class="check">&#10003;</td>
+            <td class="check">&#10003; + SDF blend</td>
+            <td class="partial">~ Basic</td>
+        </tr>
+        <tr>
+            <td>3D sculpting</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+            <td>3D paths/splines</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+            <td>Cloner/scatter</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+            <td>Particles</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+            <td rowspan="4"><strong>Materials</strong></td>
+            <td>Material presets</td>
+            <td class="check">&#10003; 600+</td>
+            <td class="check">&#10003;</td>
+            <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+            <td>PBR support</td>
+            <td class="check">&#10003;</td>
+            <td class="check">&#10003;</td>
+            <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+            <td>Layered materials</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="partial">~ Basic</td>
+        </tr>
+        <tr>
+            <td>Video textures</td>
+            <td class="partial">~ Panel only</td>
+            <td class="check">&#10003;</td>
+            <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+            <td rowspan="5"><strong>Animation</strong></td>
+            <td>State-based animation</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+            <td>Timeline keyframes</td>
+            <td class="partial">~ Video only</td>
+            <td class="check">&#10003;</td>
+            <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+            <td>Graph/curve editor</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="partial">~ Basic</td>
+        </tr>
+        <tr>
+            <td>Path animation</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+            <td>Physics animation</td>
+            <td class="check">&#10003; Rapier3D</td>
+            <td class="check">&#10003;</td>
+            <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+            <td rowspan="5"><strong>Interactivity</strong></td>
+            <td>Mouse events</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+            <td>Keyboard events</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+            <td>Scroll events</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+            <td>Variables/data binding</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="check">&#10003; API</td>
+        </tr>
+        <tr>
+            <td>Game controls</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+            <td rowspan="4"><strong>AI Features</strong></td>
+            <td>AI scene editing</td>
+            <td class="check">&#10003;</td>
+            <td class="partial">~ Voice</td>
+            <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+            <td>Text-to-3D generation</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+            <td>Image-to-3D</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+            <td>AI texture generation</td>
+            <td class="check">&#10003;</td>
+            <td class="cross">&#10007;</td>
+            <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+            <td rowspan="3"><strong>AR/VR</strong></td>
+            <td>AR preview</td>
+            <td class="cross">&#10007;</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+            <td>USDZ export</td>
+            <td class="cross">&#10007;</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+            <td>WebXR support</td>
+            <td class="cross">&#10007;</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+            <td rowspan="3"><strong>Configurator</strong></td>
+            <td>Visual builder</td>
+            <td class="cross">&#10007;</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+            <td>E-commerce integration</td>
+            <td class="cross">&#10007;</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+            <td>Pricing calculator</td>
+            <td class="cross">&#10007;</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+            <td rowspan="5"><strong>Export</strong></td>
+            <td>GLB/GLTF</td>
+            <td class="check">&#10003;</td>
+            <td class="check">&#10003;</td>
+            <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+            <td>React/JS code</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+            <td>Iframe embed</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+            <td>Video export</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+            <td>4K render</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+            <td rowspan="3"><strong>Collaboration</strong></td>
+            <td>Real-time editing</td>
+            <td class="partial">~ Blender sync</td>
+            <td class="check">&#10003;</td>
+            <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+            <td>Comments</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+            <td>Version history</td>
+            <td class="cross">&#10007;</td>
+            <td class="check">&#10003;</td>
+            <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+            <td rowspan="2"><strong>Vector/2D</strong></td>
+            <td>SVG editor</td>
+            <td class="check">&#10003; Full studio</td>
+            <td class="partial">~ Basic</td>
+            <td class="cross">&#10007;</td>
+        </tr>
+        <tr>
+            <td>AI vectorization</td>
+            <td class="check">&#10003;</td>
+            <td class="cross">&#10007;</td>
+            <td class="cross">&#10007;</td>
+        </tr>
+    </table>
+
+    <p><strong>Legend:</strong> <span class="check">&#10003;</span> = Full support &nbsp; <span class="partial">~</span> = Partial/Limited &nbsp; <span class="cross">&#10007;</span> = Not available</p>
+
+    <div class="page-break"></div>
+
+    <h2>7. Recommended Development Roadmap</h2>
+
+    <div class="roadmap">
+        <div class="roadmap-phase">
+            <h4>Phase 1: Core Interactivity</h4>
+            <p><em>Highest Impact - Enables interactive web 3D</em></p>
+            <ol>
+                <li><strong>Event System</strong> - Mouse hover/click, keyboard events, scroll</li>
+                <li><strong>State System</strong> - Object states with transitions</li>
+                <li><strong>Variables</strong> - Scene-level data binding</li>
+            </ol>
+        </div>
+
+        <div class="roadmap-phase">
+            <h4>Phase 2: Animation Enhancement</h4>
+            <p><em>Enables animated content creation</em></p>
+            <ol>
+                <li><strong>3D Timeline</strong> - Keyframe animation in 3D Studio</li>
+                <li><strong>Graph Editor</strong> - Easing curve control</li>
+                <li><strong>Video Export</strong> - Render 3D scenes to video</li>
+            </ol>
+        </div>
+
+        <div class="roadmap-phase">
+            <h4>Phase 3: Advanced Features</h4>
+            <p><em>Differentiation and new capabilities</em></p>
+            <ol>
+                <li><strong>AR Export</strong> - WebAR and USDZ support</li>
+                <li><strong>AI 3D Generation</strong> - Text/image to mesh</li>
+                <li><strong>3D Paths & Cloner</strong> - Procedural tools</li>
+            </ol>
+        </div>
+
+        <div class="roadmap-phase">
+            <h4>Phase 4: Enterprise Tools</h4>
+            <p><em>Revenue-driving professional features</em></p>
+            <ol>
+                <li><strong>Configurator Builder</strong> - No-code product configurator</li>
+                <li><strong>Code Export</strong> - React/Vue/JS components</li>
+                <li><strong>Photorealistic Render</strong> - Path-traced output</li>
+            </ol>
+        </div>
+    </div>
+
+    <h2>8. Sources & References</h2>
+
+    <table>
+        <tr>
+            <th>Source</th>
+            <th>URL</th>
+        </tr>
+        <tr>
+            <td>Spline Official Website</td>
+            <td>https://spline.design/</td>
+        </tr>
+        <tr>
+            <td>Spline Documentation - Events</td>
+            <td>https://docs.spline.design/doc/events--interactivity/</td>
+        </tr>
+        <tr>
+            <td>Spline Timeline Animation</td>
+            <td>https://blog.spline.design/introducing-3d-timeline-animation</td>
+        </tr>
+        <tr>
+            <td>Spline AI Generation</td>
+            <td>https://spline.design/ai-generate</td>
+        </tr>
+        <tr>
+            <td>Spline Physics Documentation</td>
+            <td>https://docs.spline.design/doc/physics/</td>
+        </tr>
+        <tr>
+            <td>Spline Game Controls</td>
+            <td>https://docs.spline.design/doc/game-controls-event/</td>
+        </tr>
+        <tr>
+            <td>Vectary Official Website</td>
+            <td>https://www.vectary.com/</td>
+        </tr>
+        <tr>
+            <td>Vectary 3D Design Tool</td>
+            <td>https://www.vectary.com/3d-design-tool/</td>
+        </tr>
+        <tr>
+            <td>Vectary Configurator Maker</td>
+            <td>https://www.vectary.com/3d-configurator-maker/</td>
+        </tr>
+        <tr>
+            <td>Vectary API Documentation</td>
+            <td>https://www.vectary.com/api/</td>
+        </tr>
+        <tr>
+            <td>Vectary Animations</td>
+            <td>https://help.vectary.com/documentation/3d-configurator/animations</td>
+        </tr>
+        <tr>
+            <td>Blender Geometry Nodes 4.3</td>
+            <td>https://developer.blender.org/docs/release_notes/4.3/geometry_nodes/</td>
+        </tr>
+        <tr>
+            <td>Blender 5.0 Features</td>
+            <td>https://www.cgchannel.com/2025/11/blender-5-0-is-out/</td>
+        </tr>
+    </table>
+
+    <div class="footer">
+        <p>Bisect Feature Gap Analysis | Generated December 2, 2025</p>
+        <p>This document compares Bisect v0.1.0 Beta against Spline, Vectary, and Blender</p>
+    </div>
+</body>
+</html>

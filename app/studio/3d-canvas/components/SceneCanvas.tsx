@@ -18,6 +18,7 @@ import { MaterialPreviewOverlay } from './MaterialPreviewOverlay';
 import { VideoTexturePanel } from './VideoTexturePanel';
 import { InteractiveObject } from './InteractiveObject';
 import { CliBridge } from './CliBridge';
+import { CodeExportModal } from './CodeExportModal';
 import { SceneEnvironment } from '@/lib/core/materials/types';
 
 interface R3FCanvasProps {
@@ -57,6 +58,7 @@ export default function R3FCanvas({
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [showPresetTesting, setShowPresetTesting] = useState(false);
   const [showVideoPanel, setShowVideoPanel] = useState(false);
+  const [showCodeExport, setShowCodeExport] = useState(false);
   const [videoBackgroundUrl, setVideoBackgroundUrl] = useState<string | null>(null);
 
   // Create and manage object URL for the file
@@ -186,6 +188,7 @@ export default function R3FCanvas({
         onTogglePreview={() => setShowPresetTesting(!showPresetTesting)}
         showVideoPanel={showVideoPanel}
         onToggleVideoPanel={() => setShowVideoPanel(!showVideoPanel)}
+        onExportCode={() => setShowCodeExport(true)}
       />
 
       {/* Material Preview Overlay Modal - Glass Preset Testing */}
@@ -201,6 +204,18 @@ export default function R3FCanvas({
         onClose={() => setShowVideoPanel(false)}
         onSetBackground={setVideoBackgroundUrl}
       />
+
+      {/* Code Export Modal */}
+      <CodeExportModal
+        isOpen={showCodeExport}
+        onClose={() => setShowCodeExport(false)}
+        environment={{
+          preset: environment.preset || 'city',
+          background: environment.background ?? true,
+          blur: environment.blur ?? 0.8,
+          intensity: environment.intensity ?? 1.0,
+        }}
+      />
     </div>
   );
 }
@@ -212,19 +227,38 @@ function EditorUIOverlay({
   showPreview,
   onTogglePreview,
   showVideoPanel,
-  onToggleVideoPanel
+  onToggleVideoPanel,
+  onExportCode
 }: {
   showPreview: boolean;
   onTogglePreview: () => void;
   showVideoPanel: boolean;
   onToggleVideoPanel: () => void;
+  onExportCode: () => void;
 }) {
-  const { selectedObject } = useSelection();
+  const { selectedObject, addedObjects } = useSelection();
 
   return (
     <>
       {/* Top Right Buttons */}
       <div className="absolute top-4 right-4 z-10 flex gap-2">
+        {/* Export Code Button */}
+        <button
+          onClick={onExportCode}
+          className="px-4 py-2 rounded-lg font-medium text-sm transition-colors bg-zinc-800 text-zinc-300 hover:bg-zinc-700 flex items-center gap-2"
+          title="Export scene as code (Cmd+Shift+E)"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+          </svg>
+          Export Code
+          {addedObjects.length > 0 && (
+            <span className="bg-cyan-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+              {addedObjects.length}
+            </span>
+          )}
+        </button>
+
         {/* Preset Testing Toggle Button */}
         <button
           onClick={onTogglePreview}

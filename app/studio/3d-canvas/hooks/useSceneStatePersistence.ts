@@ -7,12 +7,13 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { sceneStatePersistence, PersistedSceneState } from '../utils/scene-state-persistence';
-import { SceneObject } from '../r3f/SceneSelectionContext';
+import { SceneObject, SceneVariable } from '../r3f/SceneSelectionContext';
 import { SceneEnvironment } from '@/lib/core/materials/types';
 
 interface UseSceneStatePersistenceOptions {
   projectId: string | null;
   addedObjects: SceneObject[];
+  sceneVariables: SceneVariable[];
   environment: SceneEnvironment;
   effects: {
     bloom: boolean;
@@ -26,6 +27,7 @@ interface UseSceneStatePersistenceOptions {
 export function useSceneStatePersistence({
   projectId,
   addedObjects,
+  sceneVariables,
   environment,
   effects,
   onRestoreState,
@@ -49,6 +51,7 @@ export function useSceneStatePersistence({
       if (shouldRestore) {
         console.log('🔄 Restoring scene state...', {
           objects: savedState.addedObjects?.length ?? 0,
+          variables: savedState.sceneVariables?.length ?? 0,
           environment: savedState.environment?.preset,
         });
         onRestoreState(savedState);
@@ -72,6 +75,16 @@ export function useSceneStatePersistence({
       addedObjects,
     });
   }, [addedObjects, projectId]);
+
+  // Auto-save when sceneVariables changes
+  useEffect(() => {
+    if (isInitialMount.current) return;
+
+    sceneStatePersistence.saveState({
+      projectId,
+      sceneVariables,
+    });
+  }, [sceneVariables, projectId]);
 
   // Auto-save when environment changes
   useEffect(() => {
@@ -111,10 +124,11 @@ export function useSceneStatePersistence({
     sceneStatePersistence.saveStateImmediate({
       projectId,
       addedObjects,
+      sceneVariables,
       environment,
       effects,
     });
-  }, [projectId, addedObjects, environment, effects]);
+  }, [projectId, addedObjects, sceneVariables, environment, effects]);
 
   return {
     clearState,

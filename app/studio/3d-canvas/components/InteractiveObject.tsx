@@ -7,7 +7,7 @@ import { RigidBody, RapierRigidBody } from '@react-three/rapier';
 import { Gltf, Detailed } from '@react-three/drei';
 import { RiggedAsset } from './RiggedAsset';
 import { ParametricObject } from './ParametricObject';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
 // ============== EVENT TYPES ==============
@@ -24,6 +24,18 @@ interface EventAction {
   duration?: number;
   easing?: string;
   relative?: boolean;
+  // For conditional actions
+  condition?: {
+    variable: string;
+    operator: 'equals' | 'notEquals' | 'greaterThan' | 'lessThan' | 'isTrue' | 'isFalse';
+    compareValue?: any;
+  };
+  // For sound actions
+  soundUrl?: string;
+  volume?: number;
+  // For lookAt/follow actions
+  targetId?: string;
+  smooth?: number;
 }
 
 interface SceneEvent {
@@ -70,10 +82,16 @@ interface InteractiveObjectProps {
 }
 
 export function InteractiveObject({ obj, children }: InteractiveObjectProps) {
-  const { setSelectedObject, updateObject, removeObject } = useSelection();
+  const { setSelectedObject, updateObject, removeObject, playSound, getVariable, addedObjects } = useSelection();
+  const { camera, gl } = useThree();
   const [isHovered, setIsHovered] = useState(false);
   const rigidBodyRef = useRef<RapierRigidBody>(null);
   const meshRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
+
+  // LookAt / Follow state
+  const [lookAtTarget, setLookAtTarget] = useState<THREE.Vector3 | null>(null);
+  const [followTarget, setFollowTarget] = useState<{ id: string; smooth: number } | null>(null);
 
   // Animation state
   const [animations, setAnimations] = useState<AnimatingValue[]>([]);
@@ -82,6 +100,37 @@ export function InteractiveObject({ obj, children }: InteractiveObjectProps) {
   const [localScale, setLocalScale] = useState(new THREE.Vector3(...obj.scale));
   const [localColor, setLocalColor] = useState(new THREE.Color(obj.color));
   const [visible, setVisible] = useState(true);
+
+  // Check if condition is met for conditional actions
+  const checkCondition = useCallback((condition: EventAction['condition']): boolean => {
+    if (!condition) return true; // No condition means always execute
+
+    const variable = getVariable(condition.variable);
+    if (!variable) {
+      console.warn(`Variable "${condition.variable}" not found`);
+      return false;
+    }
+
+    const value = variable.value;
+    const compareValue = condition.compareValue;
+
+    switch (condition.operator) {
+      case 'equals':
+        return value === compareValue;
+      case 'notEquals':
+        return value !== compareValue;
+      case 'greaterThan':
+        return typeof value === 'number' && value > compareValue;
+      case 'lessThan':
+        return typeof value === 'number' && value < compareValue;
+      case 'isTrue':
+        return value === true;
+      case 'isFalse':
+        return value === false;
+      default:
+        return true;
+    }
+  }, [getVariable]);
 
   // Get events - support both old and new format
   const getEvents = useCallback((): SceneEvent[] => {
@@ -236,10 +285,120 @@ export function InteractiveObject({ obj, children }: InteractiveObjectProps) {
         setLocalScale(new THREE.Vector3(...obj.scale));
         break;
 
+      // ============== NEW ACTIONS ==============
+
+      case 'playSound': {
+        const url = action.soundUrl || action.value;
+        const volume = action.volume ?? 1;
+        if (url) {
+          playSound(url, volume);
+        } else {
+          console.warn('No sound URL provided for playSound action');
+        }
+        break;
+      }
+
+      case 'lookAt': {
+        // Look at a target object or the camera
+        const targetId = action.targetId || action.value;
+        if (targetId === 'camera') {
+          // Look at camera (continuously updated in useFrame)
+          setLookAtTarget(null); // Will use camera position in useFrame
+        } else if (targetId) {
+          // Look at specific object
+          const targetObj = addedObjects.find(o => o.id === targetId);
+          if (targetObj) {
+            setLookAtTarget(new THREE.Vector3(...targetObj.position));
+          }
+        }
+        break;
+      }
+
+      case 'follow': {
+        // Follow a target object or cursor
+        const targetId = action.targetId || action.value;
+        const smooth = action.smooth ?? 0.1;
+        if (targetId === 'cursor') {
+          setFollowTarget({ id: 'cursor', smooth });
+        } else if (targetId) {
+          setFollowTarget({ id: targetId, smooth });
+        }
+        break;
+      }
+
+      case 'setState': {
+        // Change to a different state (for state-based animation)
+        const stateName = action.value as string;
+        if (stateName && obj.states) {
+          const targetState = obj.states.find(s => s.name === stateName);
+          if (targetState) {
+            // Animate to new state properties
+            if (targetState.properties.position) {
+              const endPos = new THREE.Vector3(...targetState.properties.position);
+              setAnimations(prev => [...prev, {
+                startValue: localPosition.clone(),
+                endValue: endPos,
+                startTime: performance.now(),
+                duration,
+                easing,
+                property: 'position',
+              }]);
+            }
+            if (targetState.properties.rotation) {
+              const endRot = new THREE.Vector3(...targetState.properties.rotation);
+              setAnimations(prev => [...prev, {
+                startValue: new THREE.Vector3(localRotation.x, localRotation.y, localRotation.z),
+                endValue: endRot,
+                startTime: performance.now(),
+                duration,
+                easing,
+                property: 'rotation',
+              }]);
+            }
+            if (targetState.properties.scale) {
+              const endScale = new THREE.Vector3(...targetState.properties.scale);
+              setAnimations(prev => [...prev, {
+                startValue: localScale.clone(),
+                endValue: endScale,
+                startTime: performance.now(),
+                duration,
+                easing,
+                property: 'scale',
+              }]);
+            }
+            if (targetState.properties.color) {
+              const newColor = new THREE.Color(targetState.properties.color);
+              setAnimations(prev => [...prev, {
+                startValue: localColor.clone(),
+                endValue: newColor,
+                startTime: performance.now(),
+                duration,
+                easing,
+                property: 'color',
+              }]);
+            }
+            if (targetState.properties.visible !== undefined) {
+              setVisible(targetState.properties.visible);
+            }
+            // Update currentState
+            updateObject(obj.id, { currentState: stateName });
+          }
+        }
+        break;
+      }
+
+      case 'stopFollow':
+        setFollowTarget(null);
+        break;
+
+      case 'stopLookAt':
+        setLookAtTarget(null);
+        break;
+
       default:
         console.log(`Action "${action.type}" not implemented yet`);
     }
-  }, [localPosition, localRotation, localScale, localColor, obj, updateObject, removeObject]);
+  }, [localPosition, localRotation, localScale, localColor, obj, updateObject, removeObject, playSound, addedObjects]);
 
   // Execute all actions for enabled events with matching trigger
   const executeTrigger = useCallback((triggerType: string, extraData?: any) => {
@@ -258,6 +417,11 @@ export function InteractiveObject({ obj, children }: InteractiveObjectProps) {
         if ((triggerType === 'keyDown' || triggerType === 'keyUp') && event.trigger.key) {
           matches = extraData?.key?.toUpperCase() === event.trigger.key.toUpperCase();
         }
+
+        // Special handling for scroll events
+        if (triggerType === 'scroll' && extraData?.scrollDelta !== undefined) {
+          // Pass scroll delta to actions that might need it
+        }
       }
 
       if (matches) {
@@ -266,15 +430,53 @@ export function InteractiveObject({ obj, children }: InteractiveObjectProps) {
 
         setTimeout(() => {
           event.actions.forEach(action => {
-            executeAction(action);
+            // Check condition before executing
+            if (checkCondition(action.condition)) {
+              executeAction(action);
+            }
           });
         }, delay);
       }
     });
-  }, [getEvents, executeAction]);
+  }, [getEvents, executeAction, checkCondition]);
 
-  // Animation frame - interpolate values
-  useFrame(() => {
+  // Animation frame - interpolate values + handle lookAt/follow
+  useFrame((state) => {
+    // Handle lookAt
+    if (lookAtTarget && groupRef.current) {
+      groupRef.current.lookAt(lookAtTarget);
+    }
+
+    // Handle follow
+    if (followTarget && groupRef.current) {
+      let targetPosition: THREE.Vector3 | null = null;
+
+      if (followTarget.id === 'cursor') {
+        // Follow cursor in 3D space (project to plane at object's Z)
+        const mouse = state.pointer;
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, state.camera);
+        const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -localPosition.z);
+        const intersection = new THREE.Vector3();
+        raycaster.ray.intersectPlane(plane, intersection);
+        if (intersection) {
+          targetPosition = intersection;
+        }
+      } else {
+        // Follow another object
+        const targetObj = addedObjects.find(o => o.id === followTarget.id);
+        if (targetObj) {
+          targetPosition = new THREE.Vector3(...targetObj.position);
+        }
+      }
+
+      if (targetPosition) {
+        // Smooth follow
+        const newPos = localPosition.clone().lerp(targetPosition, followTarget.smooth);
+        setLocalPosition(newPos);
+      }
+    }
+
     if (animations.length === 0) return;
 
     const now = performance.now();
@@ -370,34 +572,133 @@ export function InteractiveObject({ obj, children }: InteractiveObjectProps) {
     };
   }, [getEvents, executeTrigger]);
 
+  // Scroll events
+  useEffect(() => {
+    const events = getEvents();
+    const hasScrollEvents = events.some(e => e.enabled && e.trigger.type === 'scroll');
+
+    if (!hasScrollEvents) return;
+
+    const handleScroll = (e: WheelEvent) => {
+      executeTrigger('scroll', {
+        scrollDelta: e.deltaY,
+        scrollDirection: e.deltaY > 0 ? 'down' : 'up',
+      });
+    };
+
+    // Listen on the canvas element
+    const canvas = gl.domElement;
+    canvas.addEventListener('wheel', handleScroll, { passive: true });
+
+    return () => {
+      canvas.removeEventListener('wheel', handleScroll);
+    };
+  }, [getEvents, executeTrigger, gl]);
+
+  // Drag state
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartPos = useRef<THREE.Vector3 | null>(null);
+  const lastClickTime = useRef<number>(0);
+  const DOUBLE_CLICK_THRESHOLD = 300; // ms
+
   // Pointer handlers
   const handlePointerOver = (e: any) => {
     e.stopPropagation();
-    setIsHovered(true);
-    document.body.style.cursor = 'pointer';
-    executeTrigger('mouseHover');
+    if (!isHovered) {
+      setIsHovered(true);
+      document.body.style.cursor = 'pointer';
+      executeTrigger('mouseHover');
+      executeTrigger('mouseEnter'); // New event
+    }
   };
 
   const handlePointerOut = (e: any) => {
     e.stopPropagation();
-    setIsHovered(false);
-    document.body.style.cursor = 'auto';
+    if (isHovered) {
+      setIsHovered(false);
+      document.body.style.cursor = 'auto';
+      executeTrigger('mouseLeave'); // New event
+    }
   };
 
   const handlePointerDown = (e: any) => {
     e.stopPropagation();
     executeTrigger('mouseDown');
+
+    // Start drag tracking
+    dragStartPos.current = localPosition.clone();
+
+    // Check for right-click
+    if (e.button === 2) {
+      executeTrigger('rightClick');
+    }
   };
 
   const handlePointerUp = (e: any) => {
     e.stopPropagation();
     executeTrigger('mouseUp');
+
+    // End drag if was dragging
+    if (isDragging) {
+      setIsDragging(false);
+      executeTrigger('dragEnd', {
+        startPosition: dragStartPos.current,
+        endPosition: localPosition.clone(),
+        delta: dragStartPos.current ? localPosition.clone().sub(dragStartPos.current) : new THREE.Vector3(),
+      });
+      dragStartPos.current = null;
+    }
+  };
+
+  const handlePointerMove = (e: any) => {
+    e.stopPropagation();
+
+    // Start drag if pointer is down and moved enough
+    if (dragStartPos.current && !isDragging) {
+      const currentPos = localPosition.clone();
+      const distance = currentPos.distanceTo(dragStartPos.current);
+      if (distance > 0.01) {
+        setIsDragging(true);
+        executeTrigger('dragStart', {
+          startPosition: dragStartPos.current,
+        });
+      }
+    }
+
+    // Fire drag event while dragging
+    if (isDragging) {
+      executeTrigger('drag', {
+        startPosition: dragStartPos.current,
+        currentPosition: localPosition.clone(),
+        delta: dragStartPos.current ? localPosition.clone().sub(dragStartPos.current) : new THREE.Vector3(),
+      });
+    }
   };
 
   const handleClick = (e: any) => {
     e.stopPropagation();
-    setSelectedObject(e.object);
-    executeTrigger('mouseClick');
+
+    // Don't trigger click if we were dragging
+    if (isDragging) return;
+
+    const now = Date.now();
+    const timeSinceLastClick = now - lastClickTime.current;
+
+    // Check for double-click
+    if (timeSinceLastClick < DOUBLE_CLICK_THRESHOLD) {
+      executeTrigger('doubleClick');
+      lastClickTime.current = 0; // Reset to prevent triple-click registering
+    } else {
+      setSelectedObject(e.object);
+      executeTrigger('mouseClick');
+      lastClickTime.current = now;
+    }
+  };
+
+  const handleContextMenu = (e: any) => {
+    e.stopPropagation();
+    executeTrigger('contextMenu');
+    executeTrigger('rightClick'); // Also trigger rightClick on context menu
   };
 
   // Calculate Framer Motion variants for hover/click visual feedback
@@ -436,7 +737,9 @@ export function InteractiveObject({ obj, children }: InteractiveObjectProps) {
         onPointerOut={handlePointerOut}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
+        onPointerMove={handlePointerMove}
         onClick={handleClick}
+        onContextMenu={handleContextMenu}
       >
         {obj.type === 'external' && obj.url ? (
           obj.lod?.enabled && obj.lod.levels.length > 0 ? (

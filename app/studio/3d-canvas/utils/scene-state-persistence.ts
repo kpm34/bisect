@@ -7,7 +7,7 @@
  * This complements scenePersistence.ts which handles the base scene file (GLTF/Spline).
  */
 
-import { SceneObject } from '../r3f/SceneSelectionContext';
+import { SceneObject, SceneVariable } from '../r3f/SceneSelectionContext';
 import { SceneEnvironment } from '@/lib/core/materials/types';
 
 // Keys for localStorage
@@ -19,6 +19,7 @@ const STORAGE_KEYS = {
 export interface PersistedSceneState {
   projectId: string | null;
   addedObjects: SceneObject[];
+  sceneVariables: SceneVariable[];
   environment: SceneEnvironment;
   effects: {
     bloom: boolean;
@@ -73,6 +74,7 @@ class SceneStatePersistence {
       const newState: PersistedSceneState = {
         projectId: state.projectId ?? existing?.projectId ?? null,
         addedObjects: state.addedObjects ?? existing?.addedObjects ?? [],
+        sceneVariables: state.sceneVariables ?? existing?.sceneVariables ?? [],
         environment: state.environment ?? existing?.environment ?? DEFAULT_ENVIRONMENT,
         effects: state.effects ?? existing?.effects ?? DEFAULT_EFFECTS,
         timestamp: Date.now(),
@@ -82,6 +84,7 @@ class SceneStatePersistence {
       console.log('💾 Scene state saved:', {
         projectId: newState.projectId,
         objects: newState.addedObjects.length,
+        variables: newState.sceneVariables.length,
         env: newState.environment.preset,
       });
     } catch (error) {
@@ -115,6 +118,7 @@ class SceneStatePersistence {
       console.log('📂 Scene state loaded:', {
         projectId: state.projectId,
         objects: state.addedObjects?.length ?? 0,
+        variables: state.sceneVariables?.length ?? 0,
         env: state.environment?.preset,
         age: Math.round((Date.now() - state.timestamp) / 1000) + 's ago',
       });

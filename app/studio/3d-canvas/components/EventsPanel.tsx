@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { useSelection, SceneObject } from '../r3f/SceneSelectionContext';
+import { useSelection, SceneObject, SceneVariable } from '../r3f/SceneSelectionContext';
 import {
   Play,
   MousePointer2,
@@ -70,7 +70,15 @@ type ActionType =
   | 'resetTransform'
   | 'applyForce'
   | 'lookAt'
-  | 'follow';
+  | 'follow'
+  | 'stopLookAt'
+  | 'stopFollow'
+  | 'setVariable'
+  | 'toggleVariable'
+  | 'incrementVariable';
+
+// Condition operators for conditional actions
+type ConditionOperator = 'equals' | 'notEquals' | 'greaterThan' | 'lessThan' | 'isTrue' | 'isFalse';
 
 interface EventTrigger {
   type: TriggerType;
@@ -85,6 +93,18 @@ interface EventAction {
   duration?: number; // Animation duration (ms)
   easing?: 'linear' | 'easeIn' | 'easeOut' | 'easeInOut' | 'bounce';
   relative?: boolean; // Relative vs absolute transform
+  // Conditional execution
+  condition?: {
+    variable: string;
+    operator: ConditionOperator;
+    compareValue?: any;
+  };
+  // Sound-specific
+  soundUrl?: string;
+  volume?: number;
+  // Target-specific (for lookAt, follow)
+  targetId?: string;
+  smooth?: number;
 }
 
 interface SceneEvent {
@@ -180,12 +200,32 @@ const ACTION_GROUPS = [
     ]
   },
   {
-    label: 'Advanced',
+    label: 'Behaviors',
     actions: [
-      { type: 'playSound' as ActionType, label: 'Play Sound', icon: Volume2, description: 'Play audio' },
-      { type: 'setState' as ActionType, label: 'Set State', icon: RefreshCw, description: 'Change state' },
       { type: 'lookAt' as ActionType, label: 'Look At', icon: Eye, description: 'Face target' },
       { type: 'follow' as ActionType, label: 'Follow', icon: Target, description: 'Follow target' },
+      { type: 'stopLookAt' as ActionType, label: 'Stop Look At', icon: EyeOff, description: 'Stop facing' },
+      { type: 'stopFollow' as ActionType, label: 'Stop Follow', icon: RefreshCw, description: 'Stop following' },
+    ]
+  },
+  {
+    label: 'Audio',
+    actions: [
+      { type: 'playSound' as ActionType, label: 'Play Sound', icon: Volume2, description: 'Play audio file' },
+    ]
+  },
+  {
+    label: 'Variables',
+    actions: [
+      { type: 'setVariable' as ActionType, label: 'Set Variable', icon: RefreshCw, description: 'Set variable value' },
+      { type: 'toggleVariable' as ActionType, label: 'Toggle Variable', icon: Circle, description: 'Toggle boolean' },
+      { type: 'incrementVariable' as ActionType, label: 'Increment', icon: Plus, description: 'Add to number' },
+    ]
+  },
+  {
+    label: 'State',
+    actions: [
+      { type: 'setState' as ActionType, label: 'Set State', icon: RefreshCw, description: 'Change object state' },
     ]
   },
 ];
@@ -288,12 +328,15 @@ interface ActionEditorProps {
   action: EventAction;
   onChange: (updated: EventAction) => void;
   onRemove: () => void;
+  sceneVariables: SceneVariable[];
+  sceneObjects: { id: string; name: string }[];
 }
 
-function ActionEditor({ action, onChange, onRemove }: ActionEditorProps) {
+function ActionEditor({ action, onChange, onRemove, sceneVariables, sceneObjects }: ActionEditorProps) {
   const config = getActionConfig(action.type);
   if (!config) return null;
   const Icon = config.icon;
+  const [showCondition, setShowCondition] = useState(!!action.condition);
 
   return (
     <div className="bg-[#1a1a1a] rounded-lg p-3 border border-gray-800">
@@ -302,13 +345,78 @@ function ActionEditor({ action, onChange, onRemove }: ActionEditorProps) {
           <Icon size={14} className="text-green-400" />
           <span className="text-sm font-medium text-gray-200">{config.label}</span>
         </div>
-        <button
-          onClick={onRemove}
-          className="p-1 text-gray-500 hover:text-red-400 transition-colors"
-        >
-          <Trash2 size={12} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => {
+              setShowCondition(!showCondition);
+              if (showCondition) {
+                // Remove condition when hiding
+                const { condition, ...rest } = action;
+                onChange(rest as EventAction);
+              }
+            }}
+            className={`p-1 text-xs rounded transition-colors ${showCondition ? 'text-yellow-400 bg-yellow-400/10' : 'text-gray-500 hover:text-yellow-400'}`}
+            title="Add condition"
+          >
+            If
+          </button>
+          <button
+            onClick={onRemove}
+            className="p-1 text-gray-500 hover:text-red-400 transition-colors"
+          >
+            <Trash2 size={12} />
+          </button>
+        </div>
       </div>
+
+      {/* Conditional execution */}
+      {showCondition && (
+        <div className="mb-3 p-2 bg-[#111] rounded border border-yellow-900/30">
+          <label className="text-xs text-yellow-400 mb-1 block">Run if:</label>
+          <div className="flex gap-2 items-center">
+            <select
+              value={action.condition?.variable || ''}
+              onChange={(e) => onChange({
+                ...action,
+                condition: { ...action.condition, variable: e.target.value, operator: action.condition?.operator || 'equals' }
+              })}
+              className="flex-1 bg-[#1a1a1a] border border-gray-700 rounded px-2 py-1 text-xs text-gray-200"
+            >
+              <option value="">Select variable...</option>
+              {sceneVariables.map(v => (
+                <option key={v.id} value={v.name}>{v.name}</option>
+              ))}
+            </select>
+            <select
+              value={action.condition?.operator || 'equals'}
+              onChange={(e) => onChange({
+                ...action,
+                condition: { ...action.condition, variable: action.condition?.variable || '', operator: e.target.value as ConditionOperator }
+              })}
+              className="bg-[#1a1a1a] border border-gray-700 rounded px-2 py-1 text-xs text-gray-200"
+            >
+              <option value="equals">=</option>
+              <option value="notEquals">≠</option>
+              <option value="greaterThan">&gt;</option>
+              <option value="lessThan">&lt;</option>
+              <option value="isTrue">is true</option>
+              <option value="isFalse">is false</option>
+            </select>
+            {!['isTrue', 'isFalse'].includes(action.condition?.operator || '') && (
+              <input
+                type="text"
+                value={action.condition?.compareValue ?? ''}
+                onChange={(e) => onChange({
+                  ...action,
+                  condition: { ...action.condition, variable: action.condition?.variable || '', operator: action.condition?.operator || 'equals', compareValue: e.target.value }
+                })}
+                placeholder="value"
+                className="w-20 bg-[#1a1a1a] border border-gray-700 rounded px-2 py-1 text-xs text-gray-200"
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Action-specific parameters */}
       {(action.type === 'move' || action.type === 'rotate' || action.type === 'scale') && (
@@ -407,6 +515,157 @@ function ActionEditor({ action, onChange, onRemove }: ActionEditorProps) {
         </div>
       )}
 
+      {/* Play Sound */}
+      {action.type === 'playSound' && (
+        <div className="space-y-2">
+          <div>
+            <label className="text-xs text-gray-500">Sound URL</label>
+            <input
+              type="text"
+              value={action.soundUrl || ''}
+              onChange={(e) => onChange({ ...action, soundUrl: e.target.value })}
+              placeholder="https://example.com/sound.mp3"
+              className="w-full bg-[#111] border border-gray-700 rounded px-2 py-1 text-xs text-gray-200"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500">Volume (0-1)</label>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.1"
+              value={action.volume ?? 1}
+              onChange={(e) => onChange({ ...action, volume: parseFloat(e.target.value) })}
+              className="w-full"
+            />
+            <span className="text-xs text-gray-400">{action.volume ?? 1}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Look At / Follow */}
+      {(action.type === 'lookAt' || action.type === 'follow') && (
+        <div className="space-y-2">
+          <div>
+            <label className="text-xs text-gray-500">Target Object</label>
+            <select
+              value={action.targetId || ''}
+              onChange={(e) => onChange({ ...action, targetId: e.target.value })}
+              className="w-full bg-[#111] border border-gray-700 rounded px-2 py-1 text-xs text-gray-200"
+            >
+              <option value="">Select target...</option>
+              <option value="cursor">Mouse Cursor</option>
+              <option value="camera">Camera</option>
+              {sceneObjects.map(obj => (
+                <option key={obj.id} value={obj.id}>{obj.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-gray-500">Smoothing (0-1)</label>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={action.smooth ?? 0.1}
+              onChange={(e) => onChange({ ...action, smooth: parseFloat(e.target.value) })}
+              className="w-full"
+            />
+            <span className="text-xs text-gray-400">{action.smooth ?? 0.1}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Set Variable */}
+      {action.type === 'setVariable' && (
+        <div className="space-y-2">
+          <div>
+            <label className="text-xs text-gray-500">Variable</label>
+            <select
+              value={action.value?.variable || ''}
+              onChange={(e) => onChange({ ...action, value: { ...action.value, variable: e.target.value } })}
+              className="w-full bg-[#111] border border-gray-700 rounded px-2 py-1 text-xs text-gray-200"
+            >
+              <option value="">Select variable...</option>
+              {sceneVariables.map(v => (
+                <option key={v.id} value={v.name}>{v.name} ({v.type})</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-gray-500">Value</label>
+            <input
+              type="text"
+              value={action.value?.newValue ?? ''}
+              onChange={(e) => onChange({ ...action, value: { ...action.value, newValue: e.target.value } })}
+              placeholder="New value"
+              className="w-full bg-[#111] border border-gray-700 rounded px-2 py-1 text-xs text-gray-200"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Toggle Variable */}
+      {action.type === 'toggleVariable' && (
+        <div>
+          <label className="text-xs text-gray-500">Boolean Variable</label>
+          <select
+            value={action.value?.variable || ''}
+            onChange={(e) => onChange({ ...action, value: { variable: e.target.value } })}
+            className="w-full bg-[#111] border border-gray-700 rounded px-2 py-1 text-xs text-gray-200"
+          >
+            <option value="">Select variable...</option>
+            {sceneVariables.filter(v => v.type === 'boolean').map(v => (
+              <option key={v.id} value={v.name}>{v.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Increment Variable */}
+      {action.type === 'incrementVariable' && (
+        <div className="space-y-2">
+          <div>
+            <label className="text-xs text-gray-500">Number Variable</label>
+            <select
+              value={action.value?.variable || ''}
+              onChange={(e) => onChange({ ...action, value: { ...action.value, variable: e.target.value } })}
+              className="w-full bg-[#111] border border-gray-700 rounded px-2 py-1 text-xs text-gray-200"
+            >
+              <option value="">Select variable...</option>
+              {sceneVariables.filter(v => v.type === 'number').map(v => (
+                <option key={v.id} value={v.name}>{v.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-gray-500">Amount (can be negative)</label>
+            <input
+              type="number"
+              value={action.value?.amount ?? 1}
+              onChange={(e) => onChange({ ...action, value: { ...action.value, amount: parseFloat(e.target.value) || 1 } })}
+              className="w-full bg-[#111] border border-gray-700 rounded px-2 py-1 text-xs text-gray-200"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Set State */}
+      {action.type === 'setState' && (
+        <div>
+          <label className="text-xs text-gray-500">State Name</label>
+          <input
+            type="text"
+            value={action.value || ''}
+            onChange={(e) => onChange({ ...action, value: e.target.value })}
+            placeholder="e.g., active, hover, pressed"
+            className="w-full bg-[#111] border border-gray-700 rounded px-2 py-1 text-xs text-gray-200"
+          />
+        </div>
+      )}
+
       {/* Duration & Easing for animated actions */}
       {['move', 'rotate', 'scale', 'setColor'].includes(action.type) && (
         <div className="mt-2 grid grid-cols-2 gap-2">
@@ -445,9 +704,11 @@ interface EventCardProps {
   event: SceneEvent;
   onChange: (updated: SceneEvent) => void;
   onRemove: () => void;
+  sceneVariables: SceneVariable[];
+  sceneObjects: { id: string; name: string }[];
 }
 
-function EventCard({ event, onChange, onRemove }: EventCardProps) {
+function EventCard({ event, onChange, onRemove, sceneVariables, sceneObjects }: EventCardProps) {
   const [expanded, setExpanded] = useState(true);
   const [showTriggerSelector, setShowTriggerSelector] = useState(false);
   const [showActionSelector, setShowActionSelector] = useState(false);
@@ -607,6 +868,8 @@ function EventCard({ event, onChange, onRemove }: EventCardProps) {
                   action={action}
                   onChange={(updated) => updateAction(index, updated)}
                   onRemove={() => removeAction(index)}
+                  sceneVariables={sceneVariables}
+                  sceneObjects={sceneObjects}
                 />
               ))}
             </div>
@@ -620,7 +883,7 @@ function EventCard({ event, onChange, onRemove }: EventCardProps) {
 // ============== MAIN COMPONENT ==============
 
 export default function EventsPanel() {
-  const { selectedObject, addedObjects, updateObject } = useSelection();
+  const { selectedObject, addedObjects, updateObject, sceneVariables } = useSelection();
 
   // Find the addedObject if selected object is one
   const selectedAddedObject = useMemo(() => {
@@ -693,6 +956,13 @@ export default function EventsPanel() {
     saveEvents(localEvents.filter(e => e.id !== id));
   };
 
+  // Build scene objects list for target selection
+  const sceneObjects = useMemo(() => {
+    return addedObjects
+      .filter(obj => obj.id !== selectedObject?.uuid) // Exclude self
+      .map(obj => ({ id: obj.id, name: obj.name }));
+  }, [addedObjects, selectedObject]);
+
   // No object selected
   if (!selectedObject) {
     return (
@@ -741,6 +1011,8 @@ export default function EventsPanel() {
             event={event}
             onChange={(updated) => updateEvent(event.id, updated)}
             onRemove={() => removeEvent(event.id)}
+            sceneVariables={sceneVariables}
+            sceneObjects={sceneObjects}
           />
         ))}
       </div>

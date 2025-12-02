@@ -78,6 +78,7 @@ class SceneSyncService {
       // Cast scene_data to Json type for Supabase compatibility
       const sceneData: Json = JSON.parse(JSON.stringify({
         addedObjects: state.addedObjects,
+        sceneVariables: state.sceneVariables,
         environment: state.environment,
         effects: state.effects,
         timestamp: state.timestamp,
@@ -156,6 +157,7 @@ class SceneSyncService {
     return {
       projectId,
       addedObjects: sd.addedObjects || [],
+      sceneVariables: sd.sceneVariables || [],
       environment: sd.environment || {
         preset: 'city',
         background: true,

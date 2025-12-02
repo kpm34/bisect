@@ -28,7 +28,7 @@ export function SceneStateManager({
   environment,
   onEnvironmentRestore,
 }: SceneStateManagerProps) {
-  const { addedObjects, effects, setAddedObjects, setEffects } = useSelection();
+  const { addedObjects, effects, sceneVariables, setAddedObjects, setEffects, setSceneVariables } = useSelection();
   const hasRestoredRef = useRef(false);
   const isInitialMountRef = useRef(true);
 
@@ -50,6 +50,7 @@ export function SceneStateManager({
         if (shouldRestore) {
           console.log('🔄 Restoring scene state...', {
             objects: savedState.addedObjects?.length ?? 0,
+            variables: savedState.sceneVariables?.length ?? 0,
             environment: savedState.environment?.preset,
             effects: savedState.effects,
           });
@@ -58,6 +59,12 @@ export function SceneStateManager({
           if (savedState.addedObjects && savedState.addedObjects.length > 0) {
             setAddedObjects(savedState.addedObjects);
             console.log(`✅ Restored ${savedState.addedObjects.length} objects`);
+          }
+
+          // Restore scene variables
+          if (savedState.sceneVariables && savedState.sceneVariables.length > 0) {
+            setSceneVariables(savedState.sceneVariables);
+            console.log(`✅ Restored ${savedState.sceneVariables.length} variables`);
           }
 
           // Restore environment
@@ -119,6 +126,16 @@ export function SceneStateManager({
       effects,
     });
   }, [effects, projectId]);
+
+  // Auto-save when sceneVariables change (L1 + L2)
+  useEffect(() => {
+    if (isInitialMountRef.current) return;
+
+    sceneSyncService.saveState({
+      projectId,
+      sceneVariables,
+    });
+  }, [sceneVariables, projectId]);
 
   // Save project ID for quick restoration
   useEffect(() => {

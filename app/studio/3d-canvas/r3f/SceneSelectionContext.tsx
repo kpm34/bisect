@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { Object3D, WebGLRenderer } from 'three';
 import type { UniversalEditor } from '@/lib/core/adapters';
 
@@ -21,6 +21,32 @@ export type SceneObjectType =
   | 'text3d'
   | 'external'
   | 'parametric';
+
+// ============== SCENE VARIABLES ==============
+export type SceneVariableType = 'boolean' | 'number' | 'string';
+
+export interface SceneVariable {
+  id: string;
+  name: string;
+  type: SceneVariableType;
+  value: boolean | number | string;
+  defaultValue: boolean | number | string;
+}
+
+// ============== OBJECT STATES ==============
+export interface ObjectState {
+  id: string;
+  name: string;
+  isDefault?: boolean;
+  properties: {
+    position?: [number, number, number];
+    rotation?: [number, number, number];
+    scale?: [number, number, number];
+    color?: string;
+    opacity?: number;
+    visible?: boolean;
+  };
+}
 
 export interface SceneObject {
   id: string;
@@ -55,6 +81,9 @@ export interface SceneObject {
     enabled: boolean;
     levels: { distance: number; url: string }[];
   };
+  // NEW: Object states for state-based animation
+  states?: ObjectState[];
+  currentState?: string;
 }
 
 type SelectionContextValue = {
@@ -141,6 +170,19 @@ type SelectionContextValue = {
 
   // Delete selected object (handles both added objects and scene objects)
   deleteSelectedObject: () => void;
+
+  // ============== SCENE VARIABLES ==============
+  sceneVariables: SceneVariable[];
+  addVariable: (name: string, type: SceneVariableType, defaultValue: boolean | number | string) => void;
+  updateVariable: (id: string, value: boolean | number | string) => void;
+  removeVariable: (id: string) => void;
+  getVariable: (name: string) => SceneVariable | undefined;
+  setSceneVariables: (variables: SceneVariable[]) => void;
+
+  // ============== AUDIO SYSTEM ==============
+  audioContext: AudioContext | null;
+  playSound: (url: string, volume?: number) => void;
+  stopAllSounds: () => void;
 };
 
 const SelectionContext = createContext<SelectionContextValue | null>(null);
@@ -562,6 +604,112 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
   // Scene Objects State (for added shapes)
   const [addedObjects, setAddedObjects] = useState<SceneObject[]>([]);
 
+  // ============== SCENE VARIABLES STATE ==============
+  const [sceneVariables, setSceneVariables] = useState<SceneVariable[]>([]);
+
+  const addVariable = useCallback((name: string, type: SceneVariableType, defaultValue: boolean | number | string) => {
+    const newVar: SceneVariable = {
+      id: Math.random().toString(36).substr(2, 9),
+      name,
+      type,
+      value: defaultValue,
+      defaultValue,
+    };
+    setSceneVariables(prev => [...prev, newVar]);
+    console.log(`📦 Variable added: ${name} (${type}) = ${defaultValue}`);
+  }, []);
+
+  const updateVariable = useCallback((id: string, value: boolean | number | string) => {
+    setSceneVariables(prev => prev.map(v =>
+      v.id === id ? { ...v, value } : v
+    ));
+  }, []);
+
+  const removeVariable = useCallback((id: string) => {
+    setSceneVariables(prev => prev.filter(v => v.id !== id));
+  }, []);
+
+  const getVariable = useCallback((name: string): SceneVariable | undefined => {
+    return sceneVariables.find(v => v.name === name);
+  }, [sceneVariables]);
+
+  // ============== AUDIO SYSTEM ==============
+  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
+  const audioBufferCache = useRef<Map<string, AudioBuffer>>(new Map());
+  const activeAudioSources = useRef<AudioBufferSourceNode[]>([]);
+
+  // Initialize AudioContext on first user interaction
+  useEffect(() => {
+    const initAudio = () => {
+      if (!audioContext) {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        setAudioContext(ctx);
+        console.log('🔊 AudioContext initialized');
+      }
+    };
+
+    // Initialize on first click/keypress
+    window.addEventListener('click', initAudio, { once: true });
+    window.addEventListener('keydown', initAudio, { once: true });
+
+    return () => {
+      window.removeEventListener('click', initAudio);
+      window.removeEventListener('keydown', initAudio);
+    };
+  }, [audioContext]);
+
+  const playSound = useCallback(async (url: string, volume: number = 1) => {
+    if (!audioContext) {
+      console.warn('🔇 AudioContext not initialized');
+      return;
+    }
+
+    try {
+      let buffer = audioBufferCache.current.get(url);
+
+      if (!buffer) {
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
+        buffer = await audioContext.decodeAudioData(arrayBuffer);
+        audioBufferCache.current.set(url, buffer);
+      }
+
+      const source = audioContext.createBufferSource();
+      const gainNode = audioContext.createGain();
+
+      source.buffer = buffer;
+      gainNode.gain.value = Math.max(0, Math.min(1, volume));
+
+      source.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      source.start(0);
+      activeAudioSources.current.push(source);
+
+      // Remove from active sources when finished
+      source.onended = () => {
+        const index = activeAudioSources.current.indexOf(source);
+        if (index > -1) activeAudioSources.current.splice(index, 1);
+      };
+
+      console.log(`🔊 Playing sound: ${url}`);
+    } catch (error) {
+      console.error('🔇 Error playing sound:', error);
+    }
+  }, [audioContext]);
+
+  const stopAllSounds = useCallback(() => {
+    activeAudioSources.current.forEach(source => {
+      try {
+        source.stop();
+      } catch (e) {
+        // Already stopped
+      }
+    });
+    activeAudioSources.current = [];
+    console.log('🔇 Stopped all sounds');
+  }, []);
+
   const addObject = (type: SceneObjectType, url?: string, formula?: any, text?: string) => {
     console.log('🏗️ [Context] addObject called:', { type, url, formula, text });
 
@@ -730,6 +878,17 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
       updateObject,
       setAddedObjects,
       deleteSelectedObject,
+      // Scene Variables
+      sceneVariables,
+      addVariable,
+      updateVariable,
+      removeVariable,
+      getVariable,
+      setSceneVariables,
+      // Audio System
+      audioContext,
+      playSound,
+      stopAllSounds,
     }),
     [
       universalEditor,
@@ -771,6 +930,17 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
       updateObject,
       setAddedObjects,
       deleteSelectedObject,
+      // Scene Variables
+      sceneVariables,
+      addVariable,
+      updateVariable,
+      removeVariable,
+      getVariable,
+      setSceneVariables,
+      // Audio System
+      audioContext,
+      playSound,
+      stopAllSounds,
     ]
   );
 
@@ -836,5 +1006,16 @@ export function useSelection() {
     updateObject: noop,
     setAddedObjects: noop,
     deleteSelectedObject: noop,
+    // Scene Variables
+    sceneVariables: [],
+    addVariable: noop,
+    updateVariable: noop,
+    removeVariable: noop,
+    getVariable: () => undefined,
+    setSceneVariables: noop,
+    // Audio System
+    audioContext: null,
+    playSound: noop,
+    stopAllSounds: noop,
   };
 }

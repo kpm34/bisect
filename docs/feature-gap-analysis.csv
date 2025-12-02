@@ -1,0 +1,72 @@
+Category,Feature,Bisect,Spline,Vectary,Priority,Business Impact,Notes
+3D Modeling,Primitive Shapes,Yes (8 types),Yes,Yes,N/A,Already implemented,Cube/Sphere/Cylinder/Cone/Torus/Capsule/Plane/3D Text
+3D Modeling,Boolean Operations,Yes,Yes + SDF Blend,Basic,Medium,Enhance with SDF smooth blending,three-bvh-csg implementation
+3D Modeling,3D Sculpting,No,Yes,No,Medium,Creative differentiation,Brushes for vertex manipulation
+3D Modeling,3D Paths/Splines,No,Yes,No,Medium,Procedural modeling capability,Extrude along path/clone along path
+3D Modeling,Cloner/Scatter System,No,Yes,No,Medium,Pattern and distribution tools,Grid/radial/linear modes
+3D Modeling,Particle System,No,Yes,No,Medium,Visual effects capability,Emitters/physics/materials
+Materials,Material Presets,Yes (600+),Yes,Yes,N/A,Strong competitive advantage,Organized by category
+Materials,PBR Support,Yes,Yes,Yes,N/A,Already implemented,Full PBR pipeline
+Materials,Layered Materials,No,Yes,Basic,Medium,Advanced material creation,Depth/Video/Fresnel/Rainbow/Noise layers
+Materials,Video Textures,Panel only,Yes,Yes,Low,Video on 3D surfaces,VideoTexturePanel exists
+Materials,Custom HDRI Upload,No,Yes,Yes,Medium,Lighting flexibility,Currently only presets available
+Animation,State-Based Animation,No,Yes,Yes,HIGH,Critical for interactivity,Object states with transitions
+Animation,3D Timeline Keyframes,Video only,Yes,Yes,HIGH,Core animation feature,Property-level keyframe control
+Animation,Graph/Curve Editor,No,Yes,Basic,HIGH,Animation refinement,Custom easing curves
+Animation,Path Animation,No,Yes,No,Medium,Motion paths,Animate objects along 3D paths
+Animation,Physics Animation,Yes (Rapier3D),Yes,No,N/A,Competitive advantage,Already implemented
+Interactivity,Mouse Events (Hover/Click),No,Yes,Yes,HIGH,Fundamental for web 3D,Click/Hover/Down/Up events
+Interactivity,Keyboard Events,No,Yes,No,HIGH,User input handling,Key press/up/down
+Interactivity,Scroll Events,No,Yes,No,HIGH,Parallax and scroll animations,Trigger animations on scroll
+Interactivity,Collision Events,No,Yes,No,HIGH,Physics triggers,Detect object collisions
+Interactivity,Drag & Drop Events,No,Yes,No,HIGH,Interactive manipulation,User drag interactions
+Interactivity,Game Controls,No,Yes,No,HIGH,Explorable environments,WASD/Jump/Run/Camera
+Interactivity,Variables/Data Binding,No,Yes,Yes (API),HIGH,Dynamic content,Boolean/number/string variables
+Interactivity,Webhooks/API Integration,No,Yes,Yes,HIGH,External data connection,Real-time data sync
+AI Features,AI Scene Editing,Yes,Voice only,No,N/A,Competitive advantage,Natural language commands
+AI Features,Text-to-3D Generation,No,Yes,No,HIGH,Major differentiator,Generate meshes from prompts
+AI Features,Image-to-3D Conversion,No,Yes,No,HIGH,Major differentiator,Convert 2D images to 3D
+AI Features,AI Texture Generation,Yes,No,No,N/A,Unique advantage,MatCap/PBR via Gemini
+AR/VR,AR Preview,No,No,Yes,HIGH,E-commerce requirement,One-click AR viewing
+AR/VR,USDZ Export,No,No,Yes,HIGH,iOS AR support,Apple AR Quick Look
+AR/VR,WebXR Support,No,No,Yes,HIGH,VR/AR web experiences,Browser-based XR
+AR/VR,Apple Vision Pro,No,No,Yes,Medium,Future platform,visionOS support
+Configurator,Visual Configurator Builder,No,No,Yes,HIGH,Enterprise revenue,No-code product configurator
+Configurator,Material/Color Switchers,No,No,Yes,HIGH,Product customization,UI for variant selection
+Configurator,Hotspots/Annotations,No,No,Yes,HIGH,Product information,Clickable info points
+Configurator,E-commerce Integration,No,No,Yes,HIGH,Direct revenue,Shopify/WooCommerce/BigCommerce
+Configurator,Pricing Calculator,No,No,Yes,HIGH,E-commerce checkout,Variant-based pricing
+Export,GLB/GLTF Export,Yes,Yes,Yes,N/A,Already implemented,Standard 3D format
+Export,SVG Export,Yes,Basic,No,N/A,Competitive advantage,Full Vector Studio
+Export,React Component Export,No,Yes,No,HIGH,Developer integration,@splinetool/react-spline
+Export,Vanilla JS Code Export,No,Yes,No,HIGH,Web integration,Embeddable code
+Export,Next.js SSR Export,No,Yes,No,Medium,Framework support,Server-side rendering
+Export,Vue Component Export,No,Yes,No,Medium,Framework support,Vue integration
+Export,Iframe Embed Code,No,Yes,Yes,HIGH,Easy web embedding,Copy-paste embed
+Export,Video Export (MP4/WebM),No,Yes,Yes,HIGH,Content creation,Render to video file
+Export,Animated GIF Export,No,Yes,No,Medium,Social media content,Animated exports
+Export,Image Sequence Export,No,Yes,No,Medium,Post-production,Frame-by-frame export
+Export,4K Render Export,No,Yes,Yes,Medium,High-quality output,Path-traced rendering
+Collaboration,Real-time Multi-user Editing,Blender sync,Yes,Yes,Low,Team workflows,Multiple cursors
+Collaboration,Comments System,No,Yes,Yes,Low,Team feedback,Pin comments to objects
+Collaboration,Version History,No,Yes,Yes,Low,Project management,Restore previous versions
+Collaboration,@Mentions,No,Yes,Yes,Low,Team communication,Notify team members
+Vector/2D,SVG Editor,Yes (Full Studio),Basic,No,N/A,Competitive advantage,15+ drawing tools
+Vector/2D,AI Vectorization,Yes,No,No,N/A,Unique feature,Image to vector conversion
+Vector/2D,2D Canvas (Hana-style),No,Yes,No,Low,Design workflow,Infinite 2D canvas
+Post-Processing,Bloom Effect,Yes,Yes,Yes,N/A,Already implemented,Glow effect
+Post-Processing,Depth of Field,No,Yes,No,Low,Camera effect,Focus blur
+Post-Processing,Fog/Volumetrics,No,Yes,No,Low,Atmosphere,Volumetric fog
+Post-Processing,Outline Effect,Yes,Yes,No,N/A,Already implemented,Selection outline
+Physics,Rigid Body Physics,Yes,Yes,No,N/A,Competitive advantage,Rapier3D integration
+Physics,Gravity Simulation,Yes,Yes,No,N/A,Already implemented,Configurable gravity
+Physics,Collision Detection,Yes,Yes,No,N/A,Already implemented,Object collisions
+Physics,Navigation Mesh,No,Yes,No,Medium,Pathfinding,Character navigation
+Lighting,Environment Presets,Yes,Yes,Yes,N/A,Already implemented,City/Studio/Sunset etc
+Lighting,Custom Light Objects,Yes,Yes,Yes,N/A,Already implemented,Point/Directional/Ambient
+Lighting,Soft Shadows,Yes,Yes,Yes,N/A,Already implemented,Shadow quality
+Lighting,HDRI Rotation Control,No,Yes,Yes,Low,Fine-tuning,Rotate environment
+UI/UX,Transform Gizmo,Yes,Yes,Yes,N/A,Already implemented,Blender-style gizmo
+UI/UX,Scene Hierarchy Panel,Yes,Yes,Yes,N/A,Already implemented,Object tree view
+UI/UX,Properties Inspector,Yes,Yes,Yes,N/A,Already implemented,5-tab ObjectEditor
+UI/UX,Component/Symbol System,No,Yes,No,Low,Reusability,Reusable components
