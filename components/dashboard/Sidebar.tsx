@@ -68,7 +68,7 @@ export function Sidebar({ currentPath }: SidebarProps) {
       {/* Logo */}
       <div className="h-14 flex items-center px-4 border-b border-ash-grey-200">
         <Link href="/" className="flex items-center gap-2 font-bold text-lg text-ash-grey-900 hover:opacity-80 transition-opacity">
-          <Image src="/assets/bisect_logo.png" alt="Bisect" width={24} height={24} className="w-6 h-6 shrink-0" />
+          <Image src="/assets/bisect_logo.png" alt="Bisect" width={36} height={36} className="w-9 h-9 shrink-0" />
           {!isCollapsed && <span>Bisect</span>}
         </Link>
       </div>

@@ -32,9 +32,12 @@ importers:
       '@react-three/rapier':
         specifier: ^2.2.0
         version: 2.2.0(@react-three/fiber@8.18.0(@types/react@18.3.27)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.160.1))(react@18.3.1)(three@0.160.1)
+      '@splinetool/loader':
+        specifier: ^1.12.5
+        version: 1.12.5(three@0.160.1)
       '@splinetool/r3f-spline':
         specifier: ^1.0.2
-        version: 1.0.2(@react-three/fiber@8.18.0(@types/react@18.3.27)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.160.1))(@splinetool/loader@1.12.2(three@0.160.1))
+        version: 1.0.2(@react-three/fiber@8.18.0(@types/react@18.3.27)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.160.1))(@splinetool/loader@1.12.5(three@0.160.1))
       '@splinetool/runtime':
         specifier: ^1.10.99
         version: 1.12.2
@@ -896,8 +899,8 @@ packages:
   '@rushstack/eslint-patch@1.15.0':
     resolution: {integrity: sha512-ojSshQPKwVvSMR8yT2L/QtUkV5SXi/IfDiJ4/8d6UbTPjiHVmxZzUAzGD8Tzks1b9+qQkZa0isUOvYObedITaw==}
 
-  '@splinetool/loader@1.12.2':
-    resolution: {integrity: sha512-+gf8hRKcNuNzrqLQX0tn+1v0xNnxDUTyz/3K5hJ5P0sS14paMDYVdgPXrEmy0bMjUQM2hj9W6Ap2viHpsCkegA==}
+  '@splinetool/loader@1.12.5':
+    resolution: {integrity: sha512-wUats6f+/+jf+wRN+4ci6BJrwd0yrrZccW2QlRwa6bfx1/c93Xk2LQZHsx9gfzZwBIQtSXiTCgyvq3XZUW+szQ==}
     peerDependencies:
       three: '>=0.133.0'
 
@@ -4131,15 +4134,15 @@ snapshots:
 
   '@rushstack/eslint-patch@1.15.0': {}
 
-  '@splinetool/loader@1.12.2(three@0.160.1)':
+  '@splinetool/loader@1.12.5(three@0.160.1)':
     dependencies:
       semver-compare: 1.0.0
       three: 0.160.1
 
-  '@splinetool/r3f-spline@1.0.2(@react-three/fiber@8.18.0(@types/react@18.3.27)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.160.1))(@splinetool/loader@1.12.2(three@0.160.1))':
+  '@splinetool/r3f-spline@1.0.2(@react-three/fiber@8.18.0(@types/react@18.3.27)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.160.1))(@splinetool/loader@1.12.5(three@0.160.1))':
     dependencies:
       '@react-three/fiber': 8.18.0(@types/react@18.3.27)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.160.1)
-      '@splinetool/loader': 1.12.2(three@0.160.1)
+      '@splinetool/loader': 1.12.5(three@0.160.1)
 
   '@splinetool/runtime@1.12.2':
     dependencies:

@@ -799,7 +799,8 @@ function SplineScene({
         setLoadingProgress?.(30);
 
         // Dynamic import to avoid SSR issues
-        const { SplineLoader } = await import('@splinetool/loader');
+        const SplineLoaderModule = await import('@splinetool/loader');
+        const SplineLoader = SplineLoaderModule.default;
         const loader = new SplineLoader();
 
         setLoadingProgress?.(50);

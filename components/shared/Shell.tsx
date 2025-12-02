@@ -4,7 +4,7 @@ import React, { Suspense } from 'react';
 import Link from 'next/link';
 import NextImage from 'next/image';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { PenTool, Box, Image, ChevronRight, LayoutDashboard } from 'lucide-react';
+import { PenTool, Cuboid, Image, ChevronRight, LayoutDashboard, Sparkles } from 'lucide-react';
 import { UserMenu } from './UserMenu';
 
 interface ProjectContext {
@@ -36,10 +36,13 @@ function ShellInner({
   const searchParams = useSearchParams();
   const projectId = projectContext?.projectId || searchParams?.get('project');
 
-  const navItems = [
-    { href: '/studio/svg-canvas', label: 'SVG Canvas', icon: PenTool },
-    { href: '/studio/tex-factory', label: 'Tex Factory', icon: Image },
-    { href: '/studio/3d-canvas', label: '3D Canvas', icon: Box },
+  // Primary product - 3D Editor
+  const primaryNav = { href: '/studio/3d-canvas', label: '3D Editor', icon: Cuboid };
+
+  // Extensions - secondary tools
+  const extensionItems = [
+    { href: '/studio/tex-factory', label: 'Textures', icon: Sparkles },
+    { href: '/studio/svg-canvas', label: 'Vectors', icon: PenTool },
   ];
 
   // Build studio URL with project context if available
@@ -58,7 +61,7 @@ function ShellInner({
         <nav className="h-14 border-b border-neutral-800 flex items-center px-4 justify-between bg-neutral-900/50 backdrop-blur-sm z-50 shrink-0">
           <div className="flex items-center gap-4">
             <Link href="/dashboard" className="flex items-center gap-2 font-bold text-lg text-white hover:opacity-80 transition-opacity">
-              <NextImage src="/assets/bisect_logo.png" alt="Bisect" width={24} height={24} className="w-6 h-6" />
+              <NextImage src="/assets/bisect_logo.png" alt="Bisect" width={36} height={36} className="w-9 h-9" />
               <span>Bisect</span>
             </Link>
 
@@ -77,20 +80,37 @@ function ShellInner({
 
             <div className="h-6 w-px bg-neutral-800 mx-2" />
 
+            {/* Primary - 3D Editor */}
+            <Link
+              href={getStudioHref(primaryNav.href)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                pathname.startsWith(primaryNav.href)
+                  ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+                  : 'text-white hover:bg-neutral-800/50'
+              }`}
+            >
+              <primaryNav.icon size={16} />
+              {primaryNav.label}
+            </Link>
+
+            <div className="h-4 w-px bg-neutral-800 mx-1" />
+
+            {/* Extensions */}
             <div className="flex items-center gap-1">
-              {navItems.map((item) => {
+              <span className="text-[10px] text-neutral-600 uppercase tracking-wider mr-1">Ext</span>
+              {extensionItems.map((item) => {
                 const isActive = pathname.startsWith(item.href);
                 return (
                   <Link
                     key={item.href}
                     href={getStudioHref(item.href)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-all ${
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs transition-all ${
                       isActive
-                        ? 'bg-neutral-800 text-white shadow-sm'
-                        : 'text-neutral-400 hover:text-white hover:bg-neutral-800/50'
+                        ? 'bg-neutral-800 text-white'
+                        : 'text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800/50'
                     }`}
                   >
-                    <item.icon size={16} />
+                    <item.icon size={14} />
                     {item.label}
                   </Link>
                 );
@@ -181,12 +201,15 @@ function ShellFallback({
   bottomPanel,
   projectContext
 }: ShellProps) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? '';
 
-  const navItems = [
-    { href: '/studio/svg-canvas', label: 'SVG Canvas', icon: PenTool },
-    { href: '/studio/tex-factory', label: 'Tex Factory', icon: Image },
-    { href: '/studio/3d-canvas', label: '3D Canvas', icon: Box },
+  // Primary product - 3D Editor
+  const primaryNav = { href: '/studio/3d-canvas', label: '3D Editor', icon: Cuboid };
+
+  // Extensions - secondary tools
+  const extensionItems = [
+    { href: '/studio/tex-factory', label: 'Textures', icon: Sparkles },
+    { href: '/studio/svg-canvas', label: 'Vectors', icon: PenTool },
   ];
 
   return (
@@ -195,24 +218,42 @@ function ShellFallback({
         <nav className="h-14 border-b border-neutral-800 flex items-center px-4 justify-between bg-neutral-900/50 backdrop-blur-sm z-50 shrink-0">
           <div className="flex items-center gap-4">
             <Link href="/dashboard" className="flex items-center gap-2 font-bold text-lg text-white hover:opacity-80 transition-opacity">
-              <NextImage src="/assets/bisect_logo.png" alt="Bisect" width={24} height={24} className="w-6 h-6" />
+              <NextImage src="/assets/bisect_logo.png" alt="Bisect" width={36} height={36} className="w-9 h-9" />
               <span>Bisect</span>
             </Link>
             <div className="h-6 w-px bg-neutral-800 mx-2" />
+
+            {/* Primary - 3D Editor */}
+            <Link
+              href={primaryNav.href}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                pathname.startsWith(primaryNav.href)
+                  ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+                  : 'text-white hover:bg-neutral-800/50'
+              }`}
+            >
+              <primaryNav.icon size={16} />
+              {primaryNav.label}
+            </Link>
+
+            <div className="h-4 w-px bg-neutral-800 mx-1" />
+
+            {/* Extensions */}
             <div className="flex items-center gap-1">
-              {navItems.map((item) => {
-                const isActive = pathname?.startsWith(item.href);
+              <span className="text-[10px] text-neutral-600 uppercase tracking-wider mr-1">Ext</span>
+              {extensionItems.map((item) => {
+                const isActive = pathname.startsWith(item.href);
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-all ${
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs transition-all ${
                       isActive
-                        ? 'bg-neutral-800 text-white shadow-sm'
-                        : 'text-neutral-400 hover:text-white hover:bg-neutral-800/50'
+                        ? 'bg-neutral-800 text-white'
+                        : 'text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800/50'
                     }`}
                   >
-                    <item.icon size={16} />
+                    <item.icon size={14} />
                     {item.label}
                   </Link>
                 );

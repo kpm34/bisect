@@ -19,6 +19,7 @@
     "@react-three/fiber": "^8.15.0",
     "@react-three/postprocessing": "^2.16.5",
     "@react-three/rapier": "^2.2.0",
+    "@splinetool/loader": "^1.12.5",
     "@splinetool/r3f-spline": "^1.0.2",
     "@splinetool/runtime": "^1.10.99",
     "@supabase/supabase-js": "^2.84.0",
