@@ -6,7 +6,7 @@ import { TrackType, Clip, ClipTransform, ClipAppearance, ClipPlayback, ClipAudio
 import {
   Move, Maximize2, Eye, Play, Volume2, RefreshCw,
   AlignLeft, AlignCenter, AlignRight, AlignStartVertical, AlignCenterVertical, AlignEndVertical,
-  Link, Unlink, RotateCcw, ChevronDown, Diamond, Settings2, Camera, ZoomIn, ZoomOut, Target
+  Link, Unlink, RotateCcw, ChevronDown, Diamond, Settings2, Camera, ZoomIn, ZoomOut, Target, Palette
 } from 'lucide-react';
 import {
   DEFAULT_CLIP_TRANSFORM,
@@ -17,8 +17,9 @@ import {
   LAYOUT_PRESETS,
   CAMERA_PRESETS
 } from '../constants';
+import { COLOR_PRESETS, getColorPreset } from '@/lib/video/color-presets';
 
-type TabType = 'position' | 'layout' | 'appearance' | 'playback' | 'audio' | 'camera';
+type TabType = 'position' | 'layout' | 'appearance' | 'playback' | 'audio' | 'camera' | 'color';
 
 const ClipPropertiesPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('position');
@@ -32,6 +33,7 @@ const ClipPropertiesPanel: React.FC = () => {
     updateClipPlayback,
     updateClipAudio,
     updateClipCamera,
+    updateClipColorPreset,
     resetClipTransform,
   } = useStore();
 
@@ -108,6 +110,7 @@ const ClipPropertiesPanel: React.FC = () => {
     { id: 'position', icon: <Move className="w-4 h-4" />, label: 'Position' },
     { id: 'layout', icon: <Maximize2 className="w-4 h-4" />, label: 'Layout' },
     { id: 'appearance', icon: <Eye className="w-4 h-4" />, label: 'Appearance' },
+    { id: 'color', icon: <Palette className="w-4 h-4" />, label: 'Color' },
     { id: 'playback', icon: <Play className="w-4 h-4" />, label: 'Playback' },
     { id: 'audio', icon: <Volume2 className="w-4 h-4" />, label: 'Audio' },
     { id: 'camera', icon: <Camera className="w-4 h-4" />, label: 'Camera' },
@@ -865,6 +868,68 @@ const ClipPropertiesPanel: React.FC = () => {
     </div>
   );
 
+  const renderColorTab = () => {
+    const currentPreset = clip.colorPreset || 'none';
+    const selectedPreset = getColorPreset(currentPreset);
+
+    return (
+      <div className="space-y-4">
+        {/* Current Filter */}
+        <div className="p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">{selectedPreset?.icon || '🎬'}</span>
+              <div>
+                <div className="text-sm text-white font-medium">{selectedPreset?.name || 'Original'}</div>
+                <div className="text-[10px] text-gray-500">Current filter</div>
+              </div>
+            </div>
+            {currentPreset !== 'none' && (
+              <button
+                className="px-2 py-1 text-[10px] text-gray-400 hover:text-white bg-[#2a2a2a] rounded"
+                onClick={() => updateClipColorPreset(track.id, clip.id, 'none')}
+              >
+                Reset
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Color Presets Grid */}
+        <div className="space-y-2">
+          <label className="text-xs text-gray-500 uppercase font-medium">Color Presets</label>
+          <div className="grid grid-cols-3 gap-2">
+            {COLOR_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                className={`p-2 bg-[#1a1a1a] border rounded-lg transition-all hover:scale-105 ${
+                  currentPreset === preset.id
+                    ? 'border-orange-500 bg-orange-500/10'
+                    : 'border-[#2a2a2a] hover:border-gray-500'
+                }`}
+                onClick={() => updateClipColorPreset(track.id, clip.id, preset.id)}
+              >
+                <div className="text-center">
+                  <span className="text-xl block mb-1">{preset.icon}</span>
+                  <span className={`text-[10px] ${currentPreset === preset.id ? 'text-white' : 'text-gray-400'}`}>
+                    {preset.name}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Preview Note */}
+        <div className="p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+          <p className="text-[11px] text-orange-300">
+            Color presets are applied during preview and baked into the exported video.
+          </p>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="h-full flex flex-col">
       {/* Clip Info Header */}
@@ -907,6 +972,7 @@ const ClipPropertiesPanel: React.FC = () => {
         {activeTab === 'position' && renderPositionTab()}
         {activeTab === 'layout' && renderLayoutTab()}
         {activeTab === 'appearance' && renderAppearanceTab()}
+        {activeTab === 'color' && renderColorTab()}
         {activeTab === 'playback' && renderPlaybackTab()}
         {activeTab === 'audio' && renderAudioTab()}
         {activeTab === 'camera' && renderCameraTab()}

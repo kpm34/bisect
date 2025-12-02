@@ -3,7 +3,21 @@ import { ProjectState, AIState, Track, Clip, ChatMessage, TrackType, Transition,
 import { INITIAL_TRACKS, DEFAULT_TRANSITION, DEFAULT_CLIP_TRANSFORM, DEFAULT_CLIP_APPEARANCE, DEFAULT_CLIP_PLAYBACK, DEFAULT_CLIP_AUDIO, DEFAULT_CLIP_CAMERA } from './constants';
 import { v4 as uuidv4 } from 'uuid';
 
-interface AppState extends ProjectState, AIState {
+// History system for undo/redo
+interface HistoryEntry {
+  id: string;
+  description: string;
+  tracks: Track[];
+  selectedClipIds: string[];
+}
+
+interface HistoryState {
+  past: HistoryEntry[];
+  future: HistoryEntry[];
+  maxHistory: number;
+}
+
+interface AppState extends ProjectState, AIState, HistoryState {
   // Actions
   setTime: (time: number) => void;
   setDuration: (duration: number) => void;
@@ -49,7 +63,25 @@ interface AppState extends ProjectState, AIState {
   updateClipAudio: (trackId: string, clipId: string, audio: Partial<ClipAudio>) => void;
   updateClipCamera: (trackId: string, clipId: string, camera: Partial<ClipCamera>) => void;
   resetClipTransform: (trackId: string, clipId: string) => void;
+
+  // Color preset action
+  updateClipColorPreset: (trackId: string, clipId: string, presetId: string | undefined) => void;
+
+  // Waveform action
+  setClipWaveform: (trackId: string, clipId: string, waveformData: number[]) => void;
+
+  // History actions
+  pushHistory: (description: string) => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: () => boolean;
+  canRedo: () => boolean;
+  clearHistory: () => void;
 }
+
+// Helper to deep clone tracks for history
+const cloneTracks = (tracks: Track[]): Track[] =>
+  JSON.parse(JSON.stringify(tracks));
 
 export const useStore = create<AppState>((set, get) => ({
   // Project State
@@ -59,6 +91,12 @@ export const useStore = create<AppState>((set, get) => ({
   tracks: INITIAL_TRACKS,
   selectedClipIds: [],
   zoomLevel: 20, // px per second
+  projectName: 'Untitled Project',
+
+  // History State
+  past: [],
+  future: [],
+  maxHistory: 50,
 
   // AI State
   messages: [
@@ -77,12 +115,14 @@ export const useStore = create<AppState>((set, get) => ({
   togglePlay: () => set((state) => ({ isPlaying: !state.isPlaying })),
   setPlaying: (isPlaying) => set({ isPlaying }),
 
-  addClip: (trackId, clip) =>
+  addClip: (trackId, clip) => {
+    get().pushHistory('Add clip');
     set((state) => ({
       tracks: state.tracks.map((t) =>
         t.id === trackId ? { ...t, clips: [...t.clips, clip] } : t
       ),
-    })),
+    }));
+  },
 
   updateClip: (trackId, clipId, updates) =>
     set((state) => ({
@@ -156,8 +196,9 @@ export const useStore = create<AppState>((set, get) => ({
       selectedClipIds: state.tracks.flatMap((t) => t.clips.map((c) => c.id)),
     })),
 
-  // Clip management actions
-  deleteClip: (trackId, clipId) =>
+  // Clip management actions (with history)
+  deleteClip: (trackId, clipId) => {
+    get().pushHistory('Delete clip');
     set((state) => ({
       tracks: state.tracks.map((t) =>
         t.id === trackId
@@ -165,9 +206,11 @@ export const useStore = create<AppState>((set, get) => ({
           : t
       ),
       selectedClipIds: state.selectedClipIds.filter((id) => id !== clipId),
-    })),
+    }));
+  },
 
-  deleteSelectedClips: () =>
+  deleteSelectedClips: () => {
+    get().pushHistory('Delete clips');
     set((state) => {
       const selectedIds = new Set(state.selectedClipIds);
       return {
@@ -177,9 +220,11 @@ export const useStore = create<AppState>((set, get) => ({
         })),
         selectedClipIds: [],
       };
-    }),
+    });
+  },
 
-  duplicateClip: (trackId, clipId) =>
+  duplicateClip: (trackId, clipId) => {
+    get().pushHistory('Duplicate clip');
     set((state) => {
       const track = state.tracks.find((t) => t.id === trackId);
       const clip = track?.clips.find((c) => c.id === clipId);
@@ -198,85 +243,89 @@ export const useStore = create<AppState>((set, get) => ({
         ),
         selectedClipIds: [newClip.id], // Select the new clip
       };
-    }),
+    });
+  },
 
-  splitClipAtPlayhead: (trackId, clipId) =>
-    set((state) => {
-      const { currentTime } = state;
-      const track = state.tracks.find((t) => t.id === trackId);
-      const clip = track?.clips.find((c) => c.id === clipId);
+  splitClipAtPlayhead: (trackId, clipId) => {
+    const state = get();
+    const { currentTime } = state;
+    const track = state.tracks.find((t) => t.id === trackId);
+    const clip = track?.clips.find((c) => c.id === clipId);
 
-      if (!clip) return state;
+    if (!clip) return;
 
-      // Check if playhead is within the clip
-      const clipEnd = clip.start + clip.duration;
-      if (currentTime <= clip.start || currentTime >= clipEnd) {
-        return state; // Playhead not within clip
-      }
+    // Check if playhead is within the clip
+    const clipEnd = clip.start + clip.duration;
+    if (currentTime <= clip.start || currentTime >= clipEnd) {
+      return; // Playhead not within clip
+    }
 
-      const splitPoint = currentTime - clip.start;
+    get().pushHistory('Split clip');
 
-      // First part: from original start to playhead
-      const firstPart: Clip = {
-        ...clip,
-        duration: splitPoint,
-      };
+    const splitPoint = currentTime - clip.start;
 
-      // Second part: from playhead to end
-      const secondPart: Clip = {
-        ...clip,
-        id: uuidv4(),
-        name: `${clip.name} (2)`,
-        start: currentTime,
-        duration: clip.duration - splitPoint,
-        offset: clip.offset + splitPoint,
-      };
+    // First part: from original start to playhead
+    const firstPart: Clip = {
+      ...clip,
+      duration: splitPoint,
+    };
 
-      return {
+    // Second part: from playhead to end
+    const secondPart: Clip = {
+      ...clip,
+      id: uuidv4(),
+      name: `${clip.name} (2)`,
+      start: currentTime,
+      duration: clip.duration - splitPoint,
+      offset: clip.offset + splitPoint,
+    };
+
+    set((state) => ({
+      tracks: state.tracks.map((t) =>
+        t.id === trackId
+          ? {
+              ...t,
+              clips: t.clips.map((c) =>
+                c.id === clipId ? firstPart : c
+              ).concat(secondPart),
+            }
+          : t
+      ),
+      selectedClipIds: [firstPart.id, secondPart.id],
+    }));
+  },
+
+  moveClip: (fromTrackId, toTrackId, clipId, newStart) => {
+    const state = get();
+    const fromTrack = state.tracks.find((t) => t.id === fromTrackId);
+    const clip = fromTrack?.clips.find((c) => c.id === clipId);
+
+    if (!clip) return;
+
+    get().pushHistory('Move clip');
+
+    const movedClip: Clip = {
+      ...clip,
+      start: Math.max(0, newStart),
+    };
+
+    if (fromTrackId === toTrackId) {
+      // Moving within same track
+      set((state) => ({
         tracks: state.tracks.map((t) =>
-          t.id === trackId
+          t.id === fromTrackId
             ? {
                 ...t,
                 clips: t.clips.map((c) =>
-                  c.id === clipId ? firstPart : c
-                ).concat(secondPart),
+                  c.id === clipId ? movedClip : c
+                ),
               }
             : t
         ),
-        selectedClipIds: [firstPart.id, secondPart.id],
-      };
-    }),
-
-  moveClip: (fromTrackId, toTrackId, clipId, newStart) =>
-    set((state) => {
-      const fromTrack = state.tracks.find((t) => t.id === fromTrackId);
-      const clip = fromTrack?.clips.find((c) => c.id === clipId);
-
-      if (!clip) return state;
-
-      const movedClip: Clip = {
-        ...clip,
-        start: Math.max(0, newStart),
-      };
-
-      if (fromTrackId === toTrackId) {
-        // Moving within same track
-        return {
-          tracks: state.tracks.map((t) =>
-            t.id === fromTrackId
-              ? {
-                  ...t,
-                  clips: t.clips.map((c) =>
-                    c.id === clipId ? movedClip : c
-                  ),
-                }
-              : t
-          ),
-        };
-      }
-
+      }));
+    } else {
       // Moving to different track
-      return {
+      set((state) => ({
         tracks: state.tracks.map((t) => {
           if (t.id === fromTrackId) {
             return { ...t, clips: t.clips.filter((c) => c.id !== clipId) };
@@ -286,11 +335,13 @@ export const useStore = create<AppState>((set, get) => ({
           }
           return t;
         }),
-      };
-    }),
+      }));
+    }
+  },
 
-  // Transition actions
-  addTransitionToClip: (trackId, clipId, transitionType, position) =>
+  // Transition actions (with history)
+  addTransitionToClip: (trackId, clipId, transitionType, position) => {
+    get().pushHistory('Add transition');
     set((state) => {
       const transitionNames: Record<TransitionType, string> = {
         [TransitionType.CUT]: 'Cut',
@@ -335,9 +386,11 @@ export const useStore = create<AppState>((set, get) => ({
             : t
         ),
       };
-    }),
+    });
+  },
 
-  updateTransition: (trackId, clipId, position, updates) =>
+  updateTransition: (trackId, clipId, position, updates) => {
+    get().pushHistory('Update transition');
     set((state) => ({
       tracks: state.tracks.map((t) =>
         t.id === trackId
@@ -356,9 +409,11 @@ export const useStore = create<AppState>((set, get) => ({
             }
           : t
       ),
-    })),
+    }));
+  },
 
-  removeTransition: (trackId, clipId, position) =>
+  removeTransition: (trackId, clipId, position) => {
+    get().pushHistory('Remove transition');
     set((state) => ({
       tracks: state.tracks.map((t) =>
         t.id === trackId
@@ -375,10 +430,12 @@ export const useStore = create<AppState>((set, get) => ({
             }
           : t
       ),
-    })),
+    }));
+  },
 
-  // Clip resize actions
-  resizeClipStart: (trackId, clipId, newStart, newDuration) =>
+  // Clip resize actions (with history)
+  resizeClipStart: (trackId, clipId, newStart, newDuration) => {
+    get().pushHistory('Resize clip');
     set((state) => ({
       tracks: state.tracks.map((t) =>
         t.id === trackId
@@ -397,9 +454,11 @@ export const useStore = create<AppState>((set, get) => ({
             }
           : t
       ),
-    })),
+    }));
+  },
 
-  resizeClipEnd: (trackId, clipId, newDuration) =>
+  resizeClipEnd: (trackId, clipId, newDuration) => {
+    get().pushHistory('Resize clip');
     set((state) => ({
       tracks: state.tracks.map((t) =>
         t.id === trackId
@@ -413,9 +472,11 @@ export const useStore = create<AppState>((set, get) => ({
             }
           : t
       ),
-    })),
+    }));
+  },
 
-  trimClip: (trackId, clipId, trimStart, trimEnd) =>
+  trimClip: (trackId, clipId, trimStart, trimEnd) => {
+    get().pushHistory('Trim clip');
     set((state) => ({
       tracks: state.tracks.map((t) =>
         t.id === trackId
@@ -435,7 +496,8 @@ export const useStore = create<AppState>((set, get) => ({
             }
           : t
       ),
-    })),
+    }));
+  },
 
   // Clip property actions
   updateClipTransform: (trackId, clipId, transform) =>
@@ -555,4 +617,91 @@ export const useStore = create<AppState>((set, get) => ({
           : t
       ),
     })),
+
+  // Color preset action
+  updateClipColorPreset: (trackId, clipId, presetId) => {
+    get().pushHistory('Apply color preset');
+    set((state) => ({
+      tracks: state.tracks.map((t) =>
+        t.id === trackId
+          ? {
+              ...t,
+              clips: t.clips.map((c) =>
+                c.id === clipId
+                  ? {
+                      ...c,
+                      colorPreset: presetId,
+                    }
+                  : c
+              ),
+            }
+          : t
+      ),
+    }));
+  },
+
+  // History actions
+  pushHistory: (description) =>
+    set((state) => {
+      const entry: HistoryEntry = {
+        id: uuidv4(),
+        description,
+        tracks: cloneTracks(state.tracks),
+        selectedClipIds: [...state.selectedClipIds],
+      };
+
+      // Limit history size
+      const newPast = [...state.past, entry].slice(-state.maxHistory);
+
+      return {
+        past: newPast,
+        future: [], // Clear redo stack on new action
+      };
+    }),
+
+  undo: () =>
+    set((state) => {
+      if (state.past.length === 0) return state;
+
+      const previousEntry = state.past[state.past.length - 1];
+      const currentEntry: HistoryEntry = {
+        id: uuidv4(),
+        description: 'Current state',
+        tracks: cloneTracks(state.tracks),
+        selectedClipIds: [...state.selectedClipIds],
+      };
+
+      return {
+        tracks: cloneTracks(previousEntry.tracks),
+        selectedClipIds: [...previousEntry.selectedClipIds],
+        past: state.past.slice(0, -1),
+        future: [currentEntry, ...state.future],
+      };
+    }),
+
+  redo: () =>
+    set((state) => {
+      if (state.future.length === 0) return state;
+
+      const nextEntry = state.future[0];
+      const currentEntry: HistoryEntry = {
+        id: uuidv4(),
+        description: 'Current state',
+        tracks: cloneTracks(state.tracks),
+        selectedClipIds: [...state.selectedClipIds],
+      };
+
+      return {
+        tracks: cloneTracks(nextEntry.tracks),
+        selectedClipIds: [...nextEntry.selectedClipIds],
+        past: [...state.past, currentEntry],
+        future: state.future.slice(1),
+      };
+    }),
+
+  canUndo: () => get().past.length > 0,
+
+  canRedo: () => get().future.length > 0,
+
+  clearHistory: () => set({ past: [], future: [] }),
 }));

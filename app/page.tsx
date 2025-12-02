@@ -15,7 +15,10 @@ import {
   FileImage,
   Sparkles,
   Layers,
-  Zap
+  Zap,
+  PenTool,
+  Film,
+  Box
 } from 'lucide-react';
 import TextureShowcase from './components/TextureShowcase';
 
@@ -68,85 +71,118 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* Hero Section - 3D Editor Focused */}
-      <section className="pt-32 pb-24 px-6 max-w-7xl mx-auto relative">
-        <div className="absolute top-20 right-0 w-[500px] h-[500px] bg-cta-orange/10 blur-[120px] rounded-full pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-cta-orange/10 blur-[100px] rounded-full pointer-events-none" />
+      {/* Hero Section - Bisected 4-Quadrant Workflow */}
+      <section className="pt-24 pb-16 px-6 min-h-[calc(100vh-4rem)]">
+        <div className="max-w-6xl mx-auto">
+          {/* Tagline */}
+          <div className="text-center mb-8">
+            <h1 className="text-4xl md:text-5xl font-sans font-bold text-charcoal tracking-tight">
+              From mesh to market
+            </h1>
+            <p className="text-text-primary/50 mt-2">One workflow. Four tools.</p>
+          </div>
 
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          <div className="space-y-8 z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-charcoal/5 border border-charcoal/10 text-[10px] font-mono text-cta-orange uppercase tracking-wider">
-              All-Purpose Editing Utility
+          {/* The Bisected Grid */}
+          <div className="relative">
+            {/* Orange bisect lines */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <div className="w-1 h-full bg-gradient-to-b from-transparent via-cta-orange to-transparent opacity-60" />
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <div className="h-1 w-full bg-gradient-to-r from-transparent via-cta-orange to-transparent opacity-60" />
             </div>
 
-            <h1 className="text-6xl md:text-7xl font-sans font-bold text-charcoal tracking-tight leading-none">
-              Your Creative<br/>
-              <span className="text-text-primary/40">Swiss Army Knife.</span>
-            </h1>
-
-            <p className="text-xl text-text-primary/70 max-w-md font-light">
-              One utility for 3D, video, logos, and textures. Edit scenes, generate assets, and export production-ready files. No experience required.
-            </p>
-
-            <div className="flex flex-wrap items-center gap-4 pt-4">
+            {/* 4 Quadrants */}
+            <div className="grid grid-cols-2 gap-1">
+              {/* Q1: Import Base Mesh */}
               <Link
                 href="/studio/3d-canvas"
-                className="group px-8 py-4 bg-cta-orange text-white rounded-xl font-medium hover:bg-cta-orange-hover transition-all flex items-center gap-2 shadow-lg shadow-cta-orange/25"
+                className="group relative aspect-[4/3] bg-charcoal rounded-tl-2xl overflow-hidden flex flex-col items-center justify-center p-6 hover:bg-charcoal/90 transition-all"
               >
-                <Cuboid size={18} />
-                Start Editing
-                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                <div className="absolute top-4 left-4 flex items-center gap-2 text-white/40 text-xs font-mono">
+                  <span className="w-5 h-5 rounded-full border border-white/20 flex items-center justify-center text-[10px]">1</span>
+                  IMPORT
+                </div>
+                <Box size={48} className="text-white/20 group-hover:text-white/40 transition-colors mb-3" strokeWidth={1} />
+                <p className="text-white/60 text-sm font-medium">Base Mesh</p>
+                <p className="text-white/30 text-xs mt-1">Drop any 3D file</p>
               </Link>
-              <a
-                href="#extensions"
-                className="group px-8 py-4 bg-white border border-charcoal/20 text-charcoal rounded-xl font-medium hover:border-cta-orange hover:shadow-lg transition-all flex items-center gap-2"
+
+              {/* Q2: Apply Material */}
+              <Link
+                href="/studio/3d-canvas"
+                className="group relative aspect-[4/3] bg-charcoal rounded-tr-2xl overflow-hidden flex flex-col items-center justify-center p-6 hover:bg-charcoal/90 transition-all"
               >
-                <Plug size={16} />
-                Browse Add-ons
-              </a>
+                <div className="absolute top-4 left-4 flex items-center gap-2 text-white/40 text-xs font-mono">
+                  <span className="w-5 h-5 rounded-full border border-white/20 flex items-center justify-center text-[10px]">2</span>
+                  MATERIAL
+                </div>
+                <div className="relative mb-3">
+                  <Box size={48} className="text-cta-orange/60 group-hover:text-cta-orange transition-colors" strokeWidth={1} />
+                  <Sparkles size={16} className="absolute -top-1 -right-1 text-cta-orange" />
+                </div>
+                <p className="text-white/60 text-sm font-medium">Apply Preset</p>
+                <p className="text-white/30 text-xs mt-1">600+ materials</p>
+              </Link>
+
+              {/* Q3: Add Logo */}
+              <Link
+                href="/studio/svg-canvas"
+                className="group relative aspect-[4/3] bg-charcoal rounded-bl-2xl overflow-hidden flex flex-col items-center justify-center p-6 hover:bg-charcoal/90 transition-all"
+              >
+                <div className="absolute top-4 left-4 flex items-center gap-2 text-white/40 text-xs font-mono">
+                  <span className="w-5 h-5 rounded-full border border-white/20 flex items-center justify-center text-[10px]">3</span>
+                  BRAND
+                </div>
+                <div className="relative mb-3">
+                  <Box size={48} className="text-cta-orange/60 group-hover:text-cta-orange transition-colors" strokeWidth={1} />
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded flex items-center justify-center">
+                    <PenTool size={12} className="text-charcoal" />
+                  </div>
+                </div>
+                <p className="text-white/60 text-sm font-medium">Add Logo</p>
+                <p className="text-white/30 text-xs mt-1">Vector decals</p>
+              </Link>
+
+              {/* Q4: Export Video */}
+              <Link
+                href="/studio/video-studio"
+                className="group relative aspect-[4/3] bg-charcoal rounded-br-2xl overflow-hidden flex flex-col items-center justify-center p-6 hover:bg-charcoal/90 transition-all"
+              >
+                <div className="absolute top-4 left-4 flex items-center gap-2 text-white/40 text-xs font-mono">
+                  <span className="w-5 h-5 rounded-full border border-white/20 flex items-center justify-center text-[10px]">4</span>
+                  EXPORT
+                </div>
+                <div className="relative mb-3">
+                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-cta-orange to-cta-orange-hover flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <Film size={24} className="text-white" />
+                  </div>
+                </div>
+                <p className="text-white/60 text-sm font-medium">Product Video</p>
+                <p className="text-white/30 text-xs mt-1">Ready to publish</p>
+              </Link>
             </div>
 
-            {/* Quick Stats */}
-            <div className="flex items-center gap-8 pt-4 text-sm text-text-primary/60">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 size={16} className="text-cta-orange" />
-                <span>600+ Materials</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 size={16} className="text-cta-orange" />
-                <span>AI Scene Editing</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 size={16} className="text-cta-orange" />
-                <span>Universal Export</span>
+            {/* Center Logo */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+              <div className="w-16 h-16 rounded-full bg-warm-bg border-4 border-cta-orange shadow-lg flex items-center justify-center">
+                <Image src="/assets/bisect_logo.png" alt="Bisect" width={32} height={32} />
               </div>
             </div>
           </div>
 
-          {/* Hero Visual - 3D Editor Preview */}
-          <div className="relative h-auto w-full hidden md:flex items-center justify-center">
-            <div className="bg-charcoal rounded-2xl border border-charcoal shadow-2xl p-1 w-full max-w-lg overflow-hidden">
-              {/* Editor Chrome */}
-              <div className="bg-neutral-800 rounded-t-xl px-4 py-2 flex items-center gap-2">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
-                  <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
-                </div>
-                <span className="text-xs text-white/40 ml-2 font-mono">Bisect 3D Editor</span>
-              </div>
-              {/* Editor Content */}
-              <div className="bg-neutral-900 rounded-b-xl p-8 aspect-video flex items-center justify-center">
-                <div className="text-center">
-                  <Cuboid size={64} className="text-cta-orange mx-auto mb-4 opacity-80" />
-                  <p className="text-white/60 text-sm">Drop a 3D file to start</p>
-                  <p className="text-white/30 text-xs mt-1">All 3D formats supported</p>
-                </div>
-              </div>
-            </div>
+          {/* CTA Below Grid */}
+          <div className="flex flex-col items-center mt-10 gap-4">
+            <Link
+              href="/studio/3d-canvas"
+              className="group px-8 py-4 bg-cta-orange text-white rounded-xl font-medium hover:bg-cta-orange-hover transition-all flex items-center gap-2 shadow-lg shadow-cta-orange/25"
+            >
+              Start Your Workflow
+              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <p className="text-text-primary/40 text-sm">No account required</p>
           </div>
         </div>
-
       </section>
 
       {/* Core Features - 3D Editor Capabilities */}
@@ -341,9 +377,6 @@ export default function HomePage() {
       <section id="dev-tools" className="py-32 bg-charcoal/5">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-green/10 border border-accent-green/20 text-[10px] font-mono text-accent-green uppercase tracking-wider mb-6">
-              Developer Tools
-            </div>
             <h2 className="text-4xl md:text-5xl font-sans font-bold text-charcoal mb-4">Dev Tools</h2>
             <p className="text-text-primary/70 text-lg max-w-2xl mx-auto">
               CLI, API, and plugins for seamless integration into your development workflow

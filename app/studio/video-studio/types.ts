@@ -108,6 +108,10 @@ export interface Clip {
   audio?: ClipAudio;
   // Camera (Ken Burns effect)
   camera?: ClipCamera;
+  // Color preset (1-click filters)
+  colorPreset?: string;
+  // Audio waveform data (cached for visualization)
+  waveformData?: number[];
 }
 
 export interface Track {
@@ -126,6 +130,7 @@ export interface ProjectState {
   tracks: Track[];
   selectedClipIds: string[]; // Support multi-selection
   zoomLevel: number; // px per second
+  projectName: string;
 }
 
 export interface CaptionStyle {

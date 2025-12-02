@@ -233,20 +233,6 @@ function EditorUIOverlay({
     <>
       {/* Top Right Buttons */}
       <div className="absolute top-4 right-4 z-10 flex gap-2">
-        {/* Video Textures Button */}
-        <button
-          onClick={onToggleVideoPanel}
-          className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 ${showVideoPanel
-            ? 'bg-pink-500 text-white'
-            : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
-            }`}
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
-          {showVideoPanel ? 'Close Video' : 'Video Textures'}
-        </button>
-
         {/* Preset Testing Toggle Button */}
         <button
           onClick={onTogglePreview}
@@ -259,48 +245,12 @@ function EditorUIOverlay({
         </button>
       </div>
 
-
-      {/* Shape Spawner Toolbar */}
-      <ShapeSpawnerToolbar />
-
       {/* CLI Bridge */}
       <CliBridge />
     </>
   );
 }
 
-function ShapeSpawnerToolbar() {
-  const { addObject } = useSelection();
-
-  return (
-    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2 bg-black/80 p-2 rounded-xl backdrop-blur-sm border border-white/10">
-      <button
-        onClick={() => addObject('box')}
-        className="p-2 hover:bg-white/20 rounded-lg transition-colors text-white flex flex-col items-center gap-1 min-w-[60px]"
-        title="Add Box"
-      >
-        <div className="w-6 h-6 border-2 border-white rounded-sm" />
-        <span className="text-[10px] font-medium">Box</span>
-      </button>
-      <button
-        onClick={() => addObject('sphere')}
-        className="p-2 hover:bg-white/20 rounded-lg transition-colors text-white flex flex-col items-center gap-1 min-w-[60px]"
-        title="Add Sphere"
-      >
-        <div className="w-6 h-6 border-2 border-white rounded-full" />
-        <span className="text-[10px] font-medium">Sphere</span>
-      </button>
-      <button
-        onClick={() => addObject('plane')}
-        className="p-2 hover:bg-white/20 rounded-lg transition-colors text-white flex flex-col items-center gap-1 min-w-[60px]"
-        title="Add Plane"
-      >
-        <div className="w-6 h-6 border-b-2 border-white mb-2" />
-        <span className="text-[10px] font-medium">Plane</span>
-      </button>
-    </div>
-  );
-}
 
 /**
  * SceneSync - Syncs R3F scene and renderer to SelectionContext for hierarchy panel and MCP bridge

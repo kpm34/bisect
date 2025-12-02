@@ -121,10 +121,6 @@ const LandingPage: React.FC<LandingPageProps> = ({
 
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-8 z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-charcoal/5 border border-charcoal/10 text-[10px] font-mono text-cta-orange uppercase tracking-wider">
-              v2.0 Beta
-            </div>
-
             <h1 className="text-6xl md:text-7xl font-sans font-bold text-charcoal tracking-tight leading-none">
               Vector Tools.<br/>
               <span className="text-text-primary/40">Texture Tools.</span>
@@ -371,9 +367,6 @@ const LandingPage: React.FC<LandingPageProps> = ({
       <section id="vector-studio" className="py-32 border-y border-charcoal/10 bg-white">
          <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-16">
-               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cta-orange/10 border border-cta-orange/20 text-[10px] font-mono text-cta-orange uppercase tracking-wider mb-6">
-                  Chapter 1
-               </div>
                <h2 className="text-4xl md:text-5xl font-sans font-bold text-charcoal mb-4">Vector Studio</h2>
                <p className="text-text-primary/70 text-lg max-w-2xl mx-auto">
                   Production-ready SVG editing with AI-powered optimization and developer exports
@@ -518,9 +511,6 @@ const LandingPage: React.FC<LandingPageProps> = ({
       <section id="texture-studio" className="py-32 bg-charcoal/5">
          <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-16">
-               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-charcoal border border-white/10 text-[10px] font-mono text-accent-teal uppercase tracking-wider mb-6">
-                  Chapter 2
-               </div>
                <h2 className="text-4xl md:text-5xl font-bold text-charcoal font-sans mb-4">Texture Studio</h2>
                <p className="text-text-primary/70 text-lg max-w-2xl mx-auto">
                   AI-powered MatCap and PBR texture generation for 3D workflows
@@ -660,9 +650,6 @@ const LandingPage: React.FC<LandingPageProps> = ({
       <section id="dev-tools" className="py-32 border-y border-charcoal/10 bg-white">
          <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-16">
-               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-charcoal border border-white/10 text-[10px] font-mono text-accent-green uppercase tracking-wider mb-6">
-                  Chapter 3
-               </div>
                <h2 className="text-4xl md:text-5xl font-bold text-charcoal font-sans mb-4">Dev Tools</h2>
                <p className="text-text-primary/70 text-lg max-w-2xl mx-auto">
                   CLI, API, and plugins for seamless integration into your development workflow

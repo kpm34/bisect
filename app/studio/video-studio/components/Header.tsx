@@ -1,15 +1,45 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Undo, Redo, Download, Settings, Video, ArrowLeft, Cuboid, Save } from 'lucide-react';
 import { SaveVideoAssetModal, VideoAssetMetadata } from './SaveVideoAssetModal';
+import { ExportModal } from './ExportModal';
 import { uploadAsset } from '@/lib/services/supabase/storage';
 import { useStore } from '../store';
 
 const Header: React.FC = () => {
   const [showSaveModal, setShowSaveModal] = useState(false);
-  const { tracks, duration } = useStore();
+  const [showExportModal, setShowExportModal] = useState(false);
+  const { tracks, duration, undo, redo, canUndo, canRedo, past, future } = useStore();
+
+  // Track history state for button enabling
+  const hasUndo = past.length > 0;
+  const hasRedo = future.length > 0;
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + Z = Undo
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        if (hasUndo) undo();
+      }
+      // Cmd/Ctrl + Shift + Z = Redo
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && e.shiftKey) {
+        e.preventDefault();
+        if (hasRedo) redo();
+      }
+      // Cmd/Ctrl + Y = Redo (alternative)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'y') {
+        e.preventDefault();
+        if (hasRedo) redo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [hasUndo, hasRedo, undo, redo]);
 
   const handleSaveAsAsset = async (name: string, tags: string[], metadata: VideoAssetMetadata) => {
     // For now, we'll save the project data as JSON
@@ -93,10 +123,28 @@ const Header: React.FC = () => {
 
         {/* Center: Edit Controls */}
         <div className="flex items-center space-x-1">
-          <button className="p-2 text-gray-500 hover:text-white hover:bg-[#2a2a2a] rounded transition-colors" title="Undo">
+          <button
+            onClick={undo}
+            disabled={!hasUndo}
+            className={`p-2 rounded transition-colors ${
+              hasUndo
+                ? 'text-gray-400 hover:text-white hover:bg-[#2a2a2a]'
+                : 'text-gray-600 cursor-not-allowed'
+            }`}
+            title={`Undo${hasUndo ? ' (Cmd+Z)' : ''}`}
+          >
             <Undo className="w-4 h-4" />
           </button>
-          <button className="p-2 text-gray-500 hover:text-white hover:bg-[#2a2a2a] rounded transition-colors" title="Redo">
+          <button
+            onClick={redo}
+            disabled={!hasRedo}
+            className={`p-2 rounded transition-colors ${
+              hasRedo
+                ? 'text-gray-400 hover:text-white hover:bg-[#2a2a2a]'
+                : 'text-gray-600 cursor-not-allowed'
+            }`}
+            title={`Redo${hasRedo ? ' (Cmd+Shift+Z)' : ''}`}
+          >
             <Redo className="w-4 h-4" />
           </button>
 
@@ -128,7 +176,10 @@ const Header: React.FC = () => {
             <Settings className="w-4 h-4" />
           </button>
 
-          <button className="flex items-center px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded transition-colors">
+          <button
+            onClick={() => setShowExportModal(true)}
+            className="flex items-center px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded transition-colors"
+          >
             <Download className="w-4 h-4 mr-2" />
             Export
           </button>
@@ -140,6 +191,11 @@ const Header: React.FC = () => {
         onClose={() => setShowSaveModal(false)}
         onSave={handleSaveAsAsset}
         defaultName="Untitled Project"
+      />
+
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
       />
     </>
   );
