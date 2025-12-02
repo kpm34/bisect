@@ -219,10 +219,10 @@ export function MaterialPreviewOverlay({ isOpen, onClose, materialType = 'gold' 
   // Browse view for variations
   if (showBrowse && selectedPreset) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-        <div className="bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-[800px] max-h-[85vh] overflow-hidden border border-zinc-700">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div className="bg-[#1a1a1a] rounded-2xl shadow-2xl w-full max-w-[800px] max-h-[85vh] overflow-hidden border border-zinc-800">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-zinc-700 bg-gradient-to-r from-amber-900/20 to-zinc-900">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-zinc-800 bg-gradient-to-r from-amber-900/20 to-[#1a1a1a]">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <button
                 onClick={() => setShowBrowse(false)}
@@ -281,7 +281,7 @@ export function MaterialPreviewOverlay({ isOpen, onClose, materialType = 'gold' 
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-zinc-800 bg-zinc-900/50">
+          <div className="px-6 py-4 border-t border-zinc-800 bg-[#141414]">
             <div className="flex items-center justify-between">
               <p className="text-xs text-zinc-500">
                 Fine-tune variations of {selectedPreset.name}
@@ -301,10 +301,10 @@ export function MaterialPreviewOverlay({ isOpen, onClose, materialType = 'gold' 
 
   // Main preset view
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-[800px] max-h-[85vh] overflow-hidden border border-zinc-700">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+      <div className="bg-[#1a1a1a] rounded-2xl shadow-2xl w-full max-w-[800px] max-h-[85vh] overflow-hidden border border-zinc-800">
         {/* Header */}
-        <div className={`flex items-center justify-between px-4 sm:px-6 py-4 border-b border-zinc-700 bg-gradient-to-r ${materialType === 'glass' ? 'from-cyan-900/20' : 'from-amber-900/20'} to-zinc-900`}>
+        <div className={`flex items-center justify-between px-4 sm:px-6 py-4 border-b border-zinc-800 bg-gradient-to-r ${materialType === 'glass' ? 'from-cyan-900/20' : 'from-amber-900/20'} to-[#1a1a1a]`}>
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Sparkles className={`w-5 h-5 ${materialType === 'glass' ? 'text-cyan-400' : 'text-amber-400'} flex-shrink-0`} />
             <h2 className="text-lg sm:text-xl font-semibold text-white capitalize truncate">
@@ -324,7 +324,7 @@ export function MaterialPreviewOverlay({ isOpen, onClose, materialType = 'gold' 
 
         {/* Category Tabs - Only shown for tabs display_mode */}
         {category?.display_mode === 'tabs' && tabs.length > 0 && (
-          <div className="flex gap-1 sm:gap-2 px-4 sm:px-6 py-3 border-b border-zinc-800 bg-zinc-900/50 overflow-x-auto">
+          <div className="flex gap-1 sm:gap-2 px-4 sm:px-6 py-3 border-b border-zinc-800 bg-[#141414] overflow-x-auto">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -345,7 +345,7 @@ export function MaterialPreviewOverlay({ isOpen, onClose, materialType = 'gold' 
         )}
 
         {/* Preview Grid - responsive columns */}
-        <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(85vh-220px)]">
+        <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(85vh-220px)] bg-[#111111]">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
@@ -362,8 +362,8 @@ export function MaterialPreviewOverlay({ isOpen, onClose, materialType = 'gold' 
                     className={`group relative aspect-square rounded-xl overflow-hidden transition-all duration-200 ${
                       isSelected
                         ? materialType === 'glass'
-                          ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-zinc-900 scale-105'
-                          : 'ring-2 ring-amber-400 ring-offset-2 ring-offset-zinc-900 scale-105'
+                          ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-[#111111] scale-105'
+                          : 'ring-2 ring-amber-400 ring-offset-2 ring-offset-[#111111] scale-105'
                         : 'hover:scale-105 hover:ring-1 hover:ring-zinc-600'
                     }`}
                   >
@@ -406,7 +406,7 @@ export function MaterialPreviewOverlay({ isOpen, onClose, materialType = 'gold' 
         </div>
 
         {/* Footer */}
-        <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-zinc-800 bg-zinc-900/50">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-zinc-800 bg-[#141414]">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <p className="text-xs text-zinc-500 truncate max-w-full">
               {selectedObject
