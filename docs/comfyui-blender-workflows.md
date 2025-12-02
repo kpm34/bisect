@@ -67,9 +67,67 @@ ComfyUI is not just "image generation" - it's an entire creative production pipe
 |-----|---------|----------------|
 | **Real-time collaboration** | Build in Bisect | Own it |
 | **Version control for scenes** | Build in Bisect | Own it |
-| **AI scene understanding** | Bisect + GPT-4V | Hybrid |
 | **Procedural audio** | Research ComfyUI | Test first |
 | **Motion capture** | Blender MCP | Bridge |
+
+---
+
+## AI Scene Understanding (What We've Already Built)
+
+We have a sophisticated AI system already in place:
+
+### Core AI Agents (`lib/core/ai/`)
+
+| Agent | File | Capabilities |
+|-------|------|--------------|
+| **Gemini Spatial Agent** | `gemini-spatial-agent.ts` | Grid/circle/spiral arrangements, alignment, distribution, stacking, mirroring, path following |
+| **Material Agent** | `material-agent.ts` | PBR texture selection, material recommendations, RAG-powered material knowledge |
+| **Claude Blender Agent** | `claude-blender-agent.ts` | Complex Blender operations via MCP |
+| **Claude Planner Agent** | `claude-planner-agent.ts` | Multi-step task planning |
+| **Unified Spline Agent** | `unified-spline-agent.ts` | Scene editing orchestrator |
+| **Agent Debate System** | `agent-debate-system.ts` | Gemini vs Claude debate for complex decisions |
+
+### Analysis Tools (`lib/core/ai/`)
+
+| Tool | File | What It Does |
+|------|------|--------------|
+| **Visual Analysis Tools** | `visual-analysis-tools.ts` | Color resolution ("make it red" → #FF0000), UV scale calculation, normal intensity suggestions |
+| **Scene Graph Builder** | `scene-graph-builder.ts` | Semantic relationships ("on top of", "next to", "inside"), spatial reasoning, natural language summaries |
+| **Multi-Model Router** | `multi-model-router.ts` | Routes tasks to best AI model |
+| **Embedding Service** | `embedding-service.ts` | Vector embeddings for semantic search |
+
+### Math & Spatial Functions (Built into Gemini Spatial Agent)
+
+```
+arrangeInGrid      → objects in rows/columns with spacing
+arrangeInCircle    → objects around a center point
+arrangeInSpiral    → objects in spiral pattern
+scatter            → random distribution within bounds
+alignObjects       → align to min/max/center on any axis
+distributeObjects  → even spacing along axis
+stackObjects       → vertical stacking with spacing
+mirrorObjects      → mirror across axis
+moveRelative       → offset positions
+moveAbsolute       → set absolute positions
+rotate             → rotation with pivot point
+scale              → uniform or non-uniform scaling
+```
+
+### Two-Pointer & Creative Algorithms
+
+The Scene Graph Builder uses intelligent algorithms:
+- **Spatial Inference**: Distance-based relationship detection
+- **Bounding Box Analysis**: Overlap and containment detection
+- **Graph Generation**: Node-edge relationships for AI context
+- **Natural Language Summaries**: "The Cube is on top of the Table"
+
+### RAG Integration
+
+| Component | Purpose |
+|-----------|---------|
+| **Browser RAG System** | Client-side semantic search |
+| **Material Knowledge Base** | 600+ materials with properties |
+| **Embedding Search** | Find similar materials/objects |
 
 ---
 
