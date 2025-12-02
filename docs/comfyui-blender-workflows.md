@@ -8,6 +8,71 @@ ComfyUI is not just "image generation" - it's an entire creative production pipe
 
 ---
 
+## The Decision Tree: Where Does Each Capability Live?
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│              CAPABILITY ROUTING DECISION TREE                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   For any creative capability:                                   │
+│                                                                  │
+│   1. Can BISECT do it natively?                                 │
+│      YES → Use Bisect (we own the experience)                   │
+│      NO  → Continue...                                          │
+│                                                                  │
+│   2. Can BLENDER do it better?                                  │
+│      YES → Use Blender MCP (pro quality, we bridge)             │
+│      NO  → Continue...                                          │
+│                                                                  │
+│   3. Does COMFYUI have a workflow?                              │
+│      YES → Research, test, package it                           │
+│      NO  → Continue...                                          │
+│                                                                  │
+│   4. Gap exists?                                                │
+│      → Build it in Bisect (own the capability)                  │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Current Capability Routing
+
+| Capability | Best Tool | Status | Notes |
+|------------|-----------|--------|-------|
+| **PBR Textures** | Bisect (Gemini) | ✅ Own | Texture Studio |
+| **MatCap Generation** | Bisect (Gemini) | ✅ Own | Texture Studio |
+| **Material Library** | Bisect | ✅ Own | 600+ presets |
+| **3D Rendering** | Blender MCP | ✅ Bridge | Cycles/EEVEE |
+| **Physics Simulation** | Blender MCP | ✅ Bridge | Rigid body, cloth |
+| **Animation** | Blender MCP | ✅ Bridge | Keyframes, armatures |
+| **Geometry Nodes** | Blender MCP | ✅ Bridge | Procedural modeling |
+| **Video Generation** | ComfyUI | 🔴 Research | AnimateDiff, SVD |
+| **Lip Sync** | ComfyUI | 🔴 Research | Wav2Lip, SadTalker |
+| **Image → 3D** | ComfyUI / Hyper3D | 🔴 Research | TripoSR, LGM |
+| **Style Transfer** | ComfyUI | 🔴 Research | IP-Adapter |
+| **Upscaling** | ComfyUI | 🔴 Research | ESRGAN |
+| **Face Animation** | ComfyUI | 🔴 Research | LivePortrait |
+| **AI Music** | Bisect (Suno) | ✅ Own | Audio Hub |
+| **AI SFX** | Bisect (ElevenLabs) | ✅ Own | Audio Hub |
+| **Voice/TTS** | ComfyUI + ElevenLabs | 🟡 Hybrid | Research options |
+| **Events System** | Bisect | ✅ Own | 15+ triggers |
+| **Configurator** | Bisect | ✅ Own | Product variants |
+| **Hotspots** | Bisect | ✅ Own | 3D annotations |
+| **Cloner** | Bisect | ✅ Own | 6 modes, effectors |
+| **Code Export** | Bisect | ✅ Own | React, Three.js |
+
+### Gap Analysis
+
+| Gap | Options | Recommendation |
+|-----|---------|----------------|
+| **Real-time collaboration** | Build in Bisect | Own it |
+| **Version control for scenes** | Build in Bisect | Own it |
+| **AI scene understanding** | Bisect + GPT-4V | Hybrid |
+| **Procedural audio** | Research ComfyUI | Test first |
+| **Motion capture** | Blender MCP | Bridge |
+
+---
+
 ## What We Already Have (Don't Duplicate)
 
 | Capability | Current Solution | Status |
