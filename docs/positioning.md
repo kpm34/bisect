@@ -157,9 +157,10 @@
 
 ### Build (Gaps to Fill)
 1. **Video Studio** - Complete the pipeline
-2. **ComfyUI integration** - Leverage node workflows without complexity
-3. **CLI tools** - Developer experience like Cursor
-4. **Hyper3D/Meshy** - AI 3D generation in pipeline
+2. **Audio Hub** - Music/SFX library + AI generation (can't ship videos without audio)
+3. **ComfyUI integration** - Leverage node workflows without complexity
+4. **CLI tools** - Developer experience like Cursor
+5. **Hyper3D/Meshy** - AI 3D generation in pipeline
 
 ### Avoid (Not Our Game)
 1. Feature parity with Blender (we bridge, not replace)

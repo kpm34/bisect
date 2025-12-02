@@ -74,6 +74,7 @@ Bisect provides:
 | **Texture Studio** | Material generation | MatCap/PBR via Gemini, normal maps, Blender renders |
 | **3D Studio** | Scene editing | 600+ materials, AI editing, Blender bridge, physics |
 | **Video Studio** | Motion content | AI video generation, ComfyUI workflows (coming) |
+| **Audio Hub** | Music & SFX | AI music (Suno), SFX library, sync to video (coming) |
 
 ---
 
@@ -220,6 +221,7 @@ Bisect/
 - [x] E-commerce integration
 - [ ] Cross-studio drag & drop
 - [ ] Video Studio foundation
+- [ ] Audio Hub (music/SFX library + AI generation)
 
 ### Phase 3: Intelligence
 - [ ] AI workflow orchestrator

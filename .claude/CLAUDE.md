@@ -112,6 +112,7 @@ Connect Shopify/WooCommerce → Deploy: Interactive product page
 | **Vector Studio** | SVG/Logo creation, AI vectorization | 95% |
 | **Texture Studio** | MatCap/PBR generation via Gemini | 90% |
 | **3D Studio** | Scene editing, materials, physics, events | 85% |
+| **Audio Hub** | Music/SFX library, AI generation, video sync | 15% |
 | **Video Studio** | AI video, ComfyUI workflows | 10% |
 
 ### Core Systems
@@ -119,6 +120,7 @@ Connect Shopify/WooCommerce → Deploy: Interactive product page
 |--------|----------|---------|
 | AI Agents | `lib/core/ai/` | Scene editing, material selection |
 | Materials | `lib/core/materials/` | 600+ PBR presets |
+| Audio | `lib/core/audio/` | Music/SFX library, AI generation |
 | Configurator | `lib/core/configurator/` | Product variants, e-commerce |
 | Cloner | `lib/core/cloner/` | Instancing, arrays, effectors |
 | Events | `app/studio/3d-canvas/components/InteractiveObject.tsx` | 15+ event types |
@@ -130,6 +132,7 @@ Connect Shopify/WooCommerce → Deploy: Interactive product page
 | `app/studio/3d-canvas/page.tsx` | 3D Studio entry |
 | `app/studio/svg-canvas/page.tsx` | Vector Studio entry |
 | `app/studio/tex-factory/page.tsx` | Texture Studio entry |
+| `app/studio/audio-hub/` | Audio Hub entry |
 | `lib/store/unified-store.ts` | Central Zustand state |
 | `app/api/configurator/route.ts` | Configurator API |
 
@@ -154,6 +157,8 @@ Connect Shopify/WooCommerce → Deploy: Interactive product page
 - **Google Gemini** (textures, SVG)
 - **Anthropic Claude** (complex reasoning)
 - **Hyper3D** (3D generation)
+- **Suno** (AI music generation)
+- **ElevenLabs** (SFX, voiceover)
 
 ### Data
 - **Zustand** 4.5.0 (state)
@@ -200,6 +205,10 @@ OPENROUTER_API_KEY          # Multi-model access
 HYPER3D_API_KEY             # AI 3D generation
 COMFYUI_API_URL             # Local ComfyUI instance
 
+# Audio AI (optional)
+SUNO_API_KEY                # AI music generation
+ELEVENLABS_API_KEY          # SFX and voiceover generation
+
 # E-commerce (optional)
 SHOPIFY_STOREFRONT_TOKEN
 WOOCOMMERCE_API_KEY
@@ -224,6 +233,8 @@ Bisect/
 │   │   │   └── r3f/                # R3F context
 │   │   ├── svg-canvas/             # Vector Studio
 │   │   ├── tex-factory/            # Texture Studio
+│   │   ├── audio-hub/              # Audio Hub
+│   │   │   └── components/         # AudioHubPanel.tsx
 │   │   └── video-studio/           # Video Studio (WIP)
 │   └── api/
 │       ├── ai/                     # AI endpoints
@@ -235,6 +246,10 @@ Bisect/
 │   ├── core/
 │   │   ├── ai/                     # AI agents
 │   │   ├── materials/              # 600+ material library
+│   │   ├── audio/                  # Audio system
+│   │   │   ├── types.ts            # Audio types
+│   │   │   ├── audio-library.ts    # Library categories, search
+│   │   │   └── ai-audio-generator.ts  # Suno, ElevenLabs
 │   │   ├── cloner/                 # Instancing system
 │   │   ├── configurator/           # Product configurator
 │   │   │   ├── types.ts
@@ -270,11 +285,13 @@ Bisect/
 - [x] Blender MCP bridge
 
 ### In Progress
+- [ ] Audio Hub (music/SFX library, AI generation, timeline)
 - [ ] Cross-studio drag & drop
 - [ ] AI workflow orchestrator
 - [ ] Video Studio foundation
 
 ### Planned
+- [ ] Audio-to-video sync (beat detection, auto-sync)
 - [ ] ComfyUI integration
 - [ ] Hyper3D pipeline
 - [ ] CLI tool (`bisect create`, `bisect export`)
