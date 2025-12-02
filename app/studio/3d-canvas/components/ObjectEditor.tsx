@@ -266,9 +266,9 @@ export default function ObjectEditor() {
                 {/* TRANSFORM TAB */}
                 {activeTab === 'transform' && (
                     <div className="space-y-4">
-                        <TransformGroup label="Position" values={pos} onChange={(a, v) => handleTransformChange('pos', a, v)} step={0.1} />
-                        <TransformGroup label="Rotation" values={rot} onChange={(a, v) => handleTransformChange('rot', a, v)} step={0.1} />
-                        <TransformGroup label="Scale" values={scl} onChange={(a, v) => handleTransformChange('scl', a, v)} step={0.1} />
+                        <TransformGroup label="Position" values={pos} onChange={(a, v) => handleTransformChange('pos', a, v)} step={0.1} defaultValue={0} />
+                        <TransformGroup label="Rotation" values={rot} onChange={(a, v) => handleTransformChange('rot', a, v)} step={0.1} defaultValue={0} />
+                        <TransformGroup label="Scale" values={scl} onChange={(a, v) => handleTransformChange('scl', a, v)} step={0.1} defaultValue={1} />
                     </div>
                 )}
 
@@ -592,12 +592,21 @@ export default function ObjectEditor() {
 }
 
 // Helper Component for Transform Inputs
-function TransformGroup({ label, values, onChange, step }: {
+function TransformGroup({ label, values, onChange, step, defaultValue = 0 }: {
     label: string,
     values: { x: number, y: number, z: number },
     onChange: (axis: 'x' | 'y' | 'z', val: number) => void,
-    step: number
+    step: number,
+    defaultValue?: number
 }) {
+    // Format value - show clean numbers, default if NaN/undefined
+    const formatValue = (val: number | undefined | null): string => {
+        if (val === undefined || val === null || isNaN(val)) {
+            return defaultValue.toFixed(2);
+        }
+        return val.toFixed(2);
+    };
+
     return (
         <div>
             <h4 className="text-xs font-semibold text-gray-600 mb-1">{label}</h4>
@@ -610,8 +619,9 @@ function TransformGroup({ label, values, onChange, step }: {
                         <input
                             type="number"
                             step={step}
-                            value={values[axis].toFixed(2)}
-                            onChange={(e) => onChange(axis, parseFloat(e.target.value) || 0)}
+                            value={formatValue(values[axis])}
+                            placeholder={defaultValue.toFixed(2)}
+                            onChange={(e) => onChange(axis, parseFloat(e.target.value) || defaultValue)}
                             className="w-full pl-5 pr-1 py-1 text-xs border border-gray-300 rounded focus:border-blue-500 focus:outline-none"
                         />
                     </div>
