@@ -2,11 +2,12 @@
 
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { useStore } from '../store';
-import { TrackType, Track, TransitionType } from '../types';
+import { TrackType, Track, TransitionType, Marker } from '../types';
 import {
   ZoomIn, ZoomOut, Scissors, Trash2, Copy, Plus,
   Lock, Unlock, Volume2, VolumeX, MoreVertical, X,
-  ArrowRightLeft, Layers, ChevronsLeftRight, SkipBack, SkipForward
+  ArrowRightLeft, Layers, ChevronsLeftRight, SkipBack, SkipForward,
+  ChevronLeft, ChevronRight, Flag, Clipboard, Repeat, Magnet
 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { ALL_TRANSITIONS } from '../constants';
@@ -68,6 +69,28 @@ const Timeline: React.FC = () => {
     resizeClipStart,
     resizeClipEnd,
     trimClip,
+    // Phase 1: New actions
+    snappingEnabled,
+    toggleSnapping,
+    loopEnabled,
+    toggleLoop,
+    markers,
+    addMarker,
+    removeMarker,
+    jumpToNextMarker,
+    jumpToPrevMarker,
+    stepFrame,
+    jumpToStart,
+    jumpToEnd,
+    jumpToNextClip,
+    jumpToPrevClip,
+    copySelectedClips,
+    cutSelectedClips,
+    pasteClips,
+    zoomToFit,
+    rippleDelete,
+    getSnapPoint,
+    clipboard,
   } = useStore();
 
   // Convert time to pixels
@@ -164,15 +187,19 @@ const Timeline: React.FC = () => {
     });
   };
 
-  // Handle mouse move during drag
+  // Handle mouse move during drag (with snapping)
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (draggingClip) {
       const deltaX = e.clientX - draggingClip.startX;
       const deltaTime = pxToTime(deltaX);
-      const newStart = Math.max(0, draggingClip.originalStart + deltaTime);
+      let newStart = Math.max(0, draggingClip.originalStart + deltaTime);
+      // Apply snapping if enabled
+      if (snappingEnabled) {
+        newStart = getSnapPoint(newStart, draggingClip.clipId);
+      }
       moveClip(draggingClip.trackId, draggingClip.trackId, draggingClip.clipId, newStart);
     }
-  }, [draggingClip, moveClip, pxToTime]);
+  }, [draggingClip, moveClip, pxToTime, snappingEnabled, getSnapPoint]);
 
   // Handle mouse move during resize
   const handleResizeMove = useCallback((e: MouseEvent) => {
@@ -229,26 +256,157 @@ const Timeline: React.FC = () => {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if typing in an input
+      if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') {
+        return;
+      }
+
       // Delete selected clips
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedClipIds.length > 0) {
         e.preventDefault();
         deleteSelectedClips();
       }
+
       // Select all (Cmd/Ctrl + A)
       if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
         e.preventDefault();
         useStore.getState().selectAllClips();
       }
+
       // Escape to deselect
       if (e.key === 'Escape') {
         clearSelection();
         setContextMenu(null);
       }
+
+      // ============== Phase 1: New Shortcuts ==============
+
+      // Frame navigation: Left/Right arrows
+      if (e.key === 'ArrowLeft' && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+        e.preventDefault();
+        stepFrame(-1);
+      }
+      if (e.key === 'ArrowRight' && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+        e.preventDefault();
+        stepFrame(1);
+      }
+
+      // Jump to start/end: Home/End or Cmd+Left/Right
+      if (e.key === 'Home' || ((e.metaKey || e.ctrlKey) && e.key === 'ArrowLeft')) {
+        e.preventDefault();
+        jumpToStart();
+      }
+      if (e.key === 'End' || ((e.metaKey || e.ctrlKey) && e.key === 'ArrowRight')) {
+        e.preventDefault();
+        jumpToEnd();
+      }
+
+      // Jump to next/prev clip: Shift+Left/Right
+      if (e.shiftKey && e.key === 'ArrowLeft') {
+        e.preventDefault();
+        jumpToPrevClip();
+      }
+      if (e.shiftKey && e.key === 'ArrowRight') {
+        e.preventDefault();
+        jumpToNextClip();
+      }
+
+      // Add marker: M
+      if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        addMarker();
+      }
+
+      // Jump to markers: Shift+M (next), Cmd+Shift+M (prev)
+      if (e.shiftKey && (e.key === 'm' || e.key === 'M') && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        jumpToNextMarker();
+      }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === 'm' || e.key === 'M')) {
+        e.preventDefault();
+        jumpToPrevMarker();
+      }
+
+      // Copy: Cmd/Ctrl + C
+      if ((e.metaKey || e.ctrlKey) && e.key === 'c' && selectedClipIds.length > 0) {
+        e.preventDefault();
+        copySelectedClips();
+      }
+
+      // Cut: Cmd/Ctrl + X
+      if ((e.metaKey || e.ctrlKey) && e.key === 'x' && selectedClipIds.length > 0) {
+        e.preventDefault();
+        cutSelectedClips();
+      }
+
+      // Paste: Cmd/Ctrl + V
+      if ((e.metaKey || e.ctrlKey) && e.key === 'v') {
+        e.preventDefault();
+        pasteClips();
+      }
+
+      // Toggle snapping: S (without modifiers)
+      if (e.key === 's' && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+        e.preventDefault();
+        toggleSnapping();
+      }
+
+      // Toggle loop: L
+      if (e.key === 'l' || e.key === 'L') {
+        e.preventDefault();
+        toggleLoop();
+      }
+
+      // Split at playhead: Cmd/Ctrl + B or Shift+S
+      if (((e.metaKey || e.ctrlKey) && e.key === 'b') || (e.shiftKey && e.key === 'S')) {
+        e.preventDefault();
+        handleSplit();
+      }
+
+      // Zoom to fit: Shift+Z
+      if (e.shiftKey && (e.key === 'z' || e.key === 'Z') && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        zoomToFit();
+      }
+
+      // Undo: Cmd/Ctrl + Z
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        useStore.getState().undo();
+      }
+
+      // Redo: Cmd/Ctrl + Shift + Z or Cmd/Ctrl + Y
+      if (((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'z') || ((e.metaKey || e.ctrlKey) && e.key === 'y')) {
+        e.preventDefault();
+        useStore.getState().redo();
+      }
+
+      // Duplicate: Cmd/Ctrl + D
+      if ((e.metaKey || e.ctrlKey) && e.key === 'd' && selectedClipIds.length === 1) {
+        e.preventDefault();
+        // Find the track for the selected clip
+        for (const track of tracks) {
+          const clip = track.clips.find(c => c.id === selectedClipIds[0]);
+          if (clip) {
+            duplicateClip(track.id, clip.id);
+            break;
+          }
+        }
+      }
+
+      // Space bar to play/pause (if not handled elsewhere)
+      if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        useStore.getState().togglePlay();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedClipIds, deleteSelectedClips, clearSelection]);
+  }, [selectedClipIds, deleteSelectedClips, clearSelection, stepFrame, jumpToStart, jumpToEnd,
+      jumpToNextClip, jumpToPrevClip, addMarker, jumpToNextMarker, jumpToPrevMarker,
+      copySelectedClips, cutSelectedClips, pasteClips, toggleSnapping, toggleLoop,
+      zoomToFit, duplicateClip, tracks]);
 
   // Close context menu when clicking outside
   useEffect(() => {
@@ -313,6 +471,46 @@ const Timeline: React.FC = () => {
           )}
         </div>
         <div className="flex items-center space-x-2">
+          {/* Snapping Toggle */}
+          <button
+            className={`p-1 rounded transition-colors ${
+              snappingEnabled ? 'text-blue-400 bg-blue-400/20' : 'text-gray-500 hover:text-white'
+            }`}
+            onClick={toggleSnapping}
+            title={`Snapping ${snappingEnabled ? 'On' : 'Off'} (S)`}
+          >
+            <Magnet className="w-4 h-4" />
+          </button>
+          {/* Loop Toggle */}
+          <button
+            className={`p-1 rounded transition-colors ${
+              loopEnabled ? 'text-green-400 bg-green-400/20' : 'text-gray-500 hover:text-white'
+            }`}
+            onClick={toggleLoop}
+            title={`Loop ${loopEnabled ? 'On' : 'Off'} (L)`}
+          >
+            <Repeat className="w-4 h-4" />
+          </button>
+          <div className="w-px h-4 bg-[#2a2a2a]" />
+          {/* Add Marker */}
+          <button
+            className="p-1 hover:text-white text-gray-500"
+            onClick={() => addMarker()}
+            title="Add Marker (M)"
+          >
+            <Flag className="w-4 h-4" />
+          </button>
+          {/* Clipboard indicator */}
+          {clipboard && (
+            <button
+              className="p-1 text-yellow-400"
+              onClick={() => pasteClips()}
+              title="Paste (Cmd+V)"
+            >
+              <Clipboard className="w-4 h-4" />
+            </button>
+          )}
+          <div className="w-px h-4 bg-[#2a2a2a]" />
           <button
             className="p-1 hover:text-white text-gray-500"
             onClick={() => setZoomLevel(zoomLevel * 0.8)}
@@ -327,6 +525,13 @@ const Timeline: React.FC = () => {
             title="Zoom In"
           >
             <ZoomIn className="w-4 h-4" />
+          </button>
+          <button
+            className="p-1 hover:text-white text-gray-500"
+            onClick={zoomToFit}
+            title="Zoom to Fit (Shift+Z)"
+          >
+            <ChevronsLeftRight className="w-4 h-4" />
           </button>
         </div>
         <div className="flex items-center space-x-3">
@@ -459,7 +664,7 @@ const Timeline: React.FC = () => {
             onMouseDown={handleTimelineClick}
           >
             {/* Ruler */}
-            <div className="h-[24px] border-b border-[#2a2a2a] bg-[#141414] sticky top-0 z-10 flex items-end">
+            <div className="h-[24px] border-b border-[#2a2a2a] bg-[#141414] sticky top-0 z-10 flex items-end relative">
               {Array.from({ length: Math.ceil(duration / 5) + 2 }).map((_, i) => (
                 <div
                   key={i}
@@ -467,6 +672,37 @@ const Timeline: React.FC = () => {
                   style={{ left: timeToPx(i * 5) }}
                 >
                   {i * 5}s
+                </div>
+              ))}
+              {/* Markers on ruler */}
+              {markers.map((marker) => (
+                <div
+                  key={marker.id}
+                  className="absolute top-0 bottom-0 cursor-pointer group z-20"
+                  style={{ left: timeToPx(marker.time) }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setTime(marker.time);
+                  }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    removeMarker(marker.id);
+                  }}
+                  title={`${marker.label} (${marker.time.toFixed(2)}s) - Right-click to delete`}
+                >
+                  <div
+                    className="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[8px] border-l-transparent border-r-transparent -ml-[5px]"
+                    style={{ borderTopColor: marker.color }}
+                  />
+                  <div
+                    className="absolute top-2 left-0 w-px h-full opacity-50 group-hover:opacity-100 transition-opacity"
+                    style={{ backgroundColor: marker.color }}
+                  />
+                  {/* Marker label tooltip */}
+                  <div className="absolute top-0 left-2 bg-black/80 text-white text-[9px] px-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                    {marker.label}
+                  </div>
                 </div>
               ))}
             </div>
