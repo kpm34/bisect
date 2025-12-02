@@ -15,6 +15,7 @@ import GlitchLoader from './GlitchLoader';
 // GlassPresetTesting - using MaterialPreviewOverlay with glass category
 import { IconGenerator } from './IconGenerator';
 import { MaterialPreviewOverlay } from './MaterialPreviewOverlay';
+import { VideoTexturePanel } from './VideoTexturePanel';
 import { InteractiveObject } from './InteractiveObject';
 import { CliBridge } from './CliBridge';
 import { SceneEnvironment } from '@/lib/core/materials/types';
@@ -55,6 +56,8 @@ export default function R3FCanvas({
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [showPresetTesting, setShowPresetTesting] = useState(false);
+  const [showVideoPanel, setShowVideoPanel] = useState(false);
+  const [videoBackgroundUrl, setVideoBackgroundUrl] = useState<string | null>(null);
 
   // Create and manage object URL for the file
   useEffect(() => {
@@ -189,6 +192,8 @@ export default function R3FCanvas({
       <EditorUIOverlay
         showPreview={showPresetTesting}
         onTogglePreview={() => setShowPresetTesting(!showPresetTesting)}
+        showVideoPanel={showVideoPanel}
+        onToggleVideoPanel={() => setShowVideoPanel(!showVideoPanel)}
       />
 
       {/* Material Preview Overlay Modal - Glass Preset Testing */}
@@ -196,6 +201,13 @@ export default function R3FCanvas({
         isOpen={showPresetTesting}
         onClose={() => setShowPresetTesting(false)}
         materialType="glass"
+      />
+
+      {/* Video Texture Panel */}
+      <VideoTexturePanel
+        isOpen={showVideoPanel}
+        onClose={() => setShowVideoPanel(false)}
+        onSetBackground={setVideoBackgroundUrl}
       />
     </div>
   );
@@ -206,17 +218,36 @@ export default function R3FCanvas({
  */
 function EditorUIOverlay({
   showPreview,
-  onTogglePreview
+  onTogglePreview,
+  showVideoPanel,
+  onToggleVideoPanel
 }: {
   showPreview: boolean;
   onTogglePreview: () => void;
+  showVideoPanel: boolean;
+  onToggleVideoPanel: () => void;
 }) {
   const { selectedObject } = useSelection();
 
   return (
     <>
-      {/* Preset Testing Toggle Button */}
-      <div className="absolute top-4 right-4 z-10">
+      {/* Top Right Buttons */}
+      <div className="absolute top-4 right-4 z-10 flex gap-2">
+        {/* Video Textures Button */}
+        <button
+          onClick={onToggleVideoPanel}
+          className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 ${showVideoPanel
+            ? 'bg-pink-500 text-white'
+            : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+            }`}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          {showVideoPanel ? 'Close Video' : 'Video Textures'}
+        </button>
+
+        {/* Preset Testing Toggle Button */}
         <button
           onClick={onTogglePreview}
           className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${showPreview

@@ -5,3 +5,4 @@ export * from './materials';
 export * from './projects';
 export * from './assets';
 export * from './folders';
+export * from './scene-sync';

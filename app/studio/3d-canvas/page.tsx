@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Shell } from '@/components/shared/Shell';
 import { SelectionProvider, useSelection } from './r3f/SceneSelectionContext';
 import { scenePersistence } from './utils/scenePersistence';
-import { sceneStatePersistence } from './utils/sceneStatePersistence';
+import { sceneSyncService } from '@/lib/services/supabase/scene-sync';
 import { SceneEnvironment } from '@/lib/core/materials/types';
 import { useUnifiedBridge, type SceneState } from '@/hooks/useUnifiedBridge';
 import { SceneStateManager } from './components/SceneStateManager';
@@ -214,20 +214,12 @@ function EditorContent() {
   const [isRestoringScene, setIsRestoringScene] = useState(!!projectId); // Only restore if project ID present
 
   // Environment state - shared between SceneCanvas and SceneInspector
-  // Initialize with saved state if available, otherwise use defaults
-  const [environment, setEnvironment] = useState<SceneEnvironment>(() => {
-    if (typeof window !== 'undefined') {
-      const savedState = sceneStatePersistence.loadState();
-      if (savedState?.environment) {
-        return savedState.environment;
-      }
-    }
-    return {
-      preset: 'city',
-      background: true,
-      blur: 0.8,
-      intensity: 1.0,
-    };
+  // Default state - SceneStateManager will restore from L1/L2 cache
+  const [environment, setEnvironment] = useState<SceneEnvironment>({
+    preset: 'city',
+    background: true,
+    blur: 0.8,
+    intensity: 1.0,
   });
 
   // Callback for restoring environment from SceneStateManager
@@ -244,8 +236,8 @@ function EditorContent() {
 
       if (!projectId) {
         // No project ID in URL - check if we have a saved session to restore
-        const lastProjectId = sceneStatePersistence.getLastProjectId();
-        const savedState = sceneStatePersistence.loadState();
+        const lastProjectId = sceneSyncService.getLastProjectId();
+        const savedState = await sceneSyncService.loadState(lastProjectId);
 
         if (lastProjectId && savedState?.projectId === lastProjectId) {
           console.log(`🔄 Auto-restoring last session: ${lastProjectId}`);
@@ -293,7 +285,7 @@ function EditorContent() {
             alert(`Project not found. Starting with clean canvas.`);
           }
           // Clear stale saved state
-          sceneStatePersistence.clearState();
+          sceneSyncService.clearState();
         }
       } catch (error) {
         console.error('❌ Failed to load project:', error);
