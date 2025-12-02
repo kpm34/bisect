@@ -66,13 +66,31 @@ export const scalePoint = (point: Point, origin: Point, scaleX: number, scaleY: 
   };
 };
 
-// Approximate text bounding box for hit testing
+// Canvas context cache for accurate text measurement
+let measureCanvas: HTMLCanvasElement | null = null;
+let measureContext: CanvasRenderingContext2D | null = null;
+
+// Get accurate text dimensions using Canvas API
 export const getTextDimensions = (text: string, fontSize: number, fontFamily: string) => {
-  // Heuristic approximation since we don't have canvas context here
-  // Average aspect ratio for many fonts is around 0.6
-  const avgCharWidth = fontSize * 0.6; 
+  // Lazily create canvas for text measurement
+  if (!measureCanvas) {
+    measureCanvas = document.createElement('canvas');
+    measureContext = measureCanvas.getContext('2d');
+  }
+
+  if (measureContext) {
+    measureContext.font = `${fontSize}px ${fontFamily}`;
+    const metrics = measureContext.measureText(text);
+    return {
+      width: metrics.width,
+      height: metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent || fontSize
+    };
+  }
+
+  // Fallback if canvas context not available
+  const avgCharWidth = fontSize * 0.6;
   const width = text.length * avgCharWidth;
-  const height = fontSize; // Line height approx
+  const height = fontSize;
   return { width, height };
 };
 
@@ -189,12 +207,12 @@ const smoothPointsAverage = (points: Point[], iterations: number): Point[] => {
 // Convert an array of points to a smoothed Quadratic Bezier SVG path string
 export const pointsToSmoothedPath = (points: Point[], smoothingFactor: number = 0): string => {
   if (points.length < 2) return '';
-  
+
   // If smoothing is explicitly 0 (used for Geometric Shapes), return straight lines.
   if (smoothingFactor === 0) {
     return pointsToLinedPath(points);
   }
-  
+
   let processingPoints = points;
 
   if (smoothingFactor > 0) {
@@ -229,6 +247,122 @@ export const pointsToSmoothedPath = (points: Point[], smoothingFactor: number = 
   return d;
 };
 
+// Convert an array of points to a Cubic Bezier SVG path string
+// Uses Catmull-Rom spline algorithm for smoother curves
+export const pointsToCubicPath = (points: Point[], tension: number = 0.5): string => {
+  if (points.length < 2) return '';
+  if (points.length === 2) return pointsToLinedPath(points);
+
+  const first = points[0];
+  let d = `M ${first.x} ${first.y}`;
+
+  // For cubic bezier, we need to calculate control points
+  // Using Catmull-Rom to Bezier conversion
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[Math.max(0, i - 1)];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[Math.min(points.length - 1, i + 2)];
+
+    // Calculate control points using tension
+    const cp1x = p1.x + (p2.x - p0.x) * tension / 3;
+    const cp1y = p1.y + (p2.y - p0.y) * tension / 3;
+    const cp2x = p2.x - (p3.x - p1.x) * tension / 3;
+    const cp2y = p2.y - (p3.y - p1.y) * tension / 3;
+
+    d += ` C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${p2.x} ${p2.y}`;
+  }
+
+  return d;
+};
+
+// Generate cubic Bezier with explicit control points for each segment
+export interface BezierSegment {
+  start: Point;
+  cp1: Point;
+  cp2: Point;
+  end: Point;
+}
+
+export const pointsToBezierSegments = (points: Point[], tension: number = 0.5): BezierSegment[] => {
+  if (points.length < 2) return [];
+
+  const segments: BezierSegment[] = [];
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[Math.max(0, i - 1)];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[Math.min(points.length - 1, i + 2)];
+
+    segments.push({
+      start: p1,
+      cp1: {
+        x: p1.x + (p2.x - p0.x) * tension / 3,
+        y: p1.y + (p2.y - p0.y) * tension / 3
+      },
+      cp2: {
+        x: p2.x - (p3.x - p1.x) * tension / 3,
+        y: p2.y - (p3.y - p1.y) * tension / 3
+      },
+      end: p2
+    });
+  }
+
+  return segments;
+};
+
+// Evaluate a point on a cubic Bezier curve at parameter t [0,1]
+export const evaluateCubicBezier = (segment: BezierSegment, t: number): Point => {
+  const t2 = t * t;
+  const t3 = t2 * t;
+  const mt = 1 - t;
+  const mt2 = mt * mt;
+  const mt3 = mt2 * mt;
+
+  return {
+    x: mt3 * segment.start.x + 3 * mt2 * t * segment.cp1.x + 3 * mt * t2 * segment.cp2.x + t3 * segment.end.x,
+    y: mt3 * segment.start.y + 3 * mt2 * t * segment.cp1.y + 3 * mt * t2 * segment.cp2.y + t3 * segment.end.y
+  };
+};
+
+// Convert Bezier segments back to points for processing
+export const bezierSegmentsToPoints = (segments: BezierSegment[], resolution: number = 10): Point[] => {
+  if (segments.length === 0) return [];
+
+  const points: Point[] = [segments[0].start];
+
+  for (const segment of segments) {
+    for (let i = 1; i <= resolution; i++) {
+      const t = i / resolution;
+      points.push(evaluateCubicBezier(segment, t));
+    }
+  }
+
+  return points;
+};
+
+// Cached SVG container for path baking (performance optimization)
+let cachedBakeContainer: HTMLDivElement | null = null;
+let cachedBakeSvg: SVGSVGElement | null = null;
+let cachedBakePathEl: SVGPathElement | null = null;
+
+// Initialize or get cached SVG elements for path baking
+const getBakeElements = () => {
+  if (!cachedBakeContainer) {
+    cachedBakeContainer = document.createElement('div');
+    cachedBakeContainer.style.cssText = 'position:absolute;visibility:hidden;width:0;height:0;pointer-events:none;';
+    document.body.appendChild(cachedBakeContainer);
+
+    cachedBakeSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    cachedBakeContainer.appendChild(cachedBakeSvg);
+
+    cachedBakePathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    cachedBakeSvg.appendChild(cachedBakePathEl);
+  }
+  return cachedBakePathEl!;
+};
+
 export const bakePath = (path: PathData): PathData => {
   // If already baked (smoothing 0) or text, return as is.
   if (path.type === 'text') return path;
@@ -237,24 +371,16 @@ export const bakePath = (path: PathData): PathData => {
   const d = pointsToSmoothedPath(path.points, path.smoothing || 0);
   if (!d) return path;
 
-  // Setup DOM elements for measuring
-  const div = document.createElement('div');
-  div.style.cssText = 'position:absolute;visibility:hidden;width:0;height:0;pointer-events:none;';
-  document.body.appendChild(div);
-
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  div.appendChild(svg);
-  
-  const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  // Use cached SVG elements for performance
+  const pathEl = getBakeElements();
   pathEl.setAttribute("d", d);
-  svg.appendChild(pathEl);
 
   const len = pathEl.getTotalLength();
   const points: Point[] = [];
-  
+
   // Step size: balance performance vs quality. 2px is quite detailed.
-  const step = 2; 
-  
+  const step = 2;
+
   for (let i = 0; i < len; i += step) {
      const p = pathEl.getPointAtLength(i);
      points.push({ x: p.x, y: p.y });
@@ -262,8 +388,6 @@ export const bakePath = (path: PathData): PathData => {
   // Make sure we get the very end
   const last = pathEl.getPointAtLength(len);
   points.push({ x: last.x, y: last.y });
-
-  document.body.removeChild(div);
 
   return {
     ...path,
@@ -341,17 +465,28 @@ export const eraseFromPath = (path: PathData, center: Point, radius: number): Pa
          currentPoints.push(p2);
       }
     } else {
-      // Intersections found
-      for (const t of intersections) {
+      // Intersections found - handle entry/exit from eraser circle properly
+      let lastWasInside = isPrevInside;
+
+      for (let j = 0; j < intersections.length; j++) {
+        const t = intersections[j];
         const ix = p1.x + t * (p2.x - p1.x);
         const iy = p1.y + t * (p2.y - p1.y);
-        
-        if (currentPoints.length > 0) {
-           currentPoints.push({x: ix, y: iy});
-           startNewPath(); // Cut
+
+        if (lastWasInside) {
+          // Exiting the eraser circle - start a new path segment
+          currentPoints.push({ x: ix, y: iy });
         } else {
-           currentPoints.push({x: ix, y: iy});
+          // Entering the eraser circle - end current path segment
+          if (currentPoints.length > 0) {
+            currentPoints.push({ x: ix, y: iy });
+            startNewPath(); // Cut here
+          }
+          // If currentPoints is empty, we're at the start inside the circle - just skip
         }
+
+        // Toggle state after crossing boundary
+        lastWasInside = !lastWasInside;
       }
       
       if (!isNextInside) {
@@ -542,6 +677,457 @@ export const getShapePoints = (type: ShapeType, start: Point, end: Point): Point
       points.push(start);
       points.push(end);
   }
-  
+
   return points;
+};
+
+// ============================================================================
+// PATH BOOLEAN OPERATIONS (Union, Subtract, Intersect)
+// Using Sutherland-Hodgman clipping and polygon operations
+// ============================================================================
+
+export type PathBooleanOp = 'union' | 'subtract' | 'intersect';
+
+// Helper: Check if a polygon is clockwise
+const isClockwise = (points: Point[]): boolean => {
+  let sum = 0;
+  for (let i = 0; i < points.length; i++) {
+    const p1 = points[i];
+    const p2 = points[(i + 1) % points.length];
+    sum += (p2.x - p1.x) * (p2.y + p1.y);
+  }
+  return sum > 0;
+};
+
+// Helper: Reverse polygon winding
+const reversePolygon = (points: Point[]): Point[] => {
+  return [...points].reverse();
+};
+
+// Helper: Ensure polygon is closed
+const ensureClosed = (points: Point[]): Point[] => {
+  if (points.length < 2) return points;
+  const first = points[0];
+  const last = points[points.length - 1];
+  if (Math.abs(first.x - last.x) > 0.001 || Math.abs(first.y - last.y) > 0.001) {
+    return [...points, { x: first.x, y: first.y }];
+  }
+  return points;
+};
+
+// Sutherland-Hodgman polygon clipping algorithm
+const clipPolygon = (subjectPolygon: Point[], clipPolygon: Point[]): Point[] => {
+  if (subjectPolygon.length < 3 || clipPolygon.length < 3) return [];
+
+  let outputList = [...subjectPolygon];
+
+  for (let i = 0; i < clipPolygon.length - 1; i++) {
+    if (outputList.length === 0) return [];
+
+    const inputList = outputList;
+    outputList = [];
+
+    const edgeStart = clipPolygon[i];
+    const edgeEnd = clipPolygon[i + 1];
+
+    for (let j = 0; j < inputList.length; j++) {
+      const current = inputList[j];
+      const previous = inputList[(j + inputList.length - 1) % inputList.length];
+
+      const currentInside = isLeft(edgeStart, edgeEnd, current) >= 0;
+      const previousInside = isLeft(edgeStart, edgeEnd, previous) >= 0;
+
+      if (currentInside) {
+        if (!previousInside) {
+          const intersection = lineIntersection(edgeStart, edgeEnd, previous, current);
+          if (intersection) outputList.push(intersection);
+        }
+        outputList.push(current);
+      } else if (previousInside) {
+        const intersection = lineIntersection(edgeStart, edgeEnd, previous, current);
+        if (intersection) outputList.push(intersection);
+      }
+    }
+  }
+
+  return outputList;
+};
+
+// Check if point is to the left of line (positive = left, negative = right, 0 = on line)
+const isLeft = (lineStart: Point, lineEnd: Point, point: Point): number => {
+  return (lineEnd.x - lineStart.x) * (point.y - lineStart.y) -
+         (lineEnd.y - lineStart.y) * (point.x - lineStart.x);
+};
+
+// Find intersection point of two line segments
+const lineIntersection = (p1: Point, p2: Point, p3: Point, p4: Point): Point | null => {
+  const x1 = p1.x, y1 = p1.y, x2 = p2.x, y2 = p2.y;
+  const x3 = p3.x, y3 = p3.y, x4 = p4.x, y4 = p4.y;
+
+  const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+  if (Math.abs(denom) < 0.0001) return null;
+
+  const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
+
+  return {
+    x: x1 + t * (x2 - x1),
+    y: y1 + t * (y2 - y1)
+  };
+};
+
+// Compute polygon area (signed - positive for CCW, negative for CW)
+export const polygonArea = (points: Point[]): number => {
+  let area = 0;
+  for (let i = 0; i < points.length; i++) {
+    const j = (i + 1) % points.length;
+    area += points[i].x * points[j].y;
+    area -= points[j].x * points[i].y;
+  }
+  return area / 2;
+};
+
+// Get convex hull using Graham scan (needed for union)
+const convexHull = (points: Point[]): Point[] => {
+  if (points.length < 3) return points;
+
+  // Find lowest point
+  let lowest = 0;
+  for (let i = 1; i < points.length; i++) {
+    if (points[i].y < points[lowest].y ||
+        (points[i].y === points[lowest].y && points[i].x < points[lowest].x)) {
+      lowest = i;
+    }
+  }
+
+  const pivot = points[lowest];
+
+  // Sort by polar angle
+  const sorted = points.filter((_, i) => i !== lowest).sort((a, b) => {
+    const angleA = Math.atan2(a.y - pivot.y, a.x - pivot.x);
+    const angleB = Math.atan2(b.y - pivot.y, b.x - pivot.x);
+    return angleA - angleB;
+  });
+
+  const hull: Point[] = [pivot];
+
+  for (const point of sorted) {
+    while (hull.length > 1 &&
+           isLeft(hull[hull.length - 2], hull[hull.length - 1], point) <= 0) {
+      hull.pop();
+    }
+    hull.push(point);
+  }
+
+  return hull;
+};
+
+/**
+ * Perform boolean operation on two paths
+ * Note: This works best with closed paths (polygons). Open paths will be auto-closed.
+ */
+export const pathBooleanOperation = (
+  pathA: PathData,
+  pathB: PathData,
+  operation: PathBooleanOp
+): PathData | null => {
+  // Bake paths if they have smoothing
+  const bakedA = pathA.smoothing && pathA.smoothing > 0 ? bakePath(pathA) : pathA;
+  const bakedB = pathB.smoothing && pathB.smoothing > 0 ? bakePath(pathB) : pathB;
+
+  let pointsA = ensureClosed(bakedA.points);
+  let pointsB = ensureClosed(bakedB.points);
+
+  // Ensure both polygons have consistent winding (CCW)
+  if (isClockwise(pointsA)) pointsA = reversePolygon(pointsA);
+  if (isClockwise(pointsB)) pointsB = reversePolygon(pointsB);
+
+  let resultPoints: Point[] = [];
+
+  switch (operation) {
+    case 'intersect':
+      // Intersection: clip A by B
+      resultPoints = clipPolygon(pointsA, pointsB);
+      break;
+
+    case 'subtract':
+      // Subtract B from A: clip A by reversed B
+      const reversedB = reversePolygon(pointsB);
+      resultPoints = clipPolygon(pointsA, reversedB);
+      // Note: This is a simplified subtraction that works for convex shapes
+      // For complex concave shapes, would need more sophisticated algorithm
+      break;
+
+    case 'union':
+      // Union: combine both polygons' convex hull as an approximation
+      // For accurate union, would need Weiler-Atherton or similar
+      const allPoints = [...pointsA, ...pointsB];
+      resultPoints = convexHull(allPoints);
+      resultPoints.push(resultPoints[0]); // Close the polygon
+      break;
+  }
+
+  if (resultPoints.length < 3) return null;
+
+  return {
+    ...pathA,
+    id: `${pathA.id}-${operation}-${pathB.id}-${Date.now()}`,
+    points: resultPoints,
+    smoothing: 0
+  };
+};
+
+/**
+ * Path offset/inset - expand or contract a path by a given distance
+ */
+export const offsetPath = (path: PathData, distance: number): PathData => {
+  const baked = path.smoothing && path.smoothing > 0 ? bakePath(path) : path;
+  const points = baked.points;
+
+  if (points.length < 3) return path;
+
+  const offsetPoints: Point[] = [];
+
+  for (let i = 0; i < points.length; i++) {
+    const prev = points[(i - 1 + points.length) % points.length];
+    const curr = points[i];
+    const next = points[(i + 1) % points.length];
+
+    // Calculate normals for adjacent edges
+    const dx1 = curr.x - prev.x;
+    const dy1 = curr.y - prev.y;
+    const len1 = Math.sqrt(dx1 * dx1 + dy1 * dy1) || 1;
+    const nx1 = -dy1 / len1;
+    const ny1 = dx1 / len1;
+
+    const dx2 = next.x - curr.x;
+    const dy2 = next.y - curr.y;
+    const len2 = Math.sqrt(dx2 * dx2 + dy2 * dy2) || 1;
+    const nx2 = -dy2 / len2;
+    const ny2 = dx2 / len2;
+
+    // Average normal at vertex
+    let nx = (nx1 + nx2) / 2;
+    let ny = (ny1 + ny2) / 2;
+    const nlen = Math.sqrt(nx * nx + ny * ny) || 1;
+    nx /= nlen;
+    ny /= nlen;
+
+    // Miter correction
+    const dot = nx1 * nx2 + ny1 * ny2;
+    const miterLength = distance / Math.sqrt((1 + dot) / 2 + 0.001);
+
+    offsetPoints.push({
+      x: curr.x + nx * Math.min(miterLength, distance * 2),
+      y: curr.y + ny * Math.min(miterLength, distance * 2)
+    });
+  }
+
+  return {
+    ...path,
+    id: `${path.id}-offset-${Date.now()}`,
+    points: offsetPoints,
+    smoothing: 0
+  };
+};
+
+// ============================================================================
+// NODE/ANCHOR POINT EDITING
+// ============================================================================
+
+export interface AnchorPoint {
+  index: number;
+  point: Point;
+  handleIn?: Point;  // Control point for incoming curve
+  handleOut?: Point; // Control point for outgoing curve
+  type: 'corner' | 'smooth' | 'symmetric';
+}
+
+/**
+ * Extract editable anchor points from a path
+ */
+export const getPathAnchors = (path: PathData): AnchorPoint[] => {
+  const baked = path.smoothing && path.smoothing > 0 ? bakePath(path) : path;
+  const points = baked.points;
+  const anchors: AnchorPoint[] = [];
+
+  // For simplified editing, we'll identify key points
+  // In a full implementation, we'd preserve Bezier handles from the original path
+
+  for (let i = 0; i < points.length; i++) {
+    const prev = points[(i - 1 + points.length) % points.length];
+    const curr = points[i];
+    const next = points[(i + 1) % points.length];
+
+    // Calculate handles based on neighbors (using 25% of distance to neighbors)
+    anchors.push({
+      index: i,
+      point: curr,
+      handleIn: {
+        x: curr.x - (curr.x - prev.x) * 0.25,
+        y: curr.y - (curr.y - prev.y) * 0.25
+      },
+      handleOut: {
+        x: curr.x + (next.x - curr.x) * 0.25,
+        y: curr.y + (next.y - curr.y) * 0.25
+      },
+      type: 'smooth'
+    });
+  }
+
+  return anchors;
+};
+
+/**
+ * Update a specific anchor point in a path
+ */
+export const updatePathAnchor = (
+  path: PathData,
+  anchorIndex: number,
+  newPosition: Point,
+  updateHandles: boolean = true
+): PathData => {
+  const points = [...path.points];
+
+  if (anchorIndex < 0 || anchorIndex >= points.length) return path;
+
+  const oldPosition = points[anchorIndex];
+  const dx = newPosition.x - oldPosition.x;
+  const dy = newPosition.y - oldPosition.y;
+
+  points[anchorIndex] = newPosition;
+
+  // Optionally smooth neighboring points
+  if (updateHandles && points.length > 2) {
+    // Simple smoothing: slightly adjust neighbors
+    const prevIdx = (anchorIndex - 1 + points.length) % points.length;
+    const nextIdx = (anchorIndex + 1) % points.length;
+
+    // Mild adjustment to maintain curve smoothness
+    points[prevIdx] = {
+      x: points[prevIdx].x + dx * 0.1,
+      y: points[prevIdx].y + dy * 0.1
+    };
+    points[nextIdx] = {
+      x: points[nextIdx].x + dx * 0.1,
+      y: points[nextIdx].y + dy * 0.1
+    };
+  }
+
+  return {
+    ...path,
+    points,
+    smoothing: 0 // Editing bakes the path
+  };
+};
+
+/**
+ * Add a new anchor point to a path at a specific segment
+ */
+export const addAnchorToPath = (
+  path: PathData,
+  segmentIndex: number,
+  t: number = 0.5 // Parameter along segment [0,1]
+): PathData => {
+  const points = [...path.points];
+
+  if (segmentIndex < 0 || segmentIndex >= points.length - 1) return path;
+
+  const p1 = points[segmentIndex];
+  const p2 = points[segmentIndex + 1];
+
+  const newPoint: Point = {
+    x: p1.x + (p2.x - p1.x) * t,
+    y: p1.y + (p2.y - p1.y) * t
+  };
+
+  points.splice(segmentIndex + 1, 0, newPoint);
+
+  return {
+    ...path,
+    points,
+    smoothing: 0
+  };
+};
+
+/**
+ * Remove an anchor point from a path
+ */
+export const removeAnchorFromPath = (path: PathData, anchorIndex: number): PathData => {
+  if (path.points.length <= 2) return path; // Can't remove from line
+
+  const points = path.points.filter((_, i) => i !== anchorIndex);
+
+  return {
+    ...path,
+    points,
+    smoothing: 0
+  };
+};
+
+/**
+ * Find the closest anchor point to a given position
+ */
+export const findClosestAnchor = (
+  path: PathData,
+  position: Point,
+  maxDistance: number = 10
+): { index: number; distance: number } | null => {
+  let closestIndex = -1;
+  let closestDistance = Infinity;
+
+  for (let i = 0; i < path.points.length; i++) {
+    const p = path.points[i];
+    const dist = Math.sqrt((p.x - position.x) ** 2 + (p.y - position.y) ** 2);
+
+    if (dist < closestDistance && dist <= maxDistance) {
+      closestDistance = dist;
+      closestIndex = i;
+    }
+  }
+
+  if (closestIndex === -1) return null;
+
+  return { index: closestIndex, distance: closestDistance };
+};
+
+/**
+ * Find the closest segment to a given position (for adding points)
+ */
+export const findClosestSegment = (
+  path: PathData,
+  position: Point,
+  maxDistance: number = 10
+): { segmentIndex: number; t: number; distance: number } | null => {
+  let closestSegment = -1;
+  let closestT = 0;
+  let closestDistance = Infinity;
+
+  for (let i = 0; i < path.points.length - 1; i++) {
+    const p1 = path.points[i];
+    const p2 = path.points[i + 1];
+
+    // Project point onto segment
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const lenSq = dx * dx + dy * dy;
+
+    if (lenSq < 0.0001) continue;
+
+    let t = ((position.x - p1.x) * dx + (position.y - p1.y) * dy) / lenSq;
+    t = Math.max(0, Math.min(1, t));
+
+    const projX = p1.x + t * dx;
+    const projY = p1.y + t * dy;
+    const dist = Math.sqrt((position.x - projX) ** 2 + (position.y - projY) ** 2);
+
+    if (dist < closestDistance && dist <= maxDistance) {
+      closestDistance = dist;
+      closestSegment = i;
+      closestT = t;
+    }
+  }
+
+  if (closestSegment === -1) return null;
+
+  return { segmentIndex: closestSegment, t: closestT, distance: closestDistance };
 };

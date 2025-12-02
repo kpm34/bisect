@@ -2,18 +2,27 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import Image from 'next/image';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { login, signup, signInWithGoogle } from './actions';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Code } from 'lucide-react';
+
+// Dev bypass token - only works in development mode
+const DEV_BYPASS_TOKEN = 'bisect-dev-2024';
 
 export default function LoginPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const message = searchParams?.get('message') ?? null;
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDevBypass, setShowDevBypass] = useState(false);
+  const [devToken, setDevToken] = useState('');
+
+  const isDev = process.env.NODE_ENV === 'development';
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);
@@ -38,14 +47,31 @@ export default function LoginPage() {
     }
   }
 
+  // Dev bypass handler
+  function handleDevBypass() {
+    if (devToken === DEV_BYPASS_TOKEN) {
+      // Set dev bypass cookie and redirect
+      document.cookie = `bisect_dev_bypass=${DEV_BYPASS_TOKEN}; path=/; max-age=86400`; // 24 hours
+      router.push('/dashboard');
+    } else {
+      setError('Invalid dev token');
+    }
+  }
+
   return (
     <div className="min-h-screen bg-ash-grey-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <img src="/bisect-logo.svg" alt="Bisect" className="h-8 w-8" />
-            <span className="text-xl font-semibold text-ash-grey-900">Bisect</span>
+          <Link href="/" className="inline-flex items-center gap-3">
+            <Image
+              src="/assets/bisect_logo.png"
+              alt="Bisect"
+              width={40}
+              height={40}
+              className="rounded-lg"
+            />
+            <span className="text-2xl font-bold text-ash-grey-900">Bisect</span>
           </Link>
         </div>
 
@@ -189,6 +215,41 @@ export default function LoginPage() {
               {isSignUp ? 'Sign in' : 'Sign up'}
             </button>
           </p>
+
+          {/* Dev Bypass - Only shown in development */}
+          {isDev && (
+            <div className="mt-6 pt-6 border-t border-ash-grey-200">
+              {!showDevBypass ? (
+                <button
+                  type="button"
+                  onClick={() => setShowDevBypass(true)}
+                  className="w-full flex items-center justify-center gap-2 text-xs text-ash-grey-400 hover:text-ash-grey-600"
+                >
+                  <Code className="w-3 h-3" />
+                  Dev Mode
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-xs text-ash-grey-500 text-center">Enter dev token to bypass auth</p>
+                  <input
+                    type="password"
+                    value={devToken}
+                    onChange={(e) => setDevToken(e.target.value)}
+                    placeholder="Dev token"
+                    className="w-full px-3 py-2 text-sm border border-ash-grey-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    onKeyDown={(e) => e.key === 'Enter' && handleDevBypass()}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleDevBypass}
+                    className="w-full px-3 py-2 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                  >
+                    Bypass Auth (Dev Only)
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Footer */}

@@ -386,7 +386,7 @@ export default function VectorEditor() {
       transformStartRef.current = point;
 
       // Store initial state of paths for non-destructive transforms
-      originalPathsRef.current = JSON.parse(JSON.stringify(paths));
+      originalPathsRef.current = structuredClone(paths);
 
       // Store initial bounding box
       const selectedPaths = paths.filter(p => selectedPathIds.has(p.id));
@@ -646,9 +646,14 @@ export default function VectorEditor() {
           if (selectedPathIds.has(origPath.id)) {
             const idx = nextPaths.findIndex(p => p.id === origPath.id);
             if (idx !== -1) {
+              // Calculate uniform scale factor for stroke width
+              const uniformScale = Math.sqrt(Math.abs(scaleX * scaleY));
+
               nextPaths[idx] = {
                 ...origPath,
-                points: origPath.points.map(p => scalePoint(p, scaleOrigin, scaleX, scaleY))
+                points: origPath.points.map(p => scalePoint(p, scaleOrigin, scaleX, scaleY)),
+                // Scale stroke width proportionally to maintain visual consistency
+                strokeWidth: (origPath.strokeWidth || 1) * uniformScale
               };
             }
           }

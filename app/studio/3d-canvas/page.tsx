@@ -464,8 +464,11 @@ function EditorContent() {
         }
       >
         <div className="h-full w-full flex overflow-hidden bg-[#0f1419]">
-          {/* Main Content Area */}
-          <div className="flex-1 flex overflow-hidden">
+          {/* Top Navigation Bar */}
+          <TopNav />
+
+          {/* Main Content Area - offset for TopNav */}
+          <div className="flex-1 flex overflow-hidden pt-10">
             {/* Left Side: Universal 3D Canvas with Overlays */}
             <div className="flex-1 relative">
               {/* Left Sidebar Panel - Hierarchy, AI, Assets */}
