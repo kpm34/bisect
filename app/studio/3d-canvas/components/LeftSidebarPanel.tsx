@@ -16,6 +16,7 @@ interface LeftSidebarPanelProps {
   sceneLoaded: boolean;
   activeInspectorTab: string;
   onClose?: () => void;
+  onImportAsset?: (file: File) => void;
 }
 
 type SidebarTab = 'hierarchy' | 'ai' | 'assets';
@@ -508,8 +509,24 @@ function AIContent({ sceneLoaded, activeInspectorTab }: { sceneLoaded: boolean; 
 // Assets Tab Content
 // ============================================================================
 
-function AssetsContent() {
+function AssetsContent({ onImportAsset }: { onImportAsset?: (file: File) => void }) {
   const [searchQuery, setSearchQuery] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && onImportAsset) {
+      onImportAsset(file);
+    }
+    // Reset input so same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   // Asset categories
   const categories = [
@@ -552,9 +569,23 @@ function AssetsContent() {
 
         {/* Import Button */}
         <div className="mt-4 px-2">
-          <button className="w-full py-2 bg-white/5 hover:bg-white/10 border border-dashed border-white/20 rounded-lg text-xs text-gray-400 hover:text-white transition-colors">
-            + Import Asset
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".glb,.gltf,.obj,.splinecode"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <button
+            onClick={handleImportClick}
+            className="w-full py-2.5 bg-cyan-600/20 hover:bg-cyan-600/30 border border-dashed border-cyan-500/40 hover:border-cyan-500/60 rounded-lg text-xs text-cyan-400 hover:text-cyan-300 transition-colors flex items-center justify-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Import 3D Asset
           </button>
+          <p className="text-[10px] text-gray-500 text-center mt-1.5">.glb, .gltf, .obj, .splinecode</p>
         </div>
       </div>
     </div>
@@ -565,7 +596,7 @@ function AssetsContent() {
 // Main Component
 // ============================================================================
 
-export default function LeftSidebarPanel({ sceneLoaded, activeInspectorTab, onClose }: LeftSidebarPanelProps) {
+export default function LeftSidebarPanel({ sceneLoaded, activeInspectorTab, onClose, onImportAsset }: LeftSidebarPanelProps) {
   const [activeTab, setActiveTab] = useState<SidebarTab>('hierarchy');
   const [panelWidth, setPanelWidth] = useState(280);
   const [isResizing, setIsResizing] = useState(false);
@@ -700,7 +731,7 @@ export default function LeftSidebarPanel({ sceneLoaded, activeInspectorTab, onCl
         <div className="flex-1 min-h-0 overflow-hidden">
           {activeTab === 'hierarchy' && <HierarchyContent />}
           {activeTab === 'ai' && <AIContent sceneLoaded={sceneLoaded} activeInspectorTab={activeInspectorTab} />}
-          {activeTab === 'assets' && <AssetsContent />}
+          {activeTab === 'assets' && <AssetsContent onImportAsset={onImportAsset} />}
         </div>
       </div>
 

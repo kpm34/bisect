@@ -22,7 +22,13 @@ import {
   Trash2,
   Copy,
   Undo,
-  Redo
+  Redo,
+  Video,
+  Film,
+  Scissors,
+  Clock,
+  Save,
+  Play
 } from 'lucide-react';
 
 export default function DocsPage() {
@@ -55,6 +61,12 @@ export default function DocsPage() {
               className="text-sm text-text-primary/60 hover:text-text-primary transition-colors hidden sm:block"
             >
               3D Studio
+            </Link>
+            <Link
+              href="/studio/video-studio"
+              className="text-sm text-text-primary/60 hover:text-text-primary transition-colors hidden sm:block"
+            >
+              Video Studio
             </Link>
             <Link
               href="/studio/tex-factory"
@@ -107,6 +119,20 @@ export default function DocsPage() {
               </ul>
             </div>
 
+            {/* Video Studio */}
+            <div>
+              <h3 className="text-xs font-semibold text-amber-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <Video size={12} />
+                Video Studio
+              </h3>
+              <ul className="space-y-2">
+                <li><a href="#video-timeline" className="text-sm text-text-primary/70 hover:text-amber-500 transition-colors">Timeline &amp; Tracks</a></li>
+                <li><a href="#video-ai" className="text-sm text-text-primary/70 hover:text-amber-500 transition-colors">AI Assistant</a></li>
+                <li><a href="#video-textures" className="text-sm text-text-primary/70 hover:text-amber-500 transition-colors">Video Textures</a></li>
+                <li><a href="#video-export" className="text-sm text-text-primary/70 hover:text-amber-500 transition-colors">Export &amp; Save</a></li>
+              </ul>
+            </div>
+
             {/* Tex Factory */}
             <div>
               <h3 className="text-xs font-semibold text-accent-teal uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -140,12 +166,12 @@ export default function DocsPage() {
           <section id="overview" className="mb-16">
             <h1 className="text-4xl font-sans font-bold text-charcoal mb-6">Bisect Documentation</h1>
             <p className="text-lg text-text-primary/70 mb-8">
-              Bisect is a unified creative platform that connects three powerful studios: Vector graphics editing,
-              3D scene manipulation, and AI-powered texture generation. This documentation covers all features
-              and workflows across each studio.
+              Bisect is a unified creative platform that connects four powerful studios: Vector graphics editing,
+              3D scene manipulation, video timeline editing, and AI-powered texture generation. This documentation
+              covers all features and workflows across each studio.
             </p>
 
-            <div className="grid md:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Link href="#vector-canvas" className="p-4 rounded-xl bg-cta-orange/10 border border-cta-orange/20 hover:bg-cta-orange/20 transition-colors">
                 <PenTool className="text-cta-orange mb-2" size={24} />
                 <h3 className="font-semibold text-charcoal">Vector Studio</h3>
@@ -156,6 +182,12 @@ export default function DocsPage() {
                 <Cuboid className="text-accent-purple mb-2" size={24} />
                 <h3 className="font-semibold text-charcoal">3D Studio</h3>
                 <p className="text-sm text-text-primary/60">Scene editing &amp; materials</p>
+              </Link>
+
+              <Link href="#video-timeline" className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-colors">
+                <Video className="text-amber-500 mb-2" size={24} />
+                <h3 className="font-semibold text-charcoal">Video Studio</h3>
+                <p className="text-sm text-text-primary/60">Timeline editing &amp; video textures</p>
               </Link>
 
               <Link href="#tex-matcap" className="p-4 rounded-xl bg-accent-teal/10 border border-accent-teal/20 hover:bg-accent-teal/20 transition-colors">
@@ -504,6 +536,156 @@ export default function DocsPage() {
             </div>
           </section>
 
+          {/* Video Studio Section */}
+          <section id="video-timeline" className="mb-16">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                <Video className="text-amber-500" size={20} />
+              </div>
+              <div>
+                <h2 className="text-2xl font-sans font-bold text-charcoal">Video Studio</h2>
+                <p className="text-sm text-text-primary/60">Timeline-based video editing with 3D integration</p>
+              </div>
+            </div>
+
+            <div className="space-y-8">
+              {/* Timeline & Tracks */}
+              <div className="bg-white rounded-xl border border-charcoal/10 p-6">
+                <h3 className="text-lg font-semibold text-charcoal mb-4">Timeline &amp; Tracks</h3>
+                <p className="text-text-primary/70 mb-4">
+                  A multi-track timeline editor for compositing video, audio, and image layers.
+                </p>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-charcoal/5 rounded-lg">
+                    <h4 className="font-medium text-charcoal mb-2 flex items-center gap-2">
+                      <Film size={16} className="text-amber-500" />
+                      Video Tracks
+                    </h4>
+                    <p className="text-sm text-text-primary/60">Import MP4, WebM, MOV files. Trim, split, and arrange clips on the timeline.</p>
+                  </div>
+                  <div className="p-4 bg-charcoal/5 rounded-lg">
+                    <h4 className="font-medium text-charcoal mb-2 flex items-center gap-2">
+                      <Layers size={16} className="text-amber-500" />
+                      Image Layers
+                    </h4>
+                    <p className="text-sm text-text-primary/60">Add PNG, JPG, GIF overlays. Set duration and positioning.</p>
+                  </div>
+                  <div className="p-4 bg-charcoal/5 rounded-lg">
+                    <h4 className="font-medium text-charcoal mb-2 flex items-center gap-2">
+                      <Scissors size={16} className="text-amber-500" />
+                      Clip Editing
+                    </h4>
+                    <p className="text-sm text-text-primary/60">Drag edges to trim. Double-click to split. Drag to reorder clips.</p>
+                  </div>
+                  <div className="p-4 bg-charcoal/5 rounded-lg">
+                    <h4 className="font-medium text-charcoal mb-2 flex items-center gap-2">
+                      <Clock size={16} className="text-amber-500" />
+                      Playback Controls
+                    </h4>
+                    <p className="text-sm text-text-primary/60">Scrub timeline, play/pause, set playback speed, and zoom.</p>
+                  </div>
+                </div>
+
+                <h4 className="font-medium text-charcoal mt-6 mb-2">Keyboard Shortcuts</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                  <div className="flex items-center gap-2"><kbd className="px-2 py-1 bg-charcoal/10 rounded">Space</kbd> Play/Pause</div>
+                  <div className="flex items-center gap-2"><kbd className="px-2 py-1 bg-charcoal/10 rounded">Delete</kbd> Remove clip</div>
+                  <div className="flex items-center gap-2"><kbd className="px-2 py-1 bg-charcoal/10 rounded">Ctrl+Z</kbd> Undo</div>
+                  <div className="flex items-center gap-2"><kbd className="px-2 py-1 bg-charcoal/10 rounded">Ctrl+S</kbd> Save</div>
+                </div>
+              </div>
+
+              {/* AI Assistant */}
+              <div id="video-ai" className="bg-white rounded-xl border border-charcoal/10 p-6">
+                <h3 className="text-lg font-semibold text-charcoal mb-4 flex items-center gap-2">
+                  <Wand2 size={20} className="text-amber-500" />
+                  AI Assistant
+                </h3>
+                <p className="text-text-primary/70 mb-4">
+                  Use natural language to edit your video timeline. Powered by Claude AI.
+                </p>
+
+                <div className="bg-charcoal rounded-lg p-4 font-mono text-sm text-white/80 mb-4">
+                  <div className="text-amber-400">&gt; &quot;Add a 3 second fade transition between clips&quot;</div>
+                  <div className="text-white/40 mt-2">Analyzing timeline structure...</div>
+                  <div className="text-amber-300 mt-1">Added crossfade between Clip_1 and Clip_2</div>
+                </div>
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={14} className="text-amber-500" />
+                    <span>Timeline edits: &quot;Move clip X to the end&quot;</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={14} className="text-amber-500" />
+                    <span>Duration changes: &quot;Trim clip to 5 seconds&quot;</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={14} className="text-amber-500" />
+                    <span>Track management: &quot;Add a new audio track&quot;</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Video Textures */}
+              <div id="video-textures" className="bg-white rounded-xl border border-charcoal/10 p-6">
+                <h3 className="text-lg font-semibold text-charcoal mb-4 flex items-center gap-2">
+                  <Cuboid size={20} className="text-amber-500" />
+                  Video Textures for 3D
+                </h3>
+                <p className="text-text-primary/70 mb-4">
+                  Use videos from your timeline as textures on 3D objects in the 3D Studio.
+                </p>
+
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 mb-4">
+                  <h4 className="font-medium text-charcoal mb-2">Cross-Studio Integration</h4>
+                  <p className="text-sm text-text-primary/60">
+                    Save your video project, then apply it as a video texture in the 3D Studio.
+                    Videos play in real-time on 3D geometry with support for UV mapping.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <span className="px-3 py-1 bg-amber-500/10 text-amber-600 text-sm rounded-full">MP4 Support</span>
+                  <span className="px-3 py-1 bg-amber-500/10 text-amber-600 text-sm rounded-full">WebM Support</span>
+                  <span className="px-3 py-1 bg-amber-500/10 text-amber-600 text-sm rounded-full">Loop Playback</span>
+                  <span className="px-3 py-1 bg-amber-500/10 text-amber-600 text-sm rounded-full">Alpha Channel</span>
+                </div>
+              </div>
+
+              {/* Export & Save */}
+              <div id="video-export" className="bg-white rounded-xl border border-charcoal/10 p-6">
+                <h3 className="text-lg font-semibold text-charcoal mb-4 flex items-center gap-2">
+                  <Save size={20} className="text-amber-500" />
+                  Export &amp; Save
+                </h3>
+                <p className="text-text-primary/70 mb-4">
+                  Save video projects to your asset library or export as video files.
+                </p>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="p-3 border border-amber-500/20 rounded-lg bg-amber-500/5">
+                    <code className="text-amber-600 font-mono">Save as Asset</code>
+                    <p className="text-sm text-text-primary/60 mt-1">Store project in your library with metadata and tags</p>
+                  </div>
+                  <div className="p-3 border border-charcoal/10 rounded-lg">
+                    <code className="text-amber-600 font-mono">.mp4</code>
+                    <p className="text-sm text-text-primary/60 mt-1">H.264 encoded video for web and playback</p>
+                  </div>
+                  <div className="p-3 border border-charcoal/10 rounded-lg">
+                    <code className="text-amber-600 font-mono">.webm</code>
+                    <p className="text-sm text-text-primary/60 mt-1">VP9 encoded for web optimization</p>
+                  </div>
+                  <div className="p-3 border border-charcoal/10 rounded-lg">
+                    <code className="text-amber-600 font-mono">.json</code>
+                    <p className="text-sm text-text-primary/60 mt-1">Project file for later editing</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* Tex Factory Section */}
           <section id="tex-matcap" className="mb-16">
             <div className="flex items-center gap-3 mb-6">
@@ -664,6 +846,14 @@ export default function DocsPage() {
               >
                 <Cuboid size={16} />
                 3D Studio
+                <ArrowRight size={16} />
+              </Link>
+              <Link
+                href="/studio/video-studio"
+                className="px-6 py-3 bg-amber-500 text-white rounded-xl font-medium hover:bg-amber-600 transition-colors flex items-center gap-2"
+              >
+                <Video size={16} />
+                Video Studio
                 <ArrowRight size={16} />
               </Link>
               <Link

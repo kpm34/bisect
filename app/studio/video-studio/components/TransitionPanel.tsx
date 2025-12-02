@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useStore } from '../store';
 import { TRANSITION_CATEGORIES } from '../constants';
 import { TransitionType, TrackType } from '../types';
-import { ChevronDown, ChevronRight, Clock, Sparkles, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Clock, Layers, X } from 'lucide-react';
 
 interface TransitionPanelProps {
   onTransitionSelect?: (transitionType: TransitionType) => void;
@@ -102,7 +102,7 @@ const TransitionPanel: React.FC<TransitionPanelProps> = ({ onTransitionSelect })
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <Sparkles className="w-4 h-4 text-gray-400" />
+          <Layers className="w-4 h-4 text-gray-400" />
           <h3 className="text-sm font-semibold text-white">Transitions</h3>
         </div>
         {selectedClipInfo && (

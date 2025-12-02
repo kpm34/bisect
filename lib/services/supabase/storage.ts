@@ -1,10 +1,10 @@
-import { createClient } from '@/utils/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import { createAsset } from './assets';
 import type { Asset } from './types';
 
 const BUCKET_NAME = 'user-assets';
 
-export type AssetCategory = 'svg' | 'texture' | 'material' | 'image' | 'model';
+export type AssetCategory = 'svg' | 'texture' | 'material' | 'image' | 'model' | 'video';
 
 interface UploadAssetOptions {
   name: string;
@@ -220,6 +220,7 @@ function getFileExtension(file: File | Blob, category: AssetCategory): string {
     case 'material': return 'png';
     case 'image': return 'png';
     case 'model': return 'glb';
+    case 'video': return 'mp4';
     default: return 'bin';
   }
 }
@@ -234,6 +235,9 @@ function getContentType(category: AssetCategory, ext: string): string {
     gif: 'image/gif',
     glb: 'model/gltf-binary',
     gltf: 'model/gltf+json',
+    mp4: 'video/mp4',
+    webm: 'video/webm',
+    mov: 'video/quicktime',
   };
 
   return mimeTypes[ext] || 'application/octet-stream';

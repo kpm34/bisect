@@ -473,5 +473,5 @@ export interface UserPreferences {
 }
 
 // Asset types enum
-export type AssetType = 'svg' | 'texture' | 'material' | 'decal' | 'model';
-export type AssetSource = 'vector' | 'texture' | 'scene' | 'upload';
+export type AssetType = 'svg' | 'texture' | 'material' | 'decal' | 'model' | 'video';
+export type AssetSource = 'vector' | 'texture' | 'scene' | 'upload' | 'video-studio';

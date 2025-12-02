@@ -8,20 +8,22 @@ import {
   Grid3X3,
   List,
   Search,
-  Filter,
   Download,
   Trash2,
   Copy,
   MoreHorizontal,
   PenTool,
-  FileImage,
   Calendar,
-  Tag
+  Tag,
+  Video,
+  Film,
+  Clock
 } from 'lucide-react';
-import type { Asset } from '@/lib/services/supabase/types';
+import type { Asset, AssetType } from '@/lib/services/supabase/types';
 
 type ViewMode = 'grid' | 'list';
 type SortBy = 'updated' | 'created' | 'name';
+type AssetTab = 'svg' | 'video';
 
 export default function AssetsPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -31,13 +33,14 @@ export default function AssetsPage() {
   const [sortBy, setSortBy] = useState<SortBy>('updated');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAssets, setSelectedAssets] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState<AssetTab>('svg');
 
   useEffect(() => {
     async function fetchAssets() {
+      setLoading(true);
       try {
         const { getAssetsByType } = await import('@/lib/services/supabase/assets');
-        // Get SVG assets from the asset library
-        const data = await getAssetsByType('svg');
+        const data = await getAssetsByType(activeTab as AssetType);
         setAssets(data);
       } catch (err) {
         console.error('Failed to fetch assets:', err);
@@ -48,7 +51,7 @@ export default function AssetsPage() {
     }
 
     fetchAssets();
-  }, []);
+  }, [activeTab]);
 
   // Filter and sort assets
   const filteredAssets = assets
@@ -106,6 +109,18 @@ export default function AssetsPage() {
     }
   };
 
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getAssetIcon = () => {
+    return activeTab === 'video' ? Video : PenTool;
+  };
+
+  const AssetIcon = getAssetIcon();
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Page Header */}
@@ -113,28 +128,62 @@ export default function AssetsPage() {
         <div>
           <h1 className="text-2xl font-semibold text-ash-grey-900">Asset Library</h1>
           <p className="text-ash-grey-500 mt-1">
-            SVG vectors created in Vector Studio
+            {activeTab === 'svg' ? 'SVG vectors created in Vector Studio' : 'Video projects from Video Studio'}
           </p>
         </div>
         <a
-          href="/studio/svg-canvas"
+          href={activeTab === 'svg' ? '/studio/svg-canvas' : '/studio/video-studio'}
           className="flex items-center gap-2 px-4 py-2 bg-cta-orange hover:bg-cta-orange-hover text-white rounded-lg text-sm font-medium transition-colors"
         >
           <Plus className="w-4 h-4" />
-          Create New SVG
+          {activeTab === 'svg' ? 'Create New SVG' : 'Create New Video'}
         </a>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex items-center gap-1 bg-ash-grey-100 p-1 rounded-lg w-fit">
+        <button
+          onClick={() => {
+            setActiveTab('svg');
+            setSelectedAssets(new Set());
+            setSearchQuery('');
+          }}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            activeTab === 'svg'
+              ? 'bg-white text-ash-grey-900 shadow-sm'
+              : 'text-ash-grey-600 hover:text-ash-grey-900'
+          }`}
+        >
+          <PenTool className="w-4 h-4" />
+          Vectors
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab('video');
+            setSelectedAssets(new Set());
+            setSearchQuery('');
+          }}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            activeTab === 'video'
+              ? 'bg-white text-ash-grey-900 shadow-sm'
+              : 'text-ash-grey-600 hover:text-ash-grey-900'
+          }`}
+        >
+          <Video className="w-4 h-4" />
+          Videos
+        </button>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl border border-ash-grey-200 p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 rounded-lg">
-              <PenTool className="w-5 h-5 text-indigo-600" />
+            <div className={`p-2 rounded-lg ${activeTab === 'video' ? 'bg-orange-100' : 'bg-indigo-100'}`}>
+              <AssetIcon className={`w-5 h-5 ${activeTab === 'video' ? 'text-orange-600' : 'text-indigo-600'}`} />
             </div>
             <div>
               <p className="text-2xl font-semibold text-ash-grey-900">{assets.length}</p>
-              <p className="text-sm text-ash-grey-500">Total SVGs</p>
+              <p className="text-sm text-ash-grey-500">Total {activeTab === 'svg' ? 'SVGs' : 'Videos'}</p>
             </div>
           </div>
         </div>
@@ -273,7 +322,15 @@ export default function AssetsPage() {
                       className="max-w-full max-h-full object-contain"
                     />
                   ) : (
-                    <PenTool className="w-12 h-12 text-ash-grey-300" />
+                    <AssetIcon className="w-12 h-12 text-ash-grey-300" />
+                  )}
+
+                  {/* Video Duration Badge */}
+                  {activeTab === 'video' && asset.data && (asset.data as { duration?: number }).duration && (
+                    <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/70 rounded text-[10px] text-white flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {formatDuration((asset.data as { duration: number }).duration)}
+                    </div>
                   )}
 
                   {/* Checkbox */}
@@ -306,9 +363,20 @@ export default function AssetsPage() {
                 {/* Info */}
                 <div className="p-3">
                   <h3 className="font-medium text-ash-grey-900 truncate text-sm">{asset.name}</h3>
-                  <p className="text-xs text-ash-grey-500 mt-0.5">
-                    {new Date(asset.updated_at || asset.created_at || Date.now()).toLocaleDateString()}
-                  </p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-xs text-ash-grey-500">
+                      {new Date(asset.updated_at || asset.created_at || Date.now()).toLocaleDateString()}
+                    </p>
+                    {activeTab === 'video' && asset.data && (asset.data as { clipCount?: number }).clipCount && (
+                      <>
+                        <span className="text-ash-grey-300">•</span>
+                        <p className="text-xs text-ash-grey-500 flex items-center gap-1">
+                          <Film className="w-3 h-3" />
+                          {(asset.data as { clipCount: number }).clipCount} clips
+                        </p>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -324,6 +392,7 @@ export default function AssetsPage() {
                 className="w-4 h-4 rounded border-ash-grey-300 text-cta-orange focus:ring-cta-orange"
               />
               <span className="text-sm text-ash-grey-500">Name</span>
+              {activeTab === 'video' && <span className="text-sm text-ash-grey-500">Duration</span>}
               <span className="text-sm text-ash-grey-500 ml-auto">Updated</span>
             </div>
             {filteredAssets.map((asset) => (
@@ -345,7 +414,7 @@ export default function AssetsPage() {
                   {asset.thumbnail_path ? (
                     <img src={asset.thumbnail_path} alt="" className="w-full h-full object-contain" />
                   ) : (
-                    <PenTool className="w-5 h-5 text-ash-grey-400" />
+                    <AssetIcon className="w-5 h-5 text-ash-grey-400" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -360,6 +429,22 @@ export default function AssetsPage() {
                     </div>
                   )}
                 </div>
+                {activeTab === 'video' && asset.data && (
+                  <div className="flex items-center gap-4 text-sm text-ash-grey-500">
+                    {(asset.data as { duration?: number }).duration && (
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        {formatDuration((asset.data as { duration: number }).duration)}
+                      </span>
+                    )}
+                    {(asset.data as { clipCount?: number }).clipCount && (
+                      <span className="flex items-center gap-1">
+                        <Film className="w-4 h-4" />
+                        {(asset.data as { clipCount: number }).clipCount}
+                      </span>
+                    )}
+                  </div>
+                )}
                 <span className="text-sm text-ash-grey-500">
                   {new Date(asset.updated_at || Date.now()).toLocaleDateString()}
                 </span>
@@ -391,20 +476,22 @@ export default function AssetsPage() {
         <div className="bg-white rounded-xl border border-ash-grey-200 p-12 text-center">
           <Layers className="w-12 h-12 text-ash-grey-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-ash-grey-900 mb-1">
-            {searchQuery ? 'No matching assets' : 'No SVG assets yet'}
+            {searchQuery ? 'No matching assets' : `No ${activeTab === 'svg' ? 'SVG' : 'video'} assets yet`}
           </h3>
           <p className="text-ash-grey-500 mb-4">
             {searchQuery
               ? 'Try adjusting your search'
-              : 'Create SVGs in Vector Studio and they will appear here'}
+              : activeTab === 'svg'
+                ? 'Create SVGs in Vector Studio and they will appear here'
+                : 'Create videos in Video Studio and save them as assets'}
           </p>
           {!searchQuery && (
             <a
-              href="/studio/svg-canvas"
+              href={activeTab === 'svg' ? '/studio/svg-canvas' : '/studio/video-studio'}
               className="inline-flex items-center gap-2 px-4 py-2 bg-cta-orange hover:bg-cta-orange-hover text-white rounded-lg text-sm font-medium transition-colors"
             >
-              <PenTool className="w-4 h-4" />
-              Open Vector Studio
+              <AssetIcon className="w-4 h-4" />
+              Open {activeTab === 'svg' ? 'Vector' : 'Video'} Studio
             </a>
           )}
         </div>

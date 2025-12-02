@@ -167,7 +167,7 @@ import { useMaterials } from '@/hooks/useMaterials';
 ### AI Integration
 - Gemini patterns: `app/studio/svg-canvas/lib/services/gemini.ts`
 - OpenAI patterns: `lib/core/ai/unified-spline-agent.ts`
-- RAG system: `lib/core/rag/browser-rag-system.ts`
+- RAG system: `lib/core/rag/BrowserRagSystem.ts`
 - MCP bridge: `lib/services/mcp-bridge-handler.ts`
 
 ### State Management

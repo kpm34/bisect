@@ -1,4 +1,6 @@
-import { supabase } from './client';
+import { createClient } from '@/lib/supabase/client';
+
+const supabase = createClient();
 import type {
   Database,
   MaterialCategory,

@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useRef, useCallback } from 'react';
-import { sceneStatePersistence, PersistedSceneState } from '../utils/sceneStatePersistence';
+import { sceneStatePersistence, PersistedSceneState } from '../utils/scene-state-persistence';
 import { SceneObject } from '../r3f/SceneSelectionContext';
 import { SceneEnvironment } from '@/lib/core/materials/types';
 

@@ -76,16 +76,16 @@ export default function HomePage() {
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <div className="space-y-8 z-10">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-charcoal/5 border border-charcoal/10 text-[10px] font-mono text-cta-orange uppercase tracking-wider">
-              No-Code 3D Platform
+              All-Purpose Editing Utility
             </div>
 
             <h1 className="text-6xl md:text-7xl font-sans font-bold text-charcoal tracking-tight leading-none">
-              3D Editing.<br/>
-              <span className="text-text-primary/40">Zero Learning Curve.</span>
+              Your Creative<br/>
+              <span className="text-text-primary/40">Swiss Army Knife.</span>
             </h1>
 
             <p className="text-xl text-text-primary/70 max-w-md font-light">
-              The fastest way to edit 3D scenes, apply materials, and export production-ready assets. AI-powered, no 3D experience required.
+              One utility for 3D, video, logos, and textures. Edit scenes, generate assets, and export production-ready files. No experience required.
             </p>
 
             <div className="flex flex-wrap items-center gap-4 pt-4">
@@ -153,9 +153,9 @@ export default function HomePage() {
       <section id="features" className="py-24 border-y border-charcoal/10 bg-charcoal/5">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-sans font-bold text-charcoal mb-4">Everything You Need in One Editor</h2>
+            <h2 className="text-4xl font-sans font-bold text-charcoal mb-4">Everything You Need in One Utility</h2>
             <p className="text-text-primary/70 text-lg max-w-2xl mx-auto">
-              Professional 3D editing capabilities without the complexity
+              Professional editing capabilities for every creative workflow
             </p>
           </div>
 
@@ -253,12 +253,9 @@ export default function HomePage() {
       {/* Add-ons Section - SVG & Texture tools */}
       <section id="extensions" className="py-24 max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-teal/10 border border-accent-teal/20 text-[10px] font-mono text-accent-teal uppercase tracking-wider mb-6">
-            Built-in Tools
-          </div>
-          <h2 className="text-4xl font-sans font-bold text-charcoal mb-4">Powerful Add-ons Built-In</h2>
+          <h2 className="text-4xl font-sans font-bold text-charcoal mb-4">More Tools in Your Kit</h2>
           <p className="text-text-primary/70 text-lg max-w-2xl mx-auto">
-            Create assets directly in Bisect that flow seamlessly into your projects
+            Create assets directly in Bisect that flow seamlessly into any workflow
           </p>
         </div>
 
@@ -268,11 +265,8 @@ export default function HomePage() {
             href="/studio/tex-factory"
             className="group p-8 rounded-2xl bg-white border border-charcoal/10 hover:border-accent-teal/40 transition-all duration-200 shadow-sm hover:shadow-lg"
           >
-            <div className="flex items-start justify-between mb-6">
-              <div className="w-14 h-14 rounded-xl bg-accent-teal/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Palette className="text-accent-teal" size={28} />
-              </div>
-              <span className="text-xs font-mono text-accent-teal bg-accent-teal/10 px-2 py-1 rounded">ADD-ON</span>
+            <div className="w-14 h-14 rounded-xl bg-accent-teal/10 flex items-center justify-center group-hover:scale-110 transition-transform mb-6">
+              <Palette className="text-accent-teal" size={28} />
             </div>
             <h3 className="text-2xl font-sans font-semibold text-charcoal mb-3">Texture Generator</h3>
             <p className="text-text-primary/60 mb-6">
@@ -307,11 +301,8 @@ export default function HomePage() {
             href="/studio/svg-canvas"
             className="group p-8 rounded-2xl bg-white border border-charcoal/10 hover:border-cta-orange/40 transition-all duration-200 shadow-sm hover:shadow-lg"
           >
-            <div className="flex items-start justify-between mb-6">
-              <div className="w-14 h-14 rounded-xl bg-cta-orange/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Zap className="text-cta-orange" size={28} />
-              </div>
-              <span className="text-xs font-mono text-cta-orange bg-cta-orange/10 px-2 py-1 rounded">ADD-ON</span>
+            <div className="w-14 h-14 rounded-xl bg-cta-orange/10 flex items-center justify-center group-hover:scale-110 transition-transform mb-6">
+              <Zap className="text-cta-orange" size={28} />
             </div>
             <h3 className="text-2xl font-sans font-semibold text-charcoal mb-3">Vector Editor</h3>
             <p className="text-text-primary/60 mb-6">
@@ -340,21 +331,6 @@ export default function HomePage() {
               <ArrowRight size={16} />
             </div>
           </Link>
-        </div>
-      </section>
-
-      {/* The Workflow */}
-      <section className="py-24 max-w-7xl mx-auto px-6 border-t border-charcoal/10">
-        <div className="flex flex-col items-center">
-          <h2 className="text-2xl font-sans font-bold text-charcoal mb-12">The Workflow</h2>
-
-          <div className="flex flex-col md:flex-row items-center gap-6 text-text-primary/60 text-sm font-mono">
-            <span className="px-6 py-3 border border-charcoal/20 bg-white rounded-lg shadow-sm">3D FILE</span>
-            <ArrowRight size={16} className="rotate-90 md:rotate-0 text-cta-orange" />
-            <span className="px-6 py-3 border border-cta-orange/30 text-cta-orange bg-cta-orange/10 rounded-lg shadow-[0_0_20px_rgba(255,107,53,0.15)]">BISECT EDITOR</span>
-            <ArrowRight size={16} className="rotate-90 md:rotate-0 text-cta-orange" />
-            <span className="px-6 py-3 border border-charcoal/20 bg-white rounded-lg shadow-sm">PRODUCTION</span>
-          </div>
         </div>
       </section>
 
@@ -497,28 +473,20 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer CTA - 3D Editor Focus */}
+      {/* Footer CTA */}
       <section className="py-20 border-t border-charcoal/10 text-center bg-white">
-        <h2 className="text-3xl font-sans font-bold text-charcoal mb-4">Ready to Edit?</h2>
+        <h2 className="text-3xl font-sans font-bold text-charcoal mb-4">Ready to Create?</h2>
         <p className="text-text-primary/60 mb-8 max-w-md mx-auto">
-          Start editing 3D scenes in seconds. No installation, no learning curve.
+          One utility for video, 3D, logos, and textures. No installation, no learning curve.
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-4">
-          <Link
-            href="/studio/3d-canvas"
-            className="px-8 py-4 bg-cta-orange text-white rounded-xl font-medium hover:bg-cta-orange-hover transition-colors shadow-lg shadow-cta-orange/25 flex items-center gap-2"
-          >
-            <Cuboid size={18} />
-            Open 3D Editor
-            <ArrowRight size={16} />
-          </Link>
-          <Link
-            href="/dashboard"
-            className="px-8 py-4 bg-white border border-charcoal/20 text-charcoal rounded-xl font-medium hover:border-cta-orange hover:shadow-lg transition-all flex items-center gap-2"
-          >
-            View Dashboard
-          </Link>
-        </div>
+        <Link
+          href="/studio/3d-canvas"
+          className="inline-flex px-8 py-4 bg-cta-orange text-white rounded-xl font-medium hover:bg-cta-orange-hover transition-colors shadow-lg shadow-cta-orange/25 items-center gap-2"
+        >
+          <Cuboid size={18} />
+          Open 3D Editor
+          <ArrowRight size={16} />
+        </Link>
       </section>
 
       {/* Footer */}
@@ -532,7 +500,7 @@ export default function HomePage() {
                 <span className="font-sans font-semibold text-charcoal tracking-tight">Bisect</span>
               </div>
               <p className="text-sm text-text-primary/60">
-                No-code 3D editing platform with AI-powered tools for materials, textures, and vector graphics.
+                All-purpose editing utility for video, 3D, logos, and textures. Your creative Swiss army knife.
               </p>
             </div>
 
@@ -549,11 +517,6 @@ export default function HomePage() {
                   <Link href="/dashboard" className="text-text-primary/60 hover:text-cta-orange transition-colors">
                     Dashboard
                   </Link>
-                </li>
-                <li>
-                  <a href="#features" className="text-text-primary/60 hover:text-cta-orange transition-colors">
-                    Features
-                  </a>
                 </li>
               </ul>
             </div>
@@ -587,11 +550,6 @@ export default function HomePage() {
                 <li>
                   <Link href="/docs" className="text-text-primary/60 hover:text-cta-orange transition-colors">
                     Documentation
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/docs#api-reference" className="text-text-primary/60 hover:text-cta-orange transition-colors">
-                    API Reference
                   </Link>
                 </li>
                 <li>

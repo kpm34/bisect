@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Download, X, Settings, Check } from 'lucide-react';
+import { Box, Download, X, Settings, Check, Image, PenTool, Package } from 'lucide-react';
 
 interface ThreeDExportModalProps {
   isOpen: boolean;
@@ -138,7 +138,7 @@ function ThreeDExportModal({ isOpen, onClose, svgContent }: ThreeDExportModalPro
                 }`}
               >
                 <div className="text-center">
-                  <div className="text-2xl mb-2">🖼️</div>
+                  <div className="flex justify-center mb-2"><Image size={24} className="text-purple-400" /></div>
                   <div className="font-semibold text-white">Decal Pack</div>
                   <div className="text-xs text-zinc-500 mt-1">PNG textures</div>
                 </div>
@@ -153,7 +153,7 @@ function ThreeDExportModal({ isOpen, onClose, svgContent }: ThreeDExportModalPro
                 }`}
               >
                 <div className="text-center">
-                  <div className="text-2xl mb-2">📐</div>
+                  <div className="flex justify-center mb-2"><PenTool size={24} className="text-purple-400" /></div>
                   <div className="font-semibold text-white">Curves Pack</div>
                   <div className="text-xs text-zinc-500 mt-1">Blender SVG</div>
                 </div>
@@ -168,7 +168,7 @@ function ThreeDExportModal({ isOpen, onClose, svgContent }: ThreeDExportModalPro
                 }`}
               >
                 <div className="text-center">
-                  <div className="text-2xl mb-2">📦</div>
+                  <div className="flex justify-center mb-2"><Package size={24} className="text-purple-400" /></div>
                   <div className="font-semibold text-white">Full Pack</div>
                   <div className="text-xs text-zinc-500 mt-1">Both formats</div>
                 </div>
@@ -352,7 +352,7 @@ async function generatePngDecal(
     canvas.height = size;
     const ctx = canvas.getContext('2d')!;
 
-    const img = new Image();
+    const img = new (window as any).Image();
     img.onload = () => {
       // Clear with transparency
       ctx.clearRect(0, 0, size, size);

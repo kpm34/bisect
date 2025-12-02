@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { TexturePreview3D } from './components/TexturePreview3D';
 import { TextureControlPanel } from './components/TextureControlPanel';
 import { GeneratedTextureSet, GenerationConfig, TextureMode, ModelQuality } from './types';
-import { generateTextureImage } from './services/geminiService';
-import { generateNormalMap, generateRoughnessMap } from './services/imageProcessing';
+import { generateTextureImage } from './services/gemini-service';
+import { generateNormalMap, generateRoughnessMap } from './services/image-processing';
 import { Palette, ArrowRight, Lock, Sparkles } from 'lucide-react';
 
 // Type declaration for AI Studio API (optional browser extension)

@@ -6,7 +6,7 @@
  */
 
 import type { MaterialPreset } from './types';
-import { BrowserChromaClient, type BrowserChromaDocument } from '../rag/browser-chroma-client';
+import { BrowserChromaClient, type BrowserChromaDocument } from '../rag/BrowserChromaClient';
 
 export interface MaterialSearchConfig {
   chromaConfig?: {

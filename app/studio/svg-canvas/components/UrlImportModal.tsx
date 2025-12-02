@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Globe, X, Loader2, CheckCircle2 } from 'lucide-react';
+import { Globe, X, Loader2, CheckCircle2, Lightbulb } from 'lucide-react';
 
 interface UrlImportModalProps {
   isOpen: boolean;
@@ -192,7 +192,7 @@ function UrlImportModal({ isOpen, onClose, onImport }: UrlImportModalProps) {
           {/* Info Box */}
           <div className="p-4 bg-cta-orange/10 border border-cta-orange/20 rounded-lg">
             <p className="text-sm text-cta-orange">
-              <strong>💡 Tip:</strong> The screenshot will be imported as a locked background layer.
+              <span className="inline-flex items-center gap-1"><Lightbulb size={14} className="inline" /><strong>Tip:</strong></span> The screenshot will be imported as a locked background layer.
               You can trace over it, or use the crop tool to vectorize specific sections like logos and icons.
             </p>
           </div>

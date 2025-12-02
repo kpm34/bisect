@@ -19,7 +19,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import type { UniversalEditor } from '@/lib/core/adapters';
 import { sessionManager } from '../lib/persistence/SceneSessionManager';
 import type { SceneSession, EditDelta, RestoreResult } from '../lib/persistence/types';
-import { applyEditDelta } from '@/app/studio/3d-canvas/utils/editHelpers';
+import { applyEditDelta } from '@/app/studio/3d-canvas/utils/edit-helpers';
 
 interface UseSceneSessionOptions {
   /** Enable auto-save (default: true) */

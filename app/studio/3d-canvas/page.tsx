@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { Shell } from '@/components/shared/Shell';
 import { SelectionProvider, useSelection } from './r3f/SceneSelectionContext';
-import { scenePersistence } from './utils/scenePersistence';
+import { scenePersistence } from './utils/scene-persistence';
 import { sceneSyncService } from '@/lib/services/supabase/scene-sync';
 import { SceneEnvironment } from '@/lib/core/materials/types';
 import { useUnifiedBridge, type SceneState } from '@/hooks/useUnifiedBridge';
@@ -37,8 +37,13 @@ const SceneInspector = dynamic(() => import('./components/SceneInspector'), {
   ssr: false,
 });
 
-// Disable SSR for Scene Hierarchy Panel
+// Disable SSR for Scene Hierarchy Panel (legacy - kept for reference)
 const SceneHierarchyPanel = dynamic(() => import('./r3f/SceneHierarchyPanel'), {
+  ssr: false,
+});
+
+// Disable SSR for Left Sidebar Panel (new consolidated panel)
+const LeftSidebarPanel = dynamic(() => import('./components/LeftSidebarPanel'), {
   ssr: false,
 });
 
@@ -207,7 +212,8 @@ function EditorContent() {
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(projectId);
   const [isLoading, setIsLoading] = useState(false);
   const [isSceneReady, setIsSceneReady] = useState(false);
-  const [showHierarchy, setShowHierarchy] = useState(false);
+  const [showHierarchy, setShowHierarchy] = useState(false); // Legacy - kept for H key toggle
+  const [showLeftSidebar, setShowLeftSidebar] = useState(true); // New consolidated left panel
   const [activeTab, setActiveTab] = useState<string>('material');
   const [panelWidth, setPanelWidth] = useState(440);
   const [isResizing, setIsResizing] = useState(false);
@@ -308,23 +314,22 @@ function EditorContent() {
     }
   }, [sceneFile]);
 
-  // Keyboard shortcut: H key to toggle hierarchy panel (only when scene is ready)
+  // Keyboard shortcut: H key to toggle left sidebar panel
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // H key (not in an input field) and scene is ready
+      // H key (not in an input field)
       if (
         e.key === 'h' &&
-        isSceneReady &&
         !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)
       ) {
         e.preventDefault();
-        setShowHierarchy((prev) => !prev);
+        setShowLeftSidebar((prev) => !prev);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isSceneReady]);
+  }, []);
 
   // Panel resize logic
   useEffect(() => {
@@ -460,19 +465,28 @@ function EditorContent() {
           <div className="flex-1 flex overflow-hidden">
             {/* Left Side: Universal 3D Canvas with Overlays */}
             <div className="flex-1 relative">
-              {/* Hierarchy Toggle Button - Only show when scene is fully loaded */}
-              {isSceneReady && (
-                <button
-                  onClick={() => setShowHierarchy((prev) => !prev)}
-                  className="absolute top-4 left-4 z-40 px-3 py-2 bg-gray-800/80 hover:bg-gray-700/80 backdrop-blur-sm text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                  title="Toggle Scene Hierarchy (H)"
-                >
-                  <span className="text-lg">☰</span>
-                  <span>Hierarchy</span>
-                </button>
+              {/* Left Sidebar Panel - Hierarchy, AI, Assets */}
+              {showLeftSidebar && (
+                <LeftSidebarPanel
+                  sceneLoaded={sceneFile !== null}
+                  activeInspectorTab={activeTab}
+                  onClose={() => setShowLeftSidebar(false)}
+                  onImportAsset={handleFileUpload}
+                />
               )}
 
-
+              {/* Sidebar Toggle Button - When sidebar is hidden */}
+              {!showLeftSidebar && (
+                <button
+                  onClick={() => setShowLeftSidebar(true)}
+                  className="absolute top-4 left-4 z-40 w-10 h-10 bg-[#0a0d12]/90 hover:bg-[#0a0d12] backdrop-blur-sm text-gray-400 hover:text-white rounded-lg flex items-center justify-center transition-colors border border-white/10"
+                  title="Show Sidebar (H)"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+              )}
 
               {/* Loading indicator while restoring scene */}
               {isRestoringScene && (
@@ -492,16 +506,6 @@ function EditorContent() {
                 setIsLoading={setIsLoading}
                 environment={environment}
               />
-
-              {/* Scene Hierarchy Panel - Only render when scene is ready */}
-              {isSceneReady && (
-                <SceneHierarchyPanel open={showHierarchy} onClose={() => setShowHierarchy(false)} />
-              )}
-
-              {/* Character 2: Prompt Line - Responsive centered positioning */}
-              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-[90%] sm:w-[80%] md:w-[70%] lg:w-[60%] max-w-2xl z-[60]">
-                <SceneCommandInput sceneLoaded={sceneFile !== null} activeTab={activeTab} />
-              </div>
             </div>
           </div>
         </div>

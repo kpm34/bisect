@@ -27,7 +27,7 @@ import {
   RotateCcw,
   Maximize2,
   Volume2,
-  Sparkles,
+  Shuffle,
   Target,
   Timer,
   ArrowUp,
@@ -159,7 +159,7 @@ const ACTION_GROUPS = [
     label: 'Appearance',
     actions: [
       { type: 'setColor' as ActionType, label: 'Set Color', icon: Palette, description: 'Set specific color' },
-      { type: 'randomColor' as ActionType, label: 'Random Color', icon: Sparkles, description: 'Random color' },
+      { type: 'randomColor' as ActionType, label: 'Random Color', icon: Shuffle, description: 'Random color' },
       { type: 'show' as ActionType, label: 'Show', icon: Eye, description: 'Make visible' },
       { type: 'hide' as ActionType, label: 'Hide', icon: EyeOff, description: 'Make invisible' },
       { type: 'toggle' as ActionType, label: 'Toggle', icon: Circle, description: 'Toggle visibility' },

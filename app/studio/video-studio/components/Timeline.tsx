@@ -6,7 +6,7 @@ import { TrackType, Track, TransitionType } from '../types';
 import {
   ZoomIn, ZoomOut, Scissors, Trash2, Copy, Plus,
   Lock, Unlock, Volume2, VolumeX, MoreVertical, X,
-  ArrowRightLeft, Sparkles, ChevronsLeftRight, SkipBack, SkipForward
+  ArrowRightLeft, Layers, ChevronsLeftRight, SkipBack, SkipForward
 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { ALL_TRANSITIONS } from '../constants';
@@ -493,27 +493,27 @@ const Timeline: React.FC = () => {
                     const hasTransitionIn = !!clip.transitionIn;
                     const hasTransitionOut = !!clip.transitionOut;
 
-                    // Get transition icon based on type
+                    // Get transition icon based on type (using simple Unicode symbols)
                     const getTransitionIcon = (type: TransitionType) => {
                       const icons: Record<TransitionType, string> = {
-                        [TransitionType.CUT]: '✂️',
-                        [TransitionType.FADE]: '🌑',
-                        [TransitionType.CROSSFADE]: '🔀',
-                        [TransitionType.BLUR]: '🌫️',
-                        [TransitionType.GLITCH]: '📺',
-                        [TransitionType.SLIDE_LEFT]: '⬅️',
-                        [TransitionType.SLIDE_RIGHT]: '➡️',
-                        [TransitionType.SLIDE_UP]: '⬆️',
-                        [TransitionType.SLIDE_DOWN]: '⬇️',
-                        [TransitionType.ZOOM_IN]: '🔍',
-                        [TransitionType.ZOOM_OUT]: '🔎',
-                        [TransitionType.WIPE_LEFT]: '◀️',
-                        [TransitionType.WIPE_RIGHT]: '▶️',
-                        [TransitionType.DISSOLVE]: '💨',
-                        [TransitionType.FLASH]: '⚡',
-                        [TransitionType.PIXELATE]: '🎮',
+                        [TransitionType.CUT]: '×',
+                        [TransitionType.FADE]: '◐',
+                        [TransitionType.CROSSFADE]: '⇄',
+                        [TransitionType.BLUR]: '○',
+                        [TransitionType.GLITCH]: '▦',
+                        [TransitionType.SLIDE_LEFT]: '←',
+                        [TransitionType.SLIDE_RIGHT]: '→',
+                        [TransitionType.SLIDE_UP]: '↑',
+                        [TransitionType.SLIDE_DOWN]: '↓',
+                        [TransitionType.ZOOM_IN]: '+',
+                        [TransitionType.ZOOM_OUT]: '−',
+                        [TransitionType.WIPE_LEFT]: '◄',
+                        [TransitionType.WIPE_RIGHT]: '►',
+                        [TransitionType.DISSOLVE]: '~',
+                        [TransitionType.FLASH]: '★',
+                        [TransitionType.PIXELATE]: '▣',
                       };
-                      return icons[type] || '✨';
+                      return icons[type] || '•';
                     };
 
                     return (
@@ -583,7 +583,7 @@ const Timeline: React.FC = () => {
                         {/* Transition badge when both exist */}
                         {(hasTransitionIn || hasTransitionOut) && (
                           <div className="absolute bottom-0.5 right-0.5">
-                            <Sparkles className="w-2.5 h-2.5 text-[#a78bfa] opacity-60" />
+                            <Layers className="w-2.5 h-2.5 text-[#a78bfa] opacity-60" />
                           </div>
                         )}
 
@@ -799,7 +799,7 @@ const Timeline: React.FC = () => {
             {/* Transition Section */}
             <div className="border-t border-[#2a2a2a] my-1" />
             <div className="px-3 py-1 text-[10px] text-gray-500 uppercase tracking-wider flex items-center space-x-1">
-              <Sparkles className="w-2.5 h-2.5" />
+              <Layers className="w-2.5 h-2.5" />
               <span>Transitions</span>
             </div>
 

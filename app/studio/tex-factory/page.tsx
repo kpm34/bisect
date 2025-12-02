@@ -25,8 +25,8 @@ const TextureControlPanel = dynamic(
 );
 
 import { GeneratedTextureSet, GenerationConfig, TextureMode, ModelQuality } from './matcap-&-pbr-genai/types';
-import { generateTextureImage } from './matcap-&-pbr-genai/services/geminiService';
-import { generateNormalMap, generateRoughnessMap } from './matcap-&-pbr-genai/services/imageProcessing';
+import { generateTextureImage } from './matcap-&-pbr-genai/services/gemini-service';
+import { generateNormalMap, generateRoughnessMap } from './matcap-&-pbr-genai/services/image-processing';
 import { Aperture, ArrowRight, Lock, Sparkles } from 'lucide-react';
 import { SaveAssetModal } from '../svg-canvas/components/SaveAssetModal';
 import { uploadAsset, dataUrlToBlob } from '@/lib/services/supabase/storage';

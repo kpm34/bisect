@@ -505,21 +505,16 @@ export function MaterialSelector() {
 
   return (
     <div style={styles.container}>
-      {/* Header */}
-      <div style={styles.header}>
-        <h3 style={styles.title}>Materials</h3>
-        {selectedObject ? (
-          <p style={styles.subtitle}>
-            Selected: {selectedObject.name || 'Unnamed Object'}
-          </p>
-        ) : (
-          <p style={styles.subtitleInactive}>
-            Select an object to apply materials
-          </p>
-        )}
-      </div>
-
-      <div style={styles.divider} />
+      {/* Selection Status */}
+      {selectedObject ? (
+        <p style={styles.subtitle}>
+          Selected: {selectedObject.name || 'Unnamed Object'}
+        </p>
+      ) : (
+        <p style={styles.subtitleInactive}>
+          Select an object to apply materials
+        </p>
+      )}
 
       {/* Material Swatches - Horizontal Row */}
       <div style={styles.section}>
@@ -681,35 +676,18 @@ const styles: Record<string, React.CSSProperties> = {
     overflow: 'visible', // Allow material popups to overflow container
   },
 
-  header: {
-    padding: '16px 24px',
-    borderBottom: '1px solid #3d3d3d',
-  },
-
-  title: {
-    margin: 0,
-    fontSize: '14px',
-    fontWeight: 600,
-    color: '#f5f5f5',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-  },
-
   subtitle: {
-    margin: '4px 0 0',
+    margin: '0 0 8px 0',
+    padding: '0 24px',
     fontSize: '12px',
     color: '#b0b0b0',
   },
 
   subtitleInactive: {
-    margin: '4px 0 0',
+    margin: '0 0 8px 0',
+    padding: '0 24px',
     fontSize: '12px',
     color: '#808080',
-  },
-
-  divider: {
-    height: '1px',
-    backgroundColor: '#3d3d3d',
   },
 
   section: {

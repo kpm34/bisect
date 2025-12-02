@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useSelection } from '../r3f/SceneSelectionContext';
-import { parseCommand } from '../utils/commandParser';
+import { parseCommand } from '../utils/command-parser';
 import { useAIMaterialEditor } from '../hooks/useAIMaterialEditor';
 
 interface SceneCommandInputProps {

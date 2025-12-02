@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Sun, Moon, Cloud, Building2, Trees, Warehouse, Sunset, Sparkles } from 'lucide-react';
+import { Sun, Moon, Cloud, Building2, Trees, Warehouse, Sunset, Focus } from 'lucide-react';
 import { EnvironmentPreset } from '@/lib/core/materials/types';
 
 interface EnvironmentControlsProps {
@@ -21,7 +21,7 @@ const ENVIRONMENT_PRESETS: {
   icon: React.ReactNode;
   description: string;
 }[] = [
-  { id: 'studio', name: 'Studio', icon: <Sparkles className="w-4 h-4" />, description: 'Clean studio lighting' },
+  { id: 'studio', name: 'Studio', icon: <Focus className="w-4 h-4" />, description: 'Clean studio lighting' },
   { id: 'city', name: 'City', icon: <Building2 className="w-4 h-4" />, description: 'Urban environment' },
   { id: 'sunset', name: 'Sunset', icon: <Sunset className="w-4 h-4" />, description: 'Warm golden hour' },
   { id: 'dawn', name: 'Dawn', icon: <Sun className="w-4 h-4" />, description: 'Soft morning light' },

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useSelection } from '../r3f/SceneSelectionContext';
-import { Sparkles, Zap, Aperture, Eye } from 'lucide-react';
+import { Sun, Zap, Aperture, Eye } from 'lucide-react';
 
 export default function EffectsControls() {
     const { effects, setEffects } = useSelection();
@@ -15,7 +15,7 @@ export default function EffectsControls() {
         <div className="space-y-6">
             <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                    <Sparkles size={16} className="text-amber-500" />
+                    <Sun size={16} className="text-amber-500" />
                     Bloom (Glow)
                 </h4>
                 <div className="flex items-center justify-between">

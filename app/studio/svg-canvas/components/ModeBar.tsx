@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import {
   MousePointer2,
   Pencil,
@@ -63,9 +65,19 @@ export function ModeBar({ activeMode, onModeClick, className }: ModeBarProps) {
       )}
     >
       {/* Logo/Home */}
-      <div className="w-10 h-10 mb-4 flex items-center justify-center">
-        <div className="w-6 h-6 bg-gradient-to-br from-violet-500 to-fuchsia-500 rounded-md" />
-      </div>
+      <Link
+        href="/dashboard"
+        className="w-10 h-10 mb-4 flex items-center justify-center hover:opacity-80 transition-opacity"
+        title="Go to Dashboard"
+      >
+        <Image
+          src="/assets/bisect_logo.png"
+          alt="Bisect"
+          width={24}
+          height={24}
+          className="w-6 h-6"
+        />
+      </Link>
 
       {/* Mode Buttons */}
       <div className="flex flex-col gap-1">

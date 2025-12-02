@@ -8,7 +8,7 @@ interface SaveAssetModalProps {
   onClose: () => void;
   onSave: (name: string, tags: string[]) => Promise<void>;
   defaultName?: string;
-  assetType: 'svg' | 'texture' | 'material';
+  assetType: 'svg' | 'texture' | 'material' | 'video';
 }
 
 export function SaveAssetModal({
@@ -91,6 +91,7 @@ export function SaveAssetModal({
     svg: 'Vector',
     texture: 'Texture',
     material: 'Material',
+    video: 'Video',
   };
 
   return (

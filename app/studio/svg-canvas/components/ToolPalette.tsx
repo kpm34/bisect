@@ -24,6 +24,7 @@ import {
   Undo,
   Redo,
   FolderPlus,
+  Eraser,
   LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -41,6 +42,7 @@ export type ToolType =
   | 'ellipse'
   | 'text'
   | 'image'
+  | 'eraser'
   // Editing & Transform
   | 'move'
   | 'rotate'
@@ -87,6 +89,7 @@ export const TOOL_GROUPS: ToolGroup[] = [
     tools: [
       { id: 'pen', label: 'Pen', icon: PenTool, shortcut: 'P', description: 'Draw paths with bezier curves' },
       { id: 'pencil', label: 'Pencil', icon: Pencil, shortcut: 'B', description: 'Freehand drawing' },
+      { id: 'eraser', label: 'Eraser', icon: Eraser, shortcut: 'X', description: 'Erase parts of paths' },
       { id: 'rectangle', label: 'Rectangle', icon: Square, shortcut: 'R', description: 'Draw rectangles and squares' },
       { id: 'ellipse', label: 'Ellipse', icon: Circle, shortcut: 'O', description: 'Draw circles and ellipses' },
       { id: 'text', label: 'Text', icon: Type, shortcut: 'T', description: 'Add text elements' },

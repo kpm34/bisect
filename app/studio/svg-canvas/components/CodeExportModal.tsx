@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Copy, Check, Code, FileCode, Braces, Sparkles, Play, Scissors, Package } from 'lucide-react';
+import { X, Copy, Check, Code, FileCode, Braces, Zap, Play, Scissors, Package, Palette } from 'lucide-react';
 
 interface CodeExportModalProps {
   isOpen: boolean;
@@ -448,7 +448,7 @@ img.masked {
 </head>
 <body>
   <div class="container">
-    <h1>🎨 Design System Preview</h1>
+    <h1>Design System Preview</h1>
 
     <h2>Color Palette</h2>
     <div class="color-grid">
@@ -563,7 +563,7 @@ ${previewHTML}
           </button>
           <button onClick={() => setActiveTab('animate')} className={tabClass('animate')}>
             <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
-              <Sparkles size={14} /> Animate
+              <Zap size={14} /> Animate
             </div>
             {activeTab === 'animate' && activeBar}
           </button>

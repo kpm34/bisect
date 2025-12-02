@@ -6,7 +6,7 @@ import type {
     ExecutionPlan,
     CostCalculation,
 } from './unified-spline-agent';
-import { BrowserRAGSystem, type BrowserRAGConfig } from '../rag/browser-rag-system';
+import { BrowserRAGSystem, type BrowserRAGConfig } from '../rag/BrowserRagSystem';
 import { MultiModelRouter } from './multi-model-router';
 import { MaterialAgent } from './material-agent';
 import { GeminiSpatialAgent } from './gemini-spatial-agent';

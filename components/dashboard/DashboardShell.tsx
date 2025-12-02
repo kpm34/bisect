@@ -7,7 +7,7 @@ import { Sidebar } from './Sidebar';
 import { UserMenu } from '../shared/UserMenu';
 import { NewProjectModal } from './NewProjectModal';
 import { createProject } from '@/lib/services/supabase/projects';
-import { createClient } from '@/utils/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 
 interface DashboardShellProps {
   children: React.ReactNode;

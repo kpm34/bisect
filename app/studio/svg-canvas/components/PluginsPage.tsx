@@ -9,7 +9,7 @@ import {
   FileCode,
   Puzzle,
   Layers,
-  Sparkles,
+  Clock,
   CheckCircle2
 } from 'lucide-react';
 
@@ -173,7 +173,7 @@ const PluginsPage: React.FC<PluginsPageProps> = ({ onNavigateHome }) => {
       {/* Coming Soon */}
       <section className="py-16 px-6 max-w-7xl mx-auto">
         <h2 className="text-2xl font-sans font-bold text-charcoal mb-8 flex items-center gap-2">
-          <Sparkles className="text-cta-orange" size={24} />
+          <Clock className="text-cta-orange" size={24} />
           Coming Soon
         </h2>
         <div className="grid md:grid-cols-3 gap-6">

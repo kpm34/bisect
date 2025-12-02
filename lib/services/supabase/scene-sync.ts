@@ -7,12 +7,14 @@
  * - Requires authentication for cloud sync
  */
 
-import { supabase } from './client';
+import { createClient } from '@/lib/supabase/client';
+
+const supabase = createClient();
 import type { Json } from './types';
 import {
   sceneStatePersistence,
   PersistedSceneState,
-} from '@/app/studio/3d-canvas/utils/sceneStatePersistence';
+} from '@/app/studio/3d-canvas/utils/scene-state-persistence';
 
 class SceneSyncService {
   private debounceTimer: NodeJS.Timeout | null = null;

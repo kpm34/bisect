@@ -6,6 +6,7 @@ import { ToolOptionsPanel } from './ToolOptionsPanel';
 import { ToolType, TOOL_GROUPS } from './ToolPalette';
 import { ToolProperties } from './ToolProperties';
 import { Tool } from '../lib/types/types';
+import { TopNav } from './TopNav';
 
 interface VectorStudioLayoutProps {
   children: React.ReactNode;
@@ -40,6 +41,7 @@ const toolTypeToTool: Record<ToolType, Tool | null> = {
   zoom: null, // Zoom handled differently
   pen: Tool.PEN,
   pencil: Tool.PENCIL,
+  eraser: Tool.ERASER,
   rectangle: Tool.SHAPE,
   ellipse: Tool.SHAPE,
   text: Tool.TEXT,
@@ -65,6 +67,7 @@ const toolToToolType: Partial<Record<Tool, ToolType>> = {
   [Tool.HAND]: 'pan',
   [Tool.PEN]: 'pen',
   [Tool.PENCIL]: 'pencil',
+  [Tool.ERASER]: 'eraser',
   [Tool.SHAPE]: 'rectangle',
   [Tool.TEXT]: 'text',
 };
@@ -76,6 +79,7 @@ const toolTypeToMode: Record<ToolType, ModeType> = {
   zoom: 'select',
   pen: 'draw',
   pencil: 'draw',
+  eraser: 'draw',
   rectangle: 'draw',
   ellipse: 'draw',
   text: 'draw',
@@ -214,6 +218,9 @@ export function VectorStudioLayout({
           case 'B':
             handleToolSelect('pencil');
             break;
+          case 'X':
+            handleToolSelect('eraser');
+            break;
           case 'R':
             handleToolSelect('rectangle');
             break;
@@ -283,8 +290,14 @@ export function VectorStudioLayout({
       />
 
       {/* Main Canvas Area */}
-      <div className="flex-1 relative">
-        {children}
+      <div className="flex-1 relative flex flex-col">
+        {/* Top Navigation */}
+        <TopNav />
+
+        {/* Canvas Content - offset by nav height */}
+        <div className="flex-1 relative mt-10">
+          {children}
+        </div>
       </div>
 
       {/* Tool Options Panel (Right - Slides in/out) */}

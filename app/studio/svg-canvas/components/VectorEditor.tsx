@@ -24,7 +24,7 @@ import {
   scalePoint
 } from '../utils/geometry';
 import { processSvgWithAi, bitmapToSvg, VectorizeConfig } from '../lib/services/gemini';
-import { traceBitmap, resizeImageForTracing } from '../lib/services/tracer';
+import { traceBitmap, resizeImageForTracing, removeBackground } from '../lib/services/tracer';
 import { Upload, Copy, Trash2, RotateCw, FlipHorizontal } from 'lucide-react';
 import { useDragDrop, DragDropBridge, DropTarget, StudioType } from '../../../../lib/drag-drop/bridge';
 import { Asset } from '../../../../lib/store/unified-store';
@@ -943,6 +943,10 @@ export default function VectorEditor() {
         // Resize large images to prevent performance issues
         dataUri = await resizeImageForTracing(dataUri, 1024);
 
+        // Remove solid background if detected
+        setLoadingText('Removing background...');
+        dataUri = await removeBackground(dataUri);
+
         // Map config to tracer options
         // complexity: 'low' = fewer colors, less detail
         // complexity: 'medium' = balanced
@@ -989,6 +993,10 @@ export default function VectorEditor() {
         try {
           // Resize large images to prevent performance issues
           dataUri = await resizeImageForTracing(dataUri, 1024);
+
+          // Remove solid background if detected
+          setLoadingText('Removing background...');
+          dataUri = await removeBackground(dataUri);
 
           setLoadingText('Tracing Geometry...');
           const svgContent = await traceBitmap(dataUri, {
@@ -1113,6 +1121,10 @@ export default function VectorEditor() {
             console.log('[VectorEditor] Resizing image if needed...');
             dataUri = await resizeImageForTracing(dataUri, 1024);
             console.log('[VectorEditor] Image ready, dataUri length:', dataUri?.length);
+
+            // Remove solid background if detected
+            setLoadingText('Removing background...');
+            dataUri = await removeBackground(dataUri);
 
             // Use local algorithmic tracer instead of AI
             // This provides deterministic geometry detection and lines
