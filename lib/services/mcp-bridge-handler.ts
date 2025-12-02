@@ -6,6 +6,11 @@
  *
  * This bridges the gap between MCP tools and the AI stack.
  *
+ * Updated to use Unified Bridge (port 9877) for:
+ * - Blender Addon sync
+ * - AI Agent orchestration (Gemini 3, GPT-4o, Claude 4.5)
+ * - Real-time scene state synchronization
+ *
  * NOTE: This module should only be dynamically imported in browser context.
  */
 
@@ -15,7 +20,12 @@ import type { WebGLRenderer, Scene, Object3D } from 'three';
 let MultiModelRouter: typeof import('@/lib/core/ai/multi-model-router').MultiModelRouter;
 let SceneGraphBuilder: typeof import('@/lib/core/ai/scene-graph-builder').SceneGraphBuilder;
 let MaterialAgent: typeof import('@/lib/core/ai/material-agent').MaterialAgent;
+let GeminiSpatialAgent: typeof import('@/lib/core/ai/gemini-spatial-agent').GeminiSpatialAgent;
+let ClaudeBlenderAgent: typeof import('@/lib/core/ai/claude-blender-agent').ClaudeBlenderAgent;
 type SemanticSceneGraph = import('@/lib/core/ai/scene-graph-builder').SemanticSceneGraph;
+
+// Unified bridge port (shared with Blender Addon and AI agents)
+const UNIFIED_BRIDGE_PORT = 9877;
 
 // Protocol types (mirror mcp-server/protocol.js)
 const MessageType = {
@@ -152,20 +162,33 @@ class MCPBridgeHandler {
       return;
     }
 
-    const bridgeUrl = 'ws://localhost:8080';
-    console.log(`[MCP Bridge] Connecting to ${bridgeUrl}...`);
+    const bridgeUrl = `ws://localhost:${UNIFIED_BRIDGE_PORT}`;
+    console.log(`[MCP Bridge] Connecting to unified bridge at ${bridgeUrl}...`);
 
     try {
       this.socket = new WebSocket(bridgeUrl);
 
       this.socket.onopen = () => {
-        console.log('[MCP Bridge] Connected to bridge');
+        console.log('[MCP Bridge] Connected to unified bridge');
         this.isConnected = true;
         this.reconnectAttempts = 0;
 
-        // Register as editor with the bridge
-        this.socket?.send(JSON.stringify({ type: 'REGISTER_EDITOR' }));
-        console.log('[MCP Bridge] Registered as editor');
+        // Register with unified bridge as 'bisect' client type
+        // Uses unified protocol JOIN message
+        const joinMessage = {
+          type: 'JOIN',
+          payload: {
+            clientType: 'bisect',
+            clientId: `bisect-web-${Date.now()}`,
+            capabilities: ['scene', 'materials', 'ai'],
+          },
+          meta: {
+            sessionId: 'default',
+            timestamp: Date.now(),
+          },
+        };
+        this.socket?.send(JSON.stringify(joinMessage));
+        console.log('[MCP Bridge] Joined unified bridge as bisect client');
 
         this.emit('connected', {});
       };

@@ -1,24 +1,41 @@
 import OpenAI from 'openai';
 import type { SpecialistAgent } from './specialist-agent';
 import type { AgentContext, ExecutionResult } from './unified-spline-agent';
+import { GeminiOrchestrator, type RoutingDecision } from './gemini-orchestrator';
 
 /**
  * Routes commands to the appropriate specialist agent
+ *
+ * Updated to use Gemini 3 Orchestrator for intelligent routing.
+ * Gemini 3 has the best spatial understanding (1501 Elo) making it
+ * ideal for understanding scene context and routing decisions.
+ *
+ * Agent Mapping:
+ * - 'material' / 'gpt4o' → GPT-4o Material Agent
+ * - 'spatial' / 'gemini' → Gemini Spatial Agent
+ * - 'planner' / 'blender' / 'claude' → Claude Blender Agent
  */
 export class MultiModelRouter {
     private agents: Map<string, SpecialistAgent>;
     private defaultAgentId: string;
     private openai: OpenAI;
+    private orchestrator: GeminiOrchestrator;
+    private useGeminiOrchestrator: boolean = true;
 
-    constructor(apiKey?: string) {
+    constructor(apiKey?: string, geminiApiKey?: string) {
         this.agents = new Map();
         this.defaultAgentId = 'material'; // Default to GPT-4o Material Agent
 
-        // Initialize OpenAI for routing decisions
+        // Initialize OpenAI for fallback routing
         this.openai = new OpenAI({
             apiKey: apiKey || process.env.NEXT_PUBLIC_OPENAI_API_KEY,
             dangerouslyAllowBrowser: true,
         });
+
+        // Initialize Gemini 3 Orchestrator for primary routing
+        this.orchestrator = new GeminiOrchestrator(
+            geminiApiKey || process.env.NEXT_PUBLIC_GOOGLE_GEMINI_API_KEY
+        );
     }
 
     /**
@@ -29,12 +46,43 @@ export class MultiModelRouter {
         if (isDefault) {
             this.defaultAgentId = agent.id;
         }
+
+        // Also register with orchestrator using normalized ID
+        const orchestratorId = this._normalizeAgentId(agent.id);
+        if (orchestratorId) {
+            this.orchestrator.registerAgent(orchestratorId, agent);
+        }
+    }
+
+    /**
+     * Normalize agent ID for orchestrator
+     */
+    private _normalizeAgentId(id: string): 'gpt4o' | 'gemini' | 'claude' | null {
+        const lower = id.toLowerCase();
+        if (lower === 'material' || lower === 'gpt4o') return 'gpt4o';
+        if (lower === 'spatial' || lower === 'gemini') return 'gemini';
+        if (lower === 'planner' || lower === 'blender' || lower === 'claude') return 'claude';
+        return null;
     }
 
     /**
      * Route and execute a command
+     * Now uses Gemini 3 Orchestrator for intelligent routing with vision support
      */
-    async routeAndExecute(command: string, context: AgentContext): Promise<ExecutionResult> {
+    async routeAndExecute(
+        command: string,
+        context: AgentContext,
+        options?: {
+            screenshot?: string;
+            forceDebate?: boolean;
+        }
+    ): Promise<ExecutionResult> {
+        // Use Gemini 3 orchestrator if enabled
+        if (this.useGeminiOrchestrator) {
+            return this._routeWithOrchestrator(command, context, options);
+        }
+
+        // Fallback to legacy routing
         const agentId = await this._determineAgent(command);
         const agent = this.agents.get(agentId);
 
@@ -44,6 +92,63 @@ export class MultiModelRouter {
 
         console.log(`🔀 Routing command "${command}" to agent: ${agentId}`);
         return agent.execute(command, context);
+    }
+
+    /**
+     * Route using Gemini 3 Orchestrator
+     * Leverages Gemini's superior spatial understanding for smart routing
+     */
+    private async _routeWithOrchestrator(
+        command: string,
+        context: AgentContext,
+        options?: { screenshot?: string; forceDebate?: boolean }
+    ): Promise<ExecutionResult> {
+        try {
+            // Use orchestrator's full pipeline (routing + optional debate + execution)
+            return await this.orchestrator.orchestrateAndExecute(
+                command,
+                context,
+                options?.screenshot,
+                options?.forceDebate
+            );
+        } catch (error) {
+            console.warn('⚠️ Gemini orchestrator failed, falling back to legacy:', error);
+            this.useGeminiOrchestrator = false; // Disable for this session
+
+            // Fallback to legacy routing
+            const agentId = await this._determineAgent(command);
+            const agent = this.agents.get(agentId);
+            if (agent) {
+                return agent.execute(command, context);
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * Get routing decision without executing
+     * Useful for debugging or UI feedback
+     */
+    async getRoutingDecision(
+        command: string,
+        context: AgentContext,
+        screenshot?: string
+    ): Promise<RoutingDecision> {
+        return this.orchestrator.route(command, context, screenshot);
+    }
+
+    /**
+     * Check if command should trigger debate mode
+     */
+    async shouldDebate(command: string): Promise<boolean> {
+        return this.orchestrator.shouldDebate(command);
+    }
+
+    /**
+     * Enable/disable Gemini orchestrator
+     */
+    setUseOrchestrator(enabled: boolean): void {
+        this.useGeminiOrchestrator = enabled;
     }
 
     /**

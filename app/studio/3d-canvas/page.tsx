@@ -1,24 +1,13 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { Shell } from '@/components/shared/Shell';
 import { SelectionProvider, useSelection } from './r3f/SceneSelectionContext';
 import { scenePersistence } from './utils/scenePersistence';
 import { SceneEnvironment } from '@/lib/core/materials/types';
-
-// Dynamically import MCP bridge handler to avoid SSR issues
-// It uses WebSocket which is not available during server-side rendering
-let mcpBridgeHandler: typeof import('@/lib/services/mcp-bridge-handler').mcpBridgeHandler | null = null;
-let initMCPBridge: typeof import('@/lib/services/mcp-bridge-handler').initMCPBridge | null = null;
-
-if (typeof window !== 'undefined') {
-  import('@/lib/services/mcp-bridge-handler').then((mod) => {
-    mcpBridgeHandler = mod.mcpBridgeHandler;
-    initMCPBridge = mod.initMCPBridge;
-  });
-}
+import { useUnifiedBridge, type SceneState } from '@/hooks/useUnifiedBridge';
 
 // Disable SSR for SceneCanvas (requires WebGL/browser APIs)
 // Using React Three Fiber for declarative 3D scene management
@@ -88,6 +77,7 @@ export default function EditorPage() {
 function MCPBridgeConnector() {
   const { r3fScene, r3fRenderer, selectedObject, addedObjects, addObject } = useSelection();
   const [bridgeReady, setBridgeReady] = useState(false);
+  const mcpBridgeHandlerRef = useRef<any>(null);
 
   // Initialize MCP bridge on mount (client-side only) - delayed to not block page load
   useEffect(() => {
@@ -97,8 +87,8 @@ function MCPBridgeConnector() {
         try {
           // Dynamic import on client side
           const mod = await import('@/lib/services/mcp-bridge-handler');
-          mcpBridgeHandler = mod.mcpBridgeHandler;
-          initMCPBridge = mod.initMCPBridge;
+          mcpBridgeHandlerRef.current = mod.mcpBridgeHandler;
+          const initMCPBridge = mod.initMCPBridge;
 
           console.log('🔌 Initializing MCP Bridge...');
           await initMCPBridge({
@@ -116,18 +106,18 @@ function MCPBridgeConnector() {
 
     return () => {
       clearTimeout(timeoutId);
-      if (mcpBridgeHandler) {
+      if (mcpBridgeHandlerRef.current) {
         console.log('🔌 Disconnecting MCP Bridge...');
-        mcpBridgeHandler.disconnect();
+        mcpBridgeHandlerRef.current.disconnect();
       }
     };
   }, []);
 
   // Update bridge with scene context when it changes
   useEffect(() => {
-    if (!bridgeReady || !mcpBridgeHandler) return;
+    if (!bridgeReady || !mcpBridgeHandlerRef.current) return;
 
-    mcpBridgeHandler.setSceneContext({
+    mcpBridgeHandlerRef.current.setSceneContext({
       scene: r3fScene as any,
       renderer: r3fRenderer as any,
       selectedObject: selectedObject as any,
@@ -143,14 +133,14 @@ function MCPBridgeConnector() {
 
   // Set up legacy command callbacks
   useEffect(() => {
-    if (!bridgeReady || !mcpBridgeHandler) return;
+    if (!bridgeReady || !mcpBridgeHandlerRef.current) return;
 
-    mcpBridgeHandler.setLegacyCallbacks({
-      onAddObject: (type) => {
+    mcpBridgeHandlerRef.current.setLegacyCallbacks({
+      onAddObject: (type: string) => {
         console.log('🔌 MCP: Adding object:', type);
         addObject(type as any);
       },
-      onUpdateObject: (updates) => {
+      onUpdateObject: (updates: any) => {
         console.log('🔌 MCP: Updating object:', updates);
         // Update selected object if we have one
         if (selectedObject) {

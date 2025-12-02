@@ -726,8 +726,8 @@ export const CATEGORIES: Record<MaterialCategory, CategoryConfig> = {
   glass: {
     id: 'glass',
     label: 'Glass',
-    featured: ['GLS_Clear', 'GLS_Frosted', 'GLS_Tinted_Smoke', 'GLS_Tinted_Blue', 'GLS_MatCap_Pearl'],
-    all: ['GLS_Clear', 'GLS_Frosted', 'GLS_Tinted_Smoke', 'GLS_Tinted_Blue', 'GLS_Tinted_Amber', 'GLS_MatCap_Pearl', 'GLS_Specialty_Holographic', 'GLS_Specialty_Diamond']
+    featured: [], // Hidden from UI - not production ready
+    all: [] // Glass materials preserved in code but hidden until production ready
   },
   stone: {
     id: 'stone',

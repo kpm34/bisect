@@ -16,7 +16,7 @@ import {
   getCategoryMaterials,
 } from '@/lib/core/materials';
 
-type MaterialCategory = 'metal' | 'glass' | 'wood' | 'stone' | 'fabric';
+type MaterialCategory = 'metal' | 'wood' | 'stone' | 'fabric'; // glass hidden - not production ready
 
 interface MaterialDrawerProps {
   isOpen: boolean;

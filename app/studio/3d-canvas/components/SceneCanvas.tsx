@@ -1,7 +1,8 @@
 'use client';
 
 import { Canvas, useThree, useLoader } from '@react-three/fiber';
-import { OrbitControls, Environment, Grid, PerspectiveCamera, useGLTF, TransformControls } from '@react-three/drei';
+import { OrbitControls, Environment, Grid, PerspectiveCamera, useGLTF } from '@react-three/drei';
+import { CombinedTransformGizmo } from './CombinedTransformGizmo';
 import { EffectComposer, Outline, Bloom, Noise, Vignette, Glitch } from '@react-three/postprocessing';
 import { Physics, RigidBody } from '@react-three/rapier';
 import { Suspense, useState, useEffect, useMemo, useRef } from 'react';
@@ -165,8 +166,8 @@ export default function R3FCanvas({
         {/* Camera Controls - MMB to orbit, MMB+Shift to pan, Scroll to zoom */}
         <SceneOrbitControls />
 
-        {/* Transform Gizmo for selected objects */}
-        <TransformGizmo />
+        {/* Combined Transform Gizmo - Shows translate arrows + rotate rings */}
+        <CombinedTransformGizmo />
 
         {/* Selection Outline */}
         <SelectionOutline />
@@ -399,58 +400,8 @@ function AddedObjectsRenderer() {
   );
 }
 
-/**
- * TransformGizmo - Blender-style transform controls for selected objects
- * Shows translate/rotate/scale gizmo when an object is selected
- */
-function TransformGizmo() {
-  const { selectedObject } = useSelection();
-  const [mode, setMode] = useState<'translate' | 'rotate' | 'scale'>('translate');
-  const transformRef = useRef<any>(null);
-
-  // Keyboard shortcuts for transform modes (G=grab/translate, R=rotate, S=scale)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Skip if typing in input
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
-        return;
-      }
-
-      switch (e.key.toLowerCase()) {
-        case 'g': // Grab/Move
-          setMode('translate');
-          break;
-        case 'r': // Rotate
-          setMode('rotate');
-          break;
-        case 's': // Scale
-          setMode('scale');
-          break;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  // Don't render if no object selected
-  if (!selectedObject) {
-    return null;
-  }
-
-  return (
-    <TransformControls
-      ref={transformRef}
-      object={selectedObject}
-      mode={mode}
-      size={0.75}
-      showX={true}
-      showY={true}
-      showZ={true}
-    />
-  );
-}
+// TransformGizmo moved to CombinedTransformGizmo.tsx
+// Shows both translate arrows + rotation rings simultaneously
 
 /**
  * SceneOrbitControls - MMB to orbit, MMB+Shift to pan, scroll to zoom

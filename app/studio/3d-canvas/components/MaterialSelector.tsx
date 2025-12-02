@@ -208,8 +208,8 @@ export function MaterialSelector() {
   const materialsByCategory = useMemo(() => {
     const result: Record<MaterialCategoryType, MaterialConfig[]> = {} as any;
 
-    // Get active categories with materials
-    const activeCategories: MaterialCategoryType[] = ['metal', 'glass', 'fabric', 'wood', 'stone'];
+    // Get active categories with materials (glass hidden - not production ready)
+    const activeCategories: MaterialCategoryType[] = ['metal', 'fabric', 'wood', 'stone'];
 
     activeCategories.forEach(category => {
       const featured = getFeaturedMaterials(category);
@@ -677,20 +677,20 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     height: '100%',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#1a1a1a',
     overflow: 'visible', // Allow material popups to overflow container
   },
 
   header: {
     padding: '16px 24px',
-    borderBottom: '1px solid #e5e7eb',
+    borderBottom: '1px solid #2a2a2a',
   },
 
   title: {
     margin: 0,
     fontSize: '14px',
     fontWeight: 600,
-    color: '#111827',
+    color: '#f5f5f5',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
   },
@@ -698,18 +698,18 @@ const styles: Record<string, React.CSSProperties> = {
   subtitle: {
     margin: '4px 0 0',
     fontSize: '12px',
-    color: '#6b7280',
+    color: '#a1a1a1',
   },
 
   subtitleInactive: {
     margin: '4px 0 0',
     fontSize: '12px',
-    color: '#9ca3af',
+    color: '#6b6b6b',
   },
 
   divider: {
     height: '1px',
-    backgroundColor: '#e5e7eb',
+    backgroundColor: '#2a2a2a',
   },
 
   section: {
@@ -719,13 +719,14 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '16px',
     padding: '24px',
     overflow: 'visible', // Allow material popups to overflow
+    backgroundColor: '#141414',
   },
 
   sectionTitle: {
     margin: 0,
     fontSize: '11px',
     fontWeight: 600,
-    color: '#9ca3af',
+    color: '#6b6b6b',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
   },
@@ -829,7 +830,7 @@ const styles: Record<string, React.CSSProperties> = {
   swatchLabel: {
     fontSize: '11px',
     fontWeight: 500,
-    color: '#6b7280',
+    color: '#a1a1a1',
     textAlign: 'center',
     marginTop: '4px',
   } as React.CSSProperties,
@@ -855,8 +856,8 @@ const styles: Record<string, React.CSSProperties> = {
 
   footer: {
     padding: '12px 24px',
-    borderTop: '1px solid #e5e7eb',
-    backgroundColor: '#f9fafb',
+    borderTop: '1px solid #2a2a2a',
+    backgroundColor: '#1a1a1a',
   },
 };
 
