@@ -97,7 +97,6 @@ function ShellInner({
 
             {/* Extensions */}
             <div className="flex items-center gap-1">
-              <span className="text-[10px] text-neutral-600 uppercase tracking-wider mr-1">Ext</span>
               {extensionItems.map((item) => {
                 const isActive = pathname.startsWith(item.href);
                 return (
@@ -240,7 +239,6 @@ function ShellFallback({
 
             {/* Extensions */}
             <div className="flex items-center gap-1">
-              <span className="text-[10px] text-neutral-600 uppercase tracking-wider mr-1">Ext</span>
               {extensionItems.map((item) => {
                 const isActive = pathname.startsWith(item.href);
                 return (
