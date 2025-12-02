@@ -115,6 +115,7 @@ type SelectionContextValue = {
   addObject: (type: SceneObjectType, url?: string, formula?: any) => void;
   removeObject: (id: string) => void;
   updateObject: (id: string, updates: Partial<SceneObject>) => void;
+  setAddedObjects: (objects: SceneObject[]) => void; // For state restoration
 
   // Delete selected object (handles both added objects and scene objects)
   deleteSelectedObject: () => void;
@@ -670,6 +671,7 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
       addObject,
       removeObject,
       updateObject,
+      setAddedObjects,
       deleteSelectedObject,
     }),
     [
@@ -708,6 +710,7 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
       addObject,
       removeObject,
       updateObject,
+      setAddedObjects,
       deleteSelectedObject,
     ]
   );
@@ -763,6 +766,7 @@ export function useSelection() {
     addObject: noop,
     removeObject: noop,
     updateObject: noop,
+    setAddedObjects: noop,
     deleteSelectedObject: noop,
   };
 }

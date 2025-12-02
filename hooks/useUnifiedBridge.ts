@@ -406,8 +406,13 @@ export function useUnifiedBridge(options: UnifiedBridgeOptions) {
   // -------------------------------------------------------------------------
 
   const connect = useCallback(() => {
+    // Skip if already connected or connecting
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       console.log('[UnifiedBridge] Already connected');
+      return;
+    }
+    if (wsRef.current?.readyState === WebSocket.CONNECTING) {
+      console.log('[UnifiedBridge] Already connecting...');
       return;
     }
 
@@ -484,15 +489,31 @@ export function useUnifiedBridge(options: UnifiedBridgeOptions) {
   // Lifecycle
   // -------------------------------------------------------------------------
 
+  // Use a ref to track if we've already initiated connection
+  const hasConnectedRef = useRef(false);
+
   useEffect(() => {
-    if (autoConnect) {
+    // Only connect once per mount, not on every dependency change
+    if (autoConnect && !hasConnectedRef.current) {
+      hasConnectedRef.current = true;
       connect();
     }
 
+    // Handle page unload to properly close connection
+    const handleBeforeUnload = () => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.close(1000, 'Page unload');
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      hasConnectedRef.current = false;
       disconnect();
     };
-  }, [autoConnect, connect, disconnect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoConnect]); // Only re-run if autoConnect changes
 
   // -------------------------------------------------------------------------
   // Return API

@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect, Suspense, useRef } from 'react';
+import { useState, useEffect, Suspense, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { Shell } from '@/components/shared/Shell';
 import { SelectionProvider, useSelection } from './r3f/SceneSelectionContext';
 import { scenePersistence } from './utils/scenePersistence';
+import { sceneStatePersistence } from './utils/sceneStatePersistence';
 import { SceneEnvironment } from '@/lib/core/materials/types';
 import { useUnifiedBridge, type SceneState } from '@/hooks/useUnifiedBridge';
+import { SceneStateManager } from './components/SceneStateManager';
 
 // Disable SSR for SceneCanvas (requires WebGL/browser APIs)
 // Using React Three Fiber for declarative 3D scene management
@@ -212,49 +214,92 @@ function EditorContent() {
   const [isRestoringScene, setIsRestoringScene] = useState(!!projectId); // Only restore if project ID present
 
   // Environment state - shared between SceneCanvas and SceneInspector
-  const [environment, setEnvironment] = useState<SceneEnvironment>({
-    preset: 'city',
-    background: true,
-    blur: 0.8,
-    intensity: 1.0,
+  // Initialize with saved state if available, otherwise use defaults
+  const [environment, setEnvironment] = useState<SceneEnvironment>(() => {
+    if (typeof window !== 'undefined') {
+      const savedState = sceneStatePersistence.loadState();
+      if (savedState?.environment) {
+        return savedState.environment;
+      }
+    }
+    return {
+      preset: 'city',
+      background: true,
+      blur: 0.8,
+      intensity: 1.0,
+    };
   });
+
+  // Callback for restoring environment from SceneStateManager
+  const handleEnvironmentRestore = useCallback((env: SceneEnvironment) => {
+    setEnvironment(env);
+  }, []);
 
 
   // Load project if ID is provided in URL (only on initial mount or when projectId actually changes)
   useEffect(() => {
     const loadProject = async () => {
+      // Check for saved state to auto-restore last session
+      let targetProjectId = projectId;
+
       if (!projectId) {
-        // No project ID = clean canvas
-        console.log('ℹ️ No project ID - starting with clean canvas');
+        // No project ID in URL - check if we have a saved session to restore
+        const lastProjectId = sceneStatePersistence.getLastProjectId();
+        const savedState = sceneStatePersistence.loadState();
+
+        if (lastProjectId && savedState?.projectId === lastProjectId) {
+          console.log(`🔄 Auto-restoring last session: ${lastProjectId}`);
+          targetProjectId = lastProjectId;
+          setIsRestoringScene(true);
+        } else {
+          console.log('ℹ️ No project ID - starting with clean canvas');
+          setIsRestoringScene(false);
+          return;
+        }
+      }
+
+      if (!targetProjectId) {
         setIsRestoringScene(false);
         return;
       }
 
       // Skip loading if we already have this project loaded
-      if (currentProjectId === projectId && sceneFile) {
-        console.log(`✅ Project ${projectId} already loaded, skipping redundant load`);
+      if (currentProjectId === targetProjectId && sceneFile) {
+        console.log(`✅ Project ${targetProjectId} already loaded, skipping redundant load`);
         setIsRestoringScene(false);
         return;
       }
 
       try {
         setIsRestoringScene(true);
-        console.log(`📂 Loading project: ${projectId}`);
+        console.log(`📂 Loading project: ${targetProjectId}`);
 
-        const project = await scenePersistence.loadProject(projectId);
+        const project = await scenePersistence.loadProject(targetProjectId);
 
         if (project) {
           const file = scenePersistence.projectToFile(project);
           console.log('✅ Project loaded:', project.name, `(${(project.fileSize / 1024 / 1024).toFixed(2)} MB)`);
           setSceneFile(file);
-          setCurrentProjectId(projectId);
+          setCurrentProjectId(targetProjectId);
+
+          // Update URL if we auto-restored
+          if (!projectId && targetProjectId) {
+            window.history.replaceState(null, '', `/studio/3d-canvas?project=${targetProjectId}`);
+          }
         } else {
-          console.warn(`⚠️ Project not found: ${projectId}`);
-          alert(`Project not found. Starting with clean canvas.`);
+          console.warn(`⚠️ Project not found: ${targetProjectId}`);
+          // Only show alert if user explicitly requested this project
+          if (projectId) {
+            alert(`Project not found. Starting with clean canvas.`);
+          }
+          // Clear stale saved state
+          sceneStatePersistence.clearState();
         }
       } catch (error) {
         console.error('❌ Failed to load project:', error);
-        alert('Failed to load project. Starting with clean canvas.');
+        if (projectId) {
+          alert('Failed to load project. Starting with clean canvas.');
+        }
       } finally {
         setIsRestoringScene(false);
       }
@@ -390,6 +435,12 @@ function EditorContent() {
 
   return (
     <SelectionProvider>
+      {/* Scene State Manager - auto-saves and restores scene state on refresh */}
+      <SceneStateManager
+        projectId={currentProjectId}
+        environment={environment}
+        onEnvironmentRestore={handleEnvironmentRestore}
+      />
       {/* Unified Bridge Connector - connects to ws://localhost:9877 for Blender + AI orchestration */}
       <UnifiedBridgeConnector />
       <Shell

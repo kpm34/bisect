@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSelection } from '../r3f/SceneSelectionContext';
-import { Box, Move, Maximize, Scissors, PenTool } from 'lucide-react';
+import { Box, Move, Maximize, Scissors, PenTool, ChevronDown, Check } from 'lucide-react';
 import * as THREE from 'three';
 import { Brush, Evaluator, SUBTRACTION, ADDITION, INTERSECTION } from 'three-bvh-csg';
 
@@ -11,13 +11,19 @@ import { Brush, Evaluator, SUBTRACTION, ADDITION, INTERSECTION } from 'three-bvh
  *
  * 5-tab interface:
  * - Transform: Position, Rotation, Scale
- * - Geometry: Extrusion & Bevel
- * - Physics: Enable/disable, type, mass, restitution
- * - Boolean: Union, Subtract, Intersect operations
+ * - Geometry: Scale operations (uniform/non-uniform)
+ * - Physics: Enable/disable, type, mass, restitution (all objects)
+ * - Boolean: Union, Subtract, Intersect with object picker
  * - Path: Vertex editing (coming soon)
  */
 
 type EditorTab = 'transform' | 'geometry' | 'physics' | 'boolean' | 'path';
+
+interface SceneMesh {
+    uuid: string;
+    name: string;
+    object: THREE.Mesh;
+}
 
 export default function ObjectEditor() {
     const { selectedObject, setPosition, setRotation, setScale, r3fScene, addedObjects, updateObject } = useSelection();
@@ -28,14 +34,52 @@ export default function ObjectEditor() {
     const [rot, setRot] = useState({ x: 0, y: 0, z: 0 });
     const [scl, setScl] = useState({ x: 1, y: 1, z: 1 });
 
-    // Extrusion State
-    const [extrudeDepth, setExtrudeDepth] = useState(1);
-    const [bevelEnabled, setBevelEnabled] = useState(false);
-    const [bevelThickness, setBevelThickness] = useState(0.1);
+    // Geometry State
+    const [uniformScale, setUniformScale] = useState(1);
+    const [scaleAxis, setScaleAxis] = useState<'uniform' | 'x' | 'y' | 'z'>('uniform');
 
     // Boolean State
     const [targetObjectId, setTargetObjectId] = useState<string>('');
     const [booleanOp, setBooleanOp] = useState<'union' | 'subtract' | 'intersect'>('subtract');
+    const [showObjectPicker, setShowObjectPicker] = useState(false);
+    const [booleanStatus, setBooleanStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [booleanMessage, setBooleanMessage] = useState('');
+
+    // Physics State for imported objects
+    const [importedPhysics, setImportedPhysics] = useState({
+        enabled: false,
+        type: 'fixed' as 'dynamic' | 'fixed' | 'kinematic',
+        mass: 1,
+        restitution: 0.5
+    });
+
+    // Get all meshes in scene for object picker
+    const sceneMeshes = useMemo((): SceneMesh[] => {
+        if (!r3fScene) return [];
+        const meshes: SceneMesh[] = [];
+        r3fScene.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh && child.uuid !== selectedObject?.uuid) {
+                // Filter out system objects (gizmos, helpers, etc)
+                if (!child.name.includes('Gizmo') &&
+                    !child.name.includes('Helper') &&
+                    !child.name.includes('Grid') &&
+                    child.visible) {
+                    meshes.push({
+                        uuid: child.uuid,
+                        name: child.name || `Mesh ${meshes.length + 1}`,
+                        object: child as THREE.Mesh
+                    });
+                }
+            }
+        });
+        return meshes;
+    }, [r3fScene, selectedObject?.uuid]);
+
+    // Get target object name for display
+    const targetObjectName = useMemo(() => {
+        const target = sceneMeshes.find(m => m.uuid === targetObjectId);
+        return target?.name || 'Select target...';
+    }, [sceneMeshes, targetObjectId]);
 
     // Sync transform state with selection
     useEffect(() => {
@@ -43,6 +87,14 @@ export default function ObjectEditor() {
         setPos({ x: selectedObject.position.x, y: selectedObject.position.y, z: selectedObject.position.z });
         setRot({ x: selectedObject.rotation.x, y: selectedObject.rotation.y, z: selectedObject.rotation.z });
         setScl({ x: selectedObject.scale.x, y: selectedObject.scale.y, z: selectedObject.scale.z });
+        setUniformScale(selectedObject.scale.x);
+
+        // Load physics from userData for imported objects
+        if (selectedObject.userData?.physics) {
+            setImportedPhysics(selectedObject.userData.physics);
+        } else {
+            setImportedPhysics({ enabled: false, type: 'fixed', mass: 1, restitution: 0.5 });
+        }
     }, [selectedObject]);
 
     // --- Handlers ---
@@ -53,72 +105,110 @@ export default function ObjectEditor() {
         if (type === 'pos') {
             const newPos = { ...pos, [axis]: value };
             setPos(newPos);
-            setPosition(newPos.x, newPos.y, newPos.z);
+            selectedObject.position.set(newPos.x, newPos.y, newPos.z);
         } else if (type === 'rot') {
             const newRot = { ...rot, [axis]: value };
             setRot(newRot);
-            setRotation(newRot.x, newRot.y, newRot.z);
+            selectedObject.rotation.set(newRot.x, newRot.y, newRot.z);
         } else if (type === 'scl') {
             const newScl = { ...scl, [axis]: value };
             setScl(newScl);
-            setScale(newScl.x, newScl.y, newScl.z);
+            selectedObject.scale.set(newScl.x, newScl.y, newScl.z);
         }
     };
 
-    const handleExtrude = () => {
+    const handleUniformScale = (value: number) => {
         if (!selectedObject) return;
+        setUniformScale(value);
+        selectedObject.scale.set(value, value, value);
+        setScl({ x: value, y: value, z: value });
+    };
 
-        if ((selectedObject as any).geometry) {
-            console.log(`Extruding ${selectedObject.name} by ${extrudeDepth}`);
-            const mesh = selectedObject as THREE.Mesh;
-            if (mesh.geometry.type === 'ShapeGeometry') {
-                console.warn('Extrusion requires original Shape data');
-            }
-        }
+    const handleAxisScale = (axis: 'x' | 'y' | 'z', value: number) => {
+        if (!selectedObject) return;
+        const newScl = { ...scl, [axis]: value };
+        setScl(newScl);
+        selectedObject.scale.set(newScl.x, newScl.y, newScl.z);
     };
 
     const handleBoolean = () => {
-        if (!selectedObject || !targetObjectId || !r3fScene) return;
+        if (!selectedObject || !targetObjectId || !r3fScene) {
+            setBooleanStatus('error');
+            setBooleanMessage('Select a target object first');
+            return;
+        }
 
         const targetObj = r3fScene.getObjectByProperty('uuid', targetObjectId) as THREE.Mesh;
         const sourceObj = selectedObject as THREE.Mesh;
 
-        if (!targetObj || !targetObj.isMesh || !sourceObj.isMesh) {
-            console.error('Boolean operation requires two meshes');
+        if (!targetObj || !targetObj.isMesh) {
+            setBooleanStatus('error');
+            setBooleanMessage('Target is not a valid mesh');
             return;
         }
 
-        sourceObj.updateMatrixWorld();
-        targetObj.updateMatrixWorld();
+        if (!sourceObj.isMesh) {
+            setBooleanStatus('error');
+            setBooleanMessage('Selected object is not a mesh');
+            return;
+        }
 
-        const brushA = new Brush(sourceObj.geometry, sourceObj.material);
-        brushA.position.copy(sourceObj.position);
-        brushA.rotation.copy(sourceObj.rotation);
-        brushA.scale.copy(sourceObj.scale);
-        brushA.updateMatrixWorld();
+        try {
+            sourceObj.updateMatrixWorld();
+            targetObj.updateMatrixWorld();
 
-        const brushB = new Brush(targetObj.geometry, targetObj.material);
-        brushB.position.copy(targetObj.position);
-        brushB.rotation.copy(targetObj.rotation);
-        brushB.scale.copy(targetObj.scale);
-        brushB.updateMatrixWorld();
+            const brushA = new Brush(sourceObj.geometry.clone(), sourceObj.material);
+            brushA.position.copy(sourceObj.position);
+            brushA.rotation.copy(sourceObj.rotation);
+            brushA.scale.copy(sourceObj.scale);
+            brushA.updateMatrixWorld();
 
-        const evaluator = new Evaluator();
-        let resultBrush;
+            const brushB = new Brush(targetObj.geometry.clone(), targetObj.material);
+            brushB.position.copy(targetObj.position);
+            brushB.rotation.copy(targetObj.rotation);
+            brushB.scale.copy(targetObj.scale);
+            brushB.updateMatrixWorld();
 
-        if (booleanOp === 'subtract') resultBrush = evaluator.evaluate(brushA, brushB, SUBTRACTION);
-        else if (booleanOp === 'union') resultBrush = evaluator.evaluate(brushA, brushB, ADDITION);
-        else if (booleanOp === 'intersect') resultBrush = evaluator.evaluate(brushA, brushB, INTERSECTION);
+            const evaluator = new Evaluator();
+            let resultBrush;
 
-        if (resultBrush) {
-            const resultMesh = new THREE.Mesh(resultBrush.geometry, sourceObj.material);
-            resultMesh.name = `${sourceObj.name}-${booleanOp}-${targetObj.name}`;
-            sourceObj.parent?.add(resultMesh);
-            sourceObj.visible = false;
-            targetObj.visible = false;
-            console.log('Boolean operation complete');
+            if (booleanOp === 'subtract') resultBrush = evaluator.evaluate(brushA, brushB, SUBTRACTION);
+            else if (booleanOp === 'union') resultBrush = evaluator.evaluate(brushA, brushB, ADDITION);
+            else if (booleanOp === 'intersect') resultBrush = evaluator.evaluate(brushA, brushB, INTERSECTION);
+
+            if (resultBrush) {
+                const resultMesh = new THREE.Mesh(resultBrush.geometry, sourceObj.material);
+                resultMesh.name = `${sourceObj.name || 'Object'}-${booleanOp}-${targetObj.name || 'Target'}`;
+                resultMesh.position.set(0, 0, 0);
+
+                sourceObj.parent?.add(resultMesh);
+                sourceObj.visible = false;
+                targetObj.visible = false;
+
+                setBooleanStatus('success');
+                setBooleanMessage(`Created: ${resultMesh.name}`);
+                setTargetObjectId('');
+            }
+        } catch (error) {
+            console.error('Boolean operation failed:', error);
+            setBooleanStatus('error');
+            setBooleanMessage('Operation failed - meshes may be incompatible');
         }
     };
+
+    // Handle physics for imported objects
+    const handleImportedPhysicsChange = (updates: Partial<typeof importedPhysics>) => {
+        if (!selectedObject) return;
+        const newPhysics = { ...importedPhysics, ...updates };
+        setImportedPhysics(newPhysics);
+        // Store in userData for the physics system to read
+        selectedObject.userData.physics = newPhysics;
+    };
+
+    // Check if object is an added primitive
+    const isAddedObject = selectedObject && (selectedObject.userData as any)?.isAddedObject;
+    const addedObjectId = isAddedObject ? (selectedObject.userData as any).id : null;
+    const addedObjectData = addedObjectId ? addedObjects.find(o => o.id === addedObjectId) : null;
 
     if (!selectedObject) {
         return (
@@ -143,7 +233,7 @@ export default function ObjectEditor() {
                 <button
                     onClick={() => setActiveTab('geometry')}
                     className={`p-2 flex-1 flex justify-center ${activeTab === 'geometry' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500'}`}
-                    title="Geometry & Extrusion"
+                    title="Scale & Geometry"
                 >
                     <Maximize size={16} />
                 </button>
@@ -185,43 +275,75 @@ export default function ObjectEditor() {
                 {/* GEOMETRY TAB */}
                 {activeTab === 'geometry' && (
                     <div className="space-y-4">
-                        <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Extrusion</h4>
-                        <div className="space-y-2">
-                            <label className="text-xs text-gray-500 block">Depth</label>
-                            <input
-                                type="number"
-                                value={extrudeDepth}
-                                onChange={(e) => setExtrudeDepth(parseFloat(e.target.value))}
-                                className="w-full px-2 py-1 text-sm border rounded"
-                            />
+                        <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Scale Mode</h4>
+
+                        <div className="flex gap-2">
+                            {(['uniform', 'x', 'y', 'z'] as const).map(mode => (
+                                <button
+                                    key={mode}
+                                    onClick={() => setScaleAxis(mode)}
+                                    className={`flex-1 py-1.5 text-xs border rounded capitalize ${
+                                        scaleAxis === mode
+                                            ? 'bg-blue-100 border-blue-500 text-blue-700'
+                                            : 'bg-white text-gray-600 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    {mode === 'uniform' ? 'All' : mode.toUpperCase()}
+                                </button>
+                            ))}
                         </div>
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                checked={bevelEnabled}
-                                onChange={(e) => setBevelEnabled(e.target.checked)}
-                                id="bevel-check"
-                            />
-                            <label htmlFor="bevel-check" className="text-sm text-gray-600">Enable Bevel</label>
-                        </div>
-                        {bevelEnabled && (
+
+                        {scaleAxis === 'uniform' ? (
                             <div className="space-y-2">
-                                <label className="text-xs text-gray-500 block">Bevel Thickness</label>
+                                <label className="text-xs text-gray-500 block">Uniform Scale</label>
                                 <input
-                                    type="number"
-                                    value={bevelThickness}
-                                    onChange={(e) => setBevelThickness(parseFloat(e.target.value))}
-                                    className="w-full px-2 py-1 text-sm border rounded"
-                                    step={0.01}
+                                    type="range"
+                                    min="0.1"
+                                    max="5"
+                                    step="0.1"
+                                    value={uniformScale}
+                                    onChange={(e) => handleUniformScale(parseFloat(e.target.value))}
+                                    className="w-full"
                                 />
+                                <div className="flex justify-between text-xs text-gray-400">
+                                    <span>0.1x</span>
+                                    <span className="font-medium text-gray-700">{uniformScale.toFixed(1)}x</span>
+                                    <span>5x</span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                <label className="text-xs text-gray-500 block">Scale {scaleAxis.toUpperCase()} Axis</label>
+                                <input
+                                    type="range"
+                                    min="0.1"
+                                    max="5"
+                                    step="0.1"
+                                    value={scl[scaleAxis]}
+                                    onChange={(e) => handleAxisScale(scaleAxis, parseFloat(e.target.value))}
+                                    className="w-full"
+                                />
+                                <div className="flex justify-between text-xs text-gray-400">
+                                    <span>0.1x</span>
+                                    <span className="font-medium text-gray-700">{scl[scaleAxis].toFixed(1)}x</span>
+                                    <span>5x</span>
+                                </div>
                             </div>
                         )}
-                        <button
-                            onClick={handleExtrude}
-                            className="w-full py-2 bg-blue-500 text-white rounded text-sm font-medium hover:bg-blue-600 transition-colors"
-                        >
-                            Apply Extrusion
-                        </button>
+
+                        <div className="pt-2 border-t border-gray-200">
+                            <button
+                                onClick={() => {
+                                    if (!selectedObject) return;
+                                    selectedObject.scale.set(1, 1, 1);
+                                    setScl({ x: 1, y: 1, z: 1 });
+                                    setUniformScale(1);
+                                }}
+                                className="w-full py-2 bg-gray-100 text-gray-700 rounded text-sm font-medium hover:bg-gray-200 transition-colors"
+                            >
+                                Reset Scale
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -230,21 +352,20 @@ export default function ObjectEditor() {
                     <div className="space-y-4">
                         <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Physics Properties</h4>
 
-                        {/* Check if it's an added object */}
-                        {selectedObject && (selectedObject.userData as any).isAddedObject ? (
+                        {isAddedObject && addedObjectData ? (
+                            // Added object physics (existing implementation)
                             <>
                                 <div className="flex items-center gap-2">
                                     <input
                                         type="checkbox"
-                                        checked={addedObjects.find(o => o.id === (selectedObject.userData as any).id)?.physics.enabled ?? true}
+                                        checked={addedObjectData.physics.enabled}
                                         onChange={(e) => {
-                                            const id = (selectedObject.userData as any).id;
-                                            const obj = addedObjects.find(o => o.id === id);
-                                            if (obj) {
-                                                updateObject(id, { physics: { ...obj.physics, enabled: e.target.checked } });
-                                            }
+                                            updateObject(addedObjectId, {
+                                                physics: { ...addedObjectData.physics, enabled: e.target.checked }
+                                            });
                                         }}
                                         id="physics-check"
+                                        className="rounded"
                                     />
                                     <label htmlFor="physics-check" className="text-sm text-gray-600">Enable Physics</label>
                                 </div>
@@ -252,14 +373,12 @@ export default function ObjectEditor() {
                                 <div className="space-y-2">
                                     <label className="text-xs text-gray-500 block">Type</label>
                                     <select
-                                        className="w-full px-2 py-1 text-sm border rounded"
-                                        value={addedObjects.find(o => o.id === (selectedObject.userData as any).id)?.physics.type ?? 'dynamic'}
+                                        className="w-full px-2 py-1.5 text-sm border rounded"
+                                        value={addedObjectData.physics.type}
                                         onChange={(e) => {
-                                            const id = (selectedObject.userData as any).id;
-                                            const obj = addedObjects.find(o => o.id === id);
-                                            if (obj) {
-                                                updateObject(id, { physics: { ...obj.physics, type: e.target.value as any } });
-                                            }
+                                            updateObject(addedObjectId, {
+                                                physics: { ...addedObjectData.physics, type: e.target.value as any }
+                                            });
                                         }}
                                     >
                                         <option value="dynamic">Dynamic (Falls)</option>
@@ -272,39 +391,93 @@ export default function ObjectEditor() {
                                     <label className="text-xs text-gray-500 block">Mass</label>
                                     <input
                                         type="number"
-                                        className="w-full px-2 py-1 text-sm border rounded"
-                                        value={addedObjects.find(o => o.id === (selectedObject.userData as any).id)?.physics.mass ?? 1}
+                                        className="w-full px-2 py-1.5 text-sm border rounded"
+                                        value={addedObjectData.physics.mass}
                                         onChange={(e) => {
-                                            const id = (selectedObject.userData as any).id;
-                                            const obj = addedObjects.find(o => o.id === id);
-                                            if (obj) {
-                                                updateObject(id, { physics: { ...obj.physics, mass: parseFloat(e.target.value) } });
-                                            }
+                                            updateObject(addedObjectId, {
+                                                physics: { ...addedObjectData.physics, mass: parseFloat(e.target.value) }
+                                            });
                                         }}
                                     />
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-xs text-gray-500 block">Bounciness (Restitution)</label>
+                                    <label className="text-xs text-gray-500 block">Bounciness</label>
                                     <input
-                                        type="number"
-                                        step={0.1}
-                                        className="w-full px-2 py-1 text-sm border rounded"
-                                        value={addedObjects.find(o => o.id === (selectedObject.userData as any).id)?.physics.restitution ?? 0.5}
+                                        type="range"
+                                        min="0"
+                                        max="1"
+                                        step="0.1"
+                                        className="w-full"
+                                        value={addedObjectData.physics.restitution}
                                         onChange={(e) => {
-                                            const id = (selectedObject.userData as any).id;
-                                            const obj = addedObjects.find(o => o.id === id);
-                                            if (obj) {
-                                                updateObject(id, { physics: { ...obj.physics, restitution: parseFloat(e.target.value) } });
-                                            }
+                                            updateObject(addedObjectId, {
+                                                physics: { ...addedObjectData.physics, restitution: parseFloat(e.target.value) }
+                                            });
                                         }}
                                     />
+                                    <div className="text-xs text-gray-400 text-right">{addedObjectData.physics.restitution}</div>
                                 </div>
                             </>
                         ) : (
-                            <div className="p-4 bg-yellow-50 text-yellow-800 text-xs rounded">
-                                Physics editing is currently only supported for added shapes (Box, Sphere, Plane).
-                            </div>
+                            // Imported object physics
+                            <>
+                                <div className="p-3 bg-blue-50 text-blue-700 text-xs rounded mb-3">
+                                    Physics for imported models. Enable to make this object interact with the physics world.
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        checked={importedPhysics.enabled}
+                                        onChange={(e) => handleImportedPhysicsChange({ enabled: e.target.checked })}
+                                        id="imported-physics-check"
+                                        className="rounded"
+                                    />
+                                    <label htmlFor="imported-physics-check" className="text-sm text-gray-600">Enable Physics</label>
+                                </div>
+
+                                {importedPhysics.enabled && (
+                                    <>
+                                        <div className="space-y-2">
+                                            <label className="text-xs text-gray-500 block">Type</label>
+                                            <select
+                                                className="w-full px-2 py-1.5 text-sm border rounded"
+                                                value={importedPhysics.type}
+                                                onChange={(e) => handleImportedPhysicsChange({ type: e.target.value as any })}
+                                            >
+                                                <option value="dynamic">Dynamic (Falls)</option>
+                                                <option value="fixed">Fixed (Static)</option>
+                                                <option value="kinematic">Kinematic (Animated)</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-xs text-gray-500 block">Mass</label>
+                                            <input
+                                                type="number"
+                                                className="w-full px-2 py-1.5 text-sm border rounded"
+                                                value={importedPhysics.mass}
+                                                onChange={(e) => handleImportedPhysicsChange({ mass: parseFloat(e.target.value) })}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-xs text-gray-500 block">Bounciness</label>
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="1"
+                                                step="0.1"
+                                                className="w-full"
+                                                value={importedPhysics.restitution}
+                                                onChange={(e) => handleImportedPhysicsChange({ restitution: parseFloat(e.target.value) })}
+                                            />
+                                            <div className="text-xs text-gray-400 text-right">{importedPhysics.restitution}</div>
+                                        </div>
+                                    </>
+                                )}
+                            </>
                         )}
                     </div>
                 )}
@@ -313,39 +486,85 @@ export default function ObjectEditor() {
                 {activeTab === 'boolean' && (
                     <div className="space-y-4">
                         <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Boolean Operation</h4>
-                        <p className="text-xs text-gray-500 mb-2">
-                            Apply operation between <strong>{selectedObject.name}</strong> and:
+                        <p className="text-xs text-gray-500">
+                            Combine <strong className="text-gray-700">{selectedObject.name || 'Selected'}</strong> with another mesh
                         </p>
 
+                        {/* Object Picker Dropdown */}
                         <div className="space-y-2">
-                            <label className="text-xs text-gray-500 block">Target Object (UUID)</label>
-                            <input
-                                type="text"
-                                value={targetObjectId}
-                                onChange={(e) => setTargetObjectId(e.target.value)}
-                                placeholder="Paste UUID here"
-                                className="w-full px-2 py-1 text-sm border rounded font-mono"
-                            />
-                            <p className="text-[10px] text-gray-400">
-                                Tip: Select another object to copy its UUID from the console or inspector.
-                            </p>
+                            <label className="text-xs text-gray-500 block">Target Object</label>
+                            <div className="relative">
+                                <button
+                                    onClick={() => setShowObjectPicker(!showObjectPicker)}
+                                    className="w-full px-3 py-2 text-sm border rounded bg-white text-left flex items-center justify-between hover:border-blue-400 transition-colors"
+                                >
+                                    <span className={targetObjectId ? 'text-gray-800' : 'text-gray-400'}>
+                                        {targetObjectName}
+                                    </span>
+                                    <ChevronDown size={14} className={`text-gray-400 transition-transform ${showObjectPicker ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {showObjectPicker && (
+                                    <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                        {sceneMeshes.length === 0 ? (
+                                            <div className="px-3 py-2 text-xs text-gray-400">No other meshes in scene</div>
+                                        ) : (
+                                            sceneMeshes.map((mesh) => (
+                                                <button
+                                                    key={mesh.uuid}
+                                                    onClick={() => {
+                                                        setTargetObjectId(mesh.uuid);
+                                                        setShowObjectPicker(false);
+                                                        setBooleanStatus('idle');
+                                                    }}
+                                                    className="w-full px-3 py-2 text-sm text-left hover:bg-blue-50 flex items-center justify-between"
+                                                >
+                                                    <span>{mesh.name}</span>
+                                                    {mesh.uuid === targetObjectId && <Check size={14} className="text-blue-500" />}
+                                                </button>
+                                            ))
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
+                        {/* Operation Buttons */}
                         <div className="flex gap-2">
                             {(['union', 'subtract', 'intersect'] as const).map(op => (
                                 <button
                                     key={op}
                                     onClick={() => setBooleanOp(op)}
-                                    className={`flex-1 py-1 text-xs border rounded capitalize ${booleanOp === op ? 'bg-blue-100 border-blue-500 text-blue-700' : 'bg-white text-gray-600'}`}
+                                    className={`flex-1 py-1.5 text-xs border rounded capitalize transition-colors ${
+                                        booleanOp === op
+                                            ? 'bg-blue-100 border-blue-500 text-blue-700'
+                                            : 'bg-white text-gray-600 hover:bg-gray-50'
+                                    }`}
                                 >
                                     {op}
                                 </button>
                             ))}
                         </div>
 
+                        {/* Status Message */}
+                        {booleanStatus !== 'idle' && (
+                            <div className={`p-2 rounded text-xs ${
+                                booleanStatus === 'success'
+                                    ? 'bg-green-50 text-green-700'
+                                    : 'bg-red-50 text-red-700'
+                            }`}>
+                                {booleanMessage}
+                            </div>
+                        )}
+
                         <button
                             onClick={handleBoolean}
-                            className="w-full py-2 bg-red-500 text-white rounded text-sm font-medium hover:bg-red-600 transition-colors"
+                            disabled={!targetObjectId}
+                            className={`w-full py-2 rounded text-sm font-medium transition-colors ${
+                                targetObjectId
+                                    ? 'bg-blue-500 text-white hover:bg-blue-600'
+                                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            }`}
                         >
                             Execute {booleanOp}
                         </button>
@@ -356,18 +575,19 @@ export default function ObjectEditor() {
                 {activeTab === 'path' && (
                     <div className="space-y-4">
                         <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Path Editing</h4>
-                        <p className="text-xs text-gray-500">
-                            Select vertices to edit position.
-                        </p>
                         <div className="p-4 bg-gray-50 rounded border border-dashed border-gray-300 text-center">
                             <PenTool className="w-6 h-6 mx-auto text-gray-400 mb-2" />
-                            <span className="text-xs text-gray-500">Vertex editing mode coming soon</span>
+                            <span className="text-xs text-gray-500 block">Vertex editing mode</span>
+                            <span className="text-xs text-blue-500">Coming soon</span>
                         </div>
+                        <p className="text-xs text-gray-400">
+                            Direct vertex manipulation will allow you to reshape meshes by moving individual vertices.
+                        </p>
                     </div>
                 )}
 
             </div>
-        </div >
+        </div>
     );
 }
 
@@ -390,8 +610,8 @@ function TransformGroup({ label, values, onChange, step }: {
                         <input
                             type="number"
                             step={step}
-                            value={values[axis]}
-                            onChange={(e) => onChange(axis, parseFloat(e.target.value))}
+                            value={values[axis].toFixed(2)}
+                            onChange={(e) => onChange(axis, parseFloat(e.target.value) || 0)}
                             className="w-full pl-5 pr-1 py-1 text-xs border border-gray-300 rounded focus:border-blue-500 focus:outline-none"
                         />
                     </div>
