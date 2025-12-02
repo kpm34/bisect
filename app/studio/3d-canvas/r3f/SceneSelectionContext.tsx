@@ -10,13 +10,24 @@ export interface FaceSelection {
   faceIndex: number;
 }
 
-export type SceneObjectType = 'box' | 'sphere' | 'plane' | 'external' | 'parametric';
+export type SceneObjectType =
+  | 'box'
+  | 'sphere'
+  | 'plane'
+  | 'cylinder'
+  | 'cone'
+  | 'torus'
+  | 'capsule'
+  | 'text3d'
+  | 'external'
+  | 'parametric';
 
 export interface SceneObject {
   id: string;
   type: SceneObjectType;
   url?: string; // For external assets
   formula?: { x: string; y: string; z: string; uRange: [number, number]; vRange: [number, number] }; // For parametric objects
+  text?: string; // For 3D text objects
   name: string;
   position: [number, number, number];
   rotation: [number, number, number];
@@ -524,20 +535,36 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
   // Scene Objects State (for added shapes)
   const [addedObjects, setAddedObjects] = useState<SceneObject[]>([]);
 
-  const addObject = (type: SceneObjectType, url?: string, formula?: any) => {
-    console.log('🏗️ [Context] addObject called:', { type, url, formula });
+  const addObject = (type: SceneObjectType, url?: string, formula?: any, text?: string) => {
+    console.log('🏗️ [Context] addObject called:', { type, url, formula, text });
+
+    // Generate friendly name based on type
+    const typeNames: Record<SceneObjectType, string> = {
+      box: 'Cube',
+      sphere: 'Sphere',
+      plane: 'Plane',
+      cylinder: 'Cylinder',
+      cone: 'Cone',
+      torus: 'Torus',
+      capsule: 'Capsule',
+      text3d: 'Text',
+      external: 'Model',
+      parametric: 'Parametric',
+    };
+
     const newObj: SceneObject = {
       id: Math.random().toString(36).substr(2, 9),
       type,
       url,
       formula,
-      name: `${type.charAt(0).toUpperCase() + type.slice(1)} ${addedObjects.length + 1}`,
-      position: [0, 5, 0], // Start high to drop
+      text: text || (type === 'text3d' ? 'Hello' : undefined),
+      name: `${typeNames[type] || type} ${addedObjects.length + 1}`,
+      position: [0, 2, 0], // Start slightly above ground
       rotation: [0, 0, 0],
       scale: [1, 1, 1],
       color: '#ffffff',
       physics: {
-        enabled: true,
+        enabled: false, // Start with physics disabled for easier positioning
         type: 'dynamic',
         mass: 1,
         restitution: 0.5,

@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { LayoutTemplate, Type, Box, Image as ImageIcon, Wand2, Search, Upload, Music, Video } from 'lucide-react';
-import { SAMPLE_VIDEOS, DEFAULT_CAPTION_STYLES } from '../constants';
+import { SAMPLE_VIDEOS, SAMPLE_IMAGES, DEFAULT_CAPTION_STYLES } from '../constants';
 import { useStore } from '../store';
 import { TrackType } from '../types';
 import TransitionPanel from './TransitionPanel';
@@ -149,7 +149,7 @@ const LeftSidebar: React.FC = () => {
                 </div>
             )}
 
-            {/* Stock Assets */}
+            {/* Stock Videos */}
             <div className="space-y-2">
               <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Stock Videos</label>
               <div className="grid grid-cols-2 gap-2">
@@ -164,6 +164,37 @@ const LeftSidebar: React.FC = () => {
                     <video src={video.url} className="w-full h-full object-cover" muted />
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <span className="text-xs font-medium text-white bg-gray-700 px-2 py-1 rounded">+ Add</span>
+                    </div>
+                    <div className="absolute bottom-1 left-1">
+                      <p className="text-[10px] text-white bg-black/70 px-1 rounded truncate">{video.name}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Stock Images */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Stock Images</label>
+              <div className="grid grid-cols-2 gap-2">
+                {SAMPLE_IMAGES.map((image, idx) => (
+                  <div
+                    key={idx}
+                    className="group relative aspect-video bg-[#0a0a0a] rounded overflow-hidden cursor-pointer border border-[#2a2a2a] hover:border-gray-500 transition-all"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, { ...image, type: TrackType.VIDEO })}
+                    onClick={() => handleAddToTimeline(image, TrackType.VIDEO)}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={image.url} alt={image.name} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="text-xs font-medium text-white bg-gray-700 px-2 py-1 rounded">+ Add</span>
+                    </div>
+                    <div className="absolute bottom-1 left-1">
+                      <p className="text-[10px] text-white bg-black/70 px-1 rounded truncate">{image.name}</p>
+                    </div>
+                    <div className="absolute top-1 right-1">
+                      <span className="text-[9px] text-white/70 bg-black/50 px-1 rounded">{image.category}</span>
                     </div>
                   </div>
                 ))}

@@ -13,10 +13,11 @@
  * Uses local manifest for main categories, Supabase for detailed metal presets
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ChevronRight, Loader2 } from 'lucide-react';
 import { useSelection } from '../r3f/SceneSelectionContext';
 import { VariationsDrawer } from './VariationsDrawer';
+import { ColorTintPicker } from './ColorTintPicker';
 import {
   MaterialConfig,
   MaterialCategory,
@@ -202,6 +203,7 @@ export function MaterialSelector() {
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(null);
   const [selectedCategoryName, setSelectedCategoryName] = useState<string>('');
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
+  const [tintColor, setTintColor] = useState<string>('#FFFFFF');
   const { setColor, setRoughness, setMetalness, selectedObject } = useSelection();
 
   // Get materials from local manifest, grouped by category
@@ -429,8 +431,10 @@ export function MaterialSelector() {
     selectedObject.traverse((child: any) => {
       if (child.isMesh && child.material) {
         // Create material with textures if available
+        // Keep the selected color to tint the texture (multiplied by the diffuse map)
+        // This allows the base color swatch to influence the final appearance
         const materialParams: any = {
-          color: diffuseMap ? 0xffffff : colorHex, // White if using diffuse texture
+          color: colorHex, // Keep user's color to tint the texture
           metalness: item.metalness,
           roughness: item.roughness,
           envMapIntensity: category === 'metal' ? 1.5 : 1.0,
@@ -502,6 +506,33 @@ export function MaterialSelector() {
 
     console.log(`✅ Applied preset "${preset.name}" to "${selectedObject.name}"`);
   };
+
+  // Handler for applying tint color to current material
+  const handleTintColorChange = useCallback(async (color: string) => {
+    setTintColor(color);
+
+    if (!selectedObject) return;
+
+    const colorHex = parseInt(color.replace('#', ''), 16);
+    setColor(colorHex);
+
+    // Also update the material color directly for immediate feedback
+    const THREE = await import('three');
+
+    selectedObject.traverse((child: any) => {
+      if (child.isMesh && child.material) {
+        const materials = Array.isArray(child.material) ? child.material : [child.material];
+        materials.forEach((mat: any) => {
+          if (mat.color) {
+            mat.color.setHex(colorHex);
+            mat.needsUpdate = true;
+          }
+        });
+      }
+    });
+
+    console.log(`🎨 Applied tint color ${color} to "${selectedObject.name}"`);
+  }, [selectedObject, setColor]);
 
   return (
     <div style={styles.container}>
@@ -637,6 +668,17 @@ export function MaterialSelector() {
         </div>
       </div>
 
+      {/* Color Tint Picker - Progressive Disclosure (shows after material selected) */}
+      {selectedMaterialId && selectedObject && (
+        <div style={styles.tintSection}>
+          <ColorTintPicker
+            value={tintColor}
+            onChange={handleTintColorChange}
+            label="Tint Color"
+          />
+        </div>
+      )}
+
       {/* Footer with Browse Variations Button */}
       <div style={styles.footer}>
         {selectedMaterialId ? (
@@ -698,6 +740,14 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '24px',
     overflow: 'visible', // Allow material popups to overflow
     backgroundColor: '#262626',
+  },
+
+  tintSection: {
+    padding: '20px 24px',
+    marginTop: '8px',
+    borderTop: '1px solid #3a3a3a',
+    borderBottom: '1px solid #3a3a3a',
+    backgroundColor: '#1f1f1f',
   },
 
   sectionTitle: {
@@ -833,8 +883,8 @@ const styles: Record<string, React.CSSProperties> = {
   } as React.CSSProperties,
 
   footer: {
-    padding: '12px 24px',
-    borderTop: '1px solid #3d3d3d',
+    padding: '16px 24px',
+    marginTop: '8px',
     backgroundColor: '#2d2d2d',
   },
 };

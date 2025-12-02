@@ -1,7 +1,7 @@
 'use client';
 
 import { Canvas, useThree, useLoader } from '@react-three/fiber';
-import { OrbitControls, Environment, Grid, PerspectiveCamera, useGLTF } from '@react-three/drei';
+import { OrbitControls, Environment, Grid, PerspectiveCamera, useGLTF, Text3D, Center } from '@react-three/drei';
 import { CombinedTransformGizmo } from './CombinedTransformGizmo';
 import { EffectComposer, Outline, Bloom, Noise, Vignette, Glitch } from '@react-three/postprocessing';
 import { Physics, RigidBody } from '@react-three/rapier';
@@ -33,7 +33,7 @@ const defaultEnvironment: SceneEnvironment = {
   preset: 'city',
   background: true,
   blur: 0.8,
-  intensity: 1.0,
+  intensity: 0.8,
 };
 
 /**
@@ -117,7 +117,7 @@ export default function R3FCanvas({
         <ambientLight intensity={0.4} />
         <directionalLight
           position={[10, 10, 5]}
-          intensity={1}
+          intensity={0.8}
           castShadow
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
@@ -360,24 +360,59 @@ function SceneEffects() {
  * AddedObjectsRenderer - Renders user-added shapes with physics
  */
 function AddedObjectsRenderer() {
-  const { addedObjects, setSelectedObject } = useSelection();
+  const { addedObjects } = useSelection();
 
   return (
     <>
       {addedObjects.map((obj) => (
         <InteractiveObject key={obj.id} obj={obj}>
-          <mesh
-            name={obj.name}
-            userData={{ id: obj.id, isAddedObject: true }}
-          >
-            {obj.type === 'box' && <boxGeometry />}
-            {obj.type === 'sphere' && <sphereGeometry />}
-            {obj.type === 'plane' && <planeGeometry args={[10, 10]} />}
-            <meshStandardMaterial color={obj.color} side={THREE.DoubleSide} />
-          </mesh>
+          {obj.type === 'text3d' ? (
+            <Text3DObject obj={obj} />
+          ) : (
+            <mesh
+              name={obj.name}
+              userData={{ id: obj.id, isAddedObject: true }}
+            >
+              {obj.type === 'box' && <boxGeometry args={[1, 1, 1]} />}
+              {obj.type === 'sphere' && <sphereGeometry args={[0.5, 32, 32]} />}
+              {obj.type === 'plane' && <planeGeometry args={[2, 2]} />}
+              {obj.type === 'cylinder' && <cylinderGeometry args={[0.5, 0.5, 1, 32]} />}
+              {obj.type === 'cone' && <coneGeometry args={[0.5, 1, 32]} />}
+              {obj.type === 'torus' && <torusGeometry args={[0.4, 0.15, 16, 48]} />}
+              {obj.type === 'capsule' && <capsuleGeometry args={[0.3, 0.6, 8, 16]} />}
+              <meshStandardMaterial color={obj.color} side={THREE.DoubleSide} />
+            </mesh>
+          )}
         </InteractiveObject>
       ))}
     </>
+  );
+}
+
+/**
+ * Text3DObject - Renders 3D text using drei's Text3D
+ */
+function Text3DObject({ obj }: { obj: any }) {
+  const fontUrl = '/fonts/helvetiker_regular.typeface.json';
+
+  return (
+    <Center>
+      <Text3D
+        font={fontUrl}
+        size={0.5}
+        height={0.1}
+        curveSegments={12}
+        bevelEnabled
+        bevelThickness={0.02}
+        bevelSize={0.01}
+        bevelSegments={3}
+        name={obj.name}
+        userData={{ id: obj.id, isAddedObject: true }}
+      >
+        {obj.text || 'Hello'}
+        <meshStandardMaterial color={obj.color} />
+      </Text3D>
+    </Center>
   );
 }
 
@@ -889,15 +924,19 @@ function FileUploadOverlay({
 
   return (
     <div
-      className={`absolute inset-0 z-10 flex items-center justify-center ${isDragging ? 'bg-blue-500/20' : ''}`}
+      className={`absolute inset-0 z-20 flex items-center justify-center transition-colors ${
+        isDragging ? 'bg-blue-500/30 border-2 border-dashed border-blue-400' : 'bg-zinc-900/80'
+      }`}
       onDragOver={(e) => {
         e.preventDefault();
         e.stopPropagation();
+        console.log('📥 DragOver event');
         setIsDragging(true);
       }}
       onDragEnter={(e) => {
         e.preventDefault();
         e.stopPropagation();
+        console.log('📥 DragEnter event');
         setIsDragging(true);
       }}
       onDragLeave={(e) => {
@@ -905,16 +944,25 @@ function FileUploadOverlay({
         e.stopPropagation();
         // Only set false if leaving the container, not entering a child
         if (e.currentTarget === e.target) {
+          console.log('📤 DragLeave event');
           setIsDragging(false);
         }
       }}
       onDrop={handleDrop}
     >
-      <div className="text-center">
-        <div className="text-white text-lg font-medium mb-4">
+      <div className="text-center pointer-events-none">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-zinc-800 flex items-center justify-center">
+          <svg className="w-8 h-8 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+        </div>
+        <div className="text-white text-lg font-medium mb-2">
           {isDragging ? 'Drop your 3D file here' : 'Drop a 3D file to start'}
         </div>
-        <label className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg cursor-pointer transition-colors">
+        <div className="text-zinc-400 text-sm mb-6">
+          or
+        </div>
+        <label className="pointer-events-auto inline-block bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg cursor-pointer transition-colors">
           Choose File
           <input
             type="file"
@@ -923,7 +971,7 @@ function FileUploadOverlay({
             className="hidden"
           />
         </label>
-        <div className="text-gray-400 text-sm mt-4">
+        <div className="text-zinc-500 text-sm mt-4">
           Supports: GLB, GLTF, OBJ, Spline
         </div>
       </div>

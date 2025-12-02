@@ -72,6 +72,20 @@ export const SAMPLE_VIDEOS = [
   { name: 'City Traffic', url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4' },
 ];
 
+// Stock images for use as video backgrounds/thumbnails
+export const SAMPLE_IMAGES = [
+  { name: 'City Night', url: '/assets/video-studio/preview-city-night.jpg', category: 'urban' },
+  { name: 'Mountains', url: '/assets/video-studio/preview-mountains.jpg', category: 'nature' },
+  { name: 'Ocean', url: '/assets/video-studio/preview-ocean.jpg', category: 'nature' },
+  { name: 'Sunset', url: '/assets/video-studio/preview-sunset.jpg', category: 'nature' },
+  { name: 'Abstract', url: '/assets/video-studio/preview-abstract.jpg', category: 'abstract' },
+  { name: 'Forest', url: '/assets/video-studio/preview-forest.jpg', category: 'nature' },
+  { name: 'Cinema', url: '/assets/video-studio/preview-cinema.jpg', category: 'creative' },
+  { name: 'Neon', url: '/assets/video-studio/preview-neon.jpg', category: 'urban' },
+  { name: 'Tech', url: '/assets/video-studio/preview-tech.jpg', category: 'abstract' },
+  { name: 'Gradient', url: '/assets/video-studio/preview-gradient.jpg', category: 'abstract' },
+];
+
 // Transition presets organized by category
 export const TRANSITION_CATEGORIES = {
   basic: {

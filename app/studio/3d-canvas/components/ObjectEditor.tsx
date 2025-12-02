@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSelection } from '../r3f/SceneSelectionContext';
-import { Box, Move, Maximize, Scissors, PenTool, ChevronDown, Check } from 'lucide-react';
+import { Box, Move, Maximize, Scissors, PenTool, ChevronDown, Check, Undo2 } from 'lucide-react';
 import * as THREE from 'three';
 import { Brush, Evaluator, SUBTRACTION, ADDITION, INTERSECTION } from 'three-bvh-csg';
+import PrimitiveCreator from './PrimitiveCreator';
 
 /**
  * ObjectEditor - Full object editing controls
@@ -13,11 +14,23 @@ import { Brush, Evaluator, SUBTRACTION, ADDITION, INTERSECTION } from 'three-bvh
  * - Transform: Position, Rotation, Scale
  * - Geometry: Scale operations (uniform/non-uniform)
  * - Physics: Enable/disable, type, mass, restitution (all objects)
- * - Boolean: Union, Subtract, Intersect with object picker
+ * - Boolean: Union, Subtract, Intersect with object picker (with undo support)
  * - Path: Vertex editing (coming soon)
  */
 
 type EditorTab = 'transform' | 'geometry' | 'physics' | 'boolean' | 'path';
+
+// Boolean operation history entry for undo support
+interface BooleanHistoryEntry {
+    type: 'boolean';
+    operation: 'union' | 'subtract' | 'intersect';
+    sourceUuid: string;
+    targetUuid: string;
+    resultUuid: string;
+    sourceVisible: boolean;
+    targetVisible: boolean;
+    sourceParentUuid: string | null;
+}
 
 interface SceneMesh {
     uuid: string;
@@ -44,6 +57,8 @@ export default function ObjectEditor() {
     const [showObjectPicker, setShowObjectPicker] = useState(false);
     const [booleanStatus, setBooleanStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [booleanMessage, setBooleanMessage] = useState('');
+    const [booleanHistory, setBooleanHistory] = useState<BooleanHistoryEntry[]>([]);
+    const [preserveOriginals, setPreserveOriginals] = useState(false);
 
     // Physics State for imported objects
     const [importedPhysics, setImportedPhysics] = useState({
@@ -210,15 +225,6 @@ export default function ObjectEditor() {
     const addedObjectId = isAddedObject ? (selectedObject.userData as any).id : null;
     const addedObjectData = addedObjectId ? addedObjects.find(o => o.id === addedObjectId) : null;
 
-    if (!selectedObject) {
-        return (
-            <div className="flex flex-col items-center justify-center h-40 text-gray-500">
-                <Box className="w-8 h-8 mb-2 opacity-50" />
-                <p className="text-sm">Select an object to edit</p>
-            </div>
-        );
-    }
-
     return (
         <div className="flex flex-col h-full">
             {/* Tab Navigation - 5 sub-tabs */}
@@ -266,9 +272,20 @@ export default function ObjectEditor() {
                 {/* TRANSFORM TAB */}
                 {activeTab === 'transform' && (
                     <div className="space-y-4">
-                        <TransformGroup label="Position" values={pos} onChange={(a, v) => handleTransformChange('pos', a, v)} step={0.1} defaultValue={0} />
-                        <TransformGroup label="Rotation" values={rot} onChange={(a, v) => handleTransformChange('rot', a, v)} step={0.1} defaultValue={0} />
-                        <TransformGroup label="Scale" values={scl} onChange={(a, v) => handleTransformChange('scl', a, v)} step={0.1} defaultValue={1} />
+                        {/* Primitive Creator - Add new shapes */}
+                        <PrimitiveCreator />
+
+                        {/* Divider */}
+                        <div className="border-t border-gray-200 pt-3" />
+
+                        {/* Transform controls (shown when object selected) */}
+                        {selectedObject && (
+                            <>
+                                <TransformGroup label="Position" values={pos} onChange={(a, v) => handleTransformChange('pos', a, v)} step={0.1} defaultValue={0} />
+                                <TransformGroup label="Rotation" values={rot} onChange={(a, v) => handleTransformChange('rot', a, v)} step={0.1} defaultValue={0} />
+                                <TransformGroup label="Scale" values={scl} onChange={(a, v) => handleTransformChange('scl', a, v)} step={0.1} defaultValue={1} />
+                            </>
+                        )}
                     </div>
                 )}
 

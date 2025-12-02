@@ -640,6 +640,27 @@ export const useStore = create<AppState>((set, get) => ({
     }));
   },
 
+  // Waveform action (no history - this is computed/cached data)
+  setClipWaveform: (trackId, clipId, waveformData) => {
+    set((state) => ({
+      tracks: state.tracks.map((t) =>
+        t.id === trackId
+          ? {
+              ...t,
+              clips: t.clips.map((c) =>
+                c.id === clipId
+                  ? {
+                      ...c,
+                      waveformData,
+                    }
+                  : c
+              ),
+            }
+          : t
+      ),
+    }));
+  },
+
   // History actions
   pushHistory: (description) =>
     set((state) => {

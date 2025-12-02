@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { ALL_TRANSITIONS } from '../constants';
+import { WaveformBars } from './WaveformCanvas';
 
 const RULER_HEIGHT = 24;
 const TRACK_HEIGHT = 60;
@@ -544,12 +545,24 @@ const Timeline: React.FC = () => {
                           }
                         }}
                       >
-                        <div className="px-2 py-1 text-xs truncate flex items-center justify-between h-full">
+                        <div className="px-2 py-1 text-xs truncate flex items-center justify-between h-full relative z-10">
                           <span className="text-white/80 font-medium drop-shadow-md">{clip.name}</span>
                           {track.type === TrackType.TEXT && (
                             <span className="text-white/50 text-[10px] truncate ml-2">"{clip.content}"</span>
                           )}
                         </div>
+
+                        {/* Waveform visualization for audio/video clips */}
+                        {clip.waveformData && clip.waveformData.length > 0 && (
+                          <div className="absolute inset-0 flex items-center pointer-events-none">
+                            <WaveformBars
+                              samples={clip.waveformData}
+                              width={Math.max(timeToPx(clip.duration), 30)}
+                              height={40}
+                              color={track.type === TrackType.AUDIO ? 'rgba(74, 222, 128, 0.5)' : 'rgba(96, 165, 250, 0.4)'}
+                            />
+                          </div>
+                        )}
 
                         {/* Selection indicator */}
                         {isSelected && (

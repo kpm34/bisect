@@ -6,6 +6,7 @@ import LeftSidebar from './components/LeftSidebar';
 import RightSidebar from './components/RightSidebar';
 import VideoPreview from './components/VideoPreview';
 import Timeline from './components/Timeline';
+import { useWaveformGeneration } from './hooks/useWaveformGeneration';
 
 // Resize handle component
 const ResizeHandle: React.FC<{
@@ -82,6 +83,9 @@ const ResizeHandle: React.FC<{
 const App: React.FC = () => {
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
+
+  // Auto-generate waveforms for audio/video clips
+  useWaveformGeneration();
 
   // Resizable panel sizes
   const [leftSidebarWidth, setLeftSidebarWidth] = useState(280);
