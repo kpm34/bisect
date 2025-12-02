@@ -4,13 +4,25 @@
 
 **Bisect is NOT another 3D editor.** It's the **connective tissue across creative domains** - an AI-powered workflow orchestrator for creative professionals.
 
-### What We Are
+> See [docs/positioning.md](../docs/positioning.md) for full positioning strategy and competitive analysis.
+
+### What Bisect IS
 | Identity | Description |
 |----------|-------------|
-| Creative workflow orchestrator | Not another Spline clone |
-| AI agent system for 3D/design | Like Cursor but for creative work |
-| Blender ↔ Web bridge | Our unique moat |
-| Cross-domain connector | Vector → 3D → Video pipeline |
+| ✓ Creative pipeline hub | End-to-end content creation, not a single tool |
+| ✓ Blender complexity abstraction | Pro 3D quality without the learning curve |
+| ✓ AI video aggregator & editor | Connect to Runway, Pika, Kling - orchestrate them |
+| ✓ Web-first output | React components, landing pages, WebGL embeds |
+| ✓ Brand-to-social content factory | Logo → 3D → Video → Social in one flow |
+
+### What Bisect is NOT
+| Anti-Identity | Why Not |
+|---------------|---------|
+| ✗ A Blender replacement | We're the bridge, not the competitor |
+| ✗ A Figma competitor | We're 3D-first, not 2D design |
+| ✗ A code-heavy dev tool | Visual-first, code export is output |
+| ✗ A single-purpose AI video generator | We're the orchestrator across tools |
+| ✗ An enterprise DAM system | We're creative workflow, not asset management |
 
 ### Competitive Landscape
 | Category | Competitors | What They Lack (Our Opportunity) |
