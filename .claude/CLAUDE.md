@@ -2,9 +2,38 @@
 
 ## Vision & Positioning
 
-**Bisect is NOT another 3D editor.** It's the **connective tissue across creative domains** - an AI-powered workflow orchestrator for creative professionals.
+**Bisect is NOT another 3D editor.** It's the **glue between Blender and ComfyUI** - bringing pro-level 3D and GenAI pipelines to everyday creators without the complexity.
 
 > See [docs/positioning.md](../docs/positioning.md) for full positioning strategy and competitive analysis.
+
+### The Creative Precision Stack
+
+```
+            ┌──────────────┐
+            │   BISECT     │  ← Visual interface (no nodes, no code)
+            │  (The Glue)  │
+            └───────┬──────┘
+                    │
+      ┌─────────────┼─────────────┐
+      │             │             │
+      ▼             ▼             ▼
+┌─────────┐   ┌─────────┐   ┌─────────┐
+│ BLENDER │◄─►│ COMFYUI │◄─►│ BISECT  │
+│  (MCP)  │   │(Workflows)│  │(Studios)│
+└─────────┘   └─────────┘   └─────────┘
+      │             │             │
+      └─────────────┴─────────────┘
+                    │
+          ┌─────────▼─────────┐
+          │  EVERYDAY CREATOR │
+          │  (Gets pro output)│
+          └───────────────────┘
+```
+
+**The Gap We Fill:**
+- Blender = powerful but steep learning curve
+- ComfyUI = powerful but node complexity
+- Bisect = bridges BOTH for creators who want results, not pipelines
 
 ### What Bisect IS
 | Identity | Description |
@@ -35,9 +64,18 @@
 
 ### Key Differentiators to Protect
 1. **Blender MCP Bridge** - Live connection to professional 3D (no competitor has this)
-2. **AI Agents** - Cross-domain reasoning (SVG → 3D → Video)
-3. **Developer Experience** - CLI, code export, webhooks, APIs
-4. **Cross-Studio Pipeline** - Single project across all creative domains
+2. **ComfyUI Orchestration** - GenAI workflows without node complexity
+3. **AI Agents** - Cross-domain reasoning (SVG → 3D → Video)
+4. **Developer Experience** - CLI, code export, webhooks, APIs
+5. **Cross-Studio Pipeline** - Single project across all creative domains
+
+### Integration Architecture
+| System | What It Provides | How Bisect Uses It |
+|--------|------------------|-------------------|
+| **Blender MCP** | Materials, rendering, physics, animation | Live bridge - real-time sync |
+| **ComfyUI** | Texture gen, video gen, upscaling, style transfer | Backend orchestration - visual triggers |
+| **Suno/ElevenLabs** | AI music, SFX, voiceover | Audio Hub generation |
+| **Hyper3D/Meshy** | AI 3D model generation | Import pipeline |
 
 ---
 
@@ -166,8 +204,11 @@ Connect Shopify/WooCommerce → Deploy: Interactive product page
 - **idb** 8.0.0 (IndexedDB)
 
 ### Integrations
-- **Blender MCP** - Live bridge to Blender 4.5
-- **ComfyUI** - Generative workflows
+- **Blender MCP** - Live bridge to Blender 4.5 (rendering, materials, animation)
+- **ComfyUI** - Generative workflows (textures, video, upscaling, style transfer)
+- **Suno** - AI music generation
+- **ElevenLabs** - AI SFX and voiceover
+- **Hyper3D/Meshy** - AI 3D model generation
 - **Shopify/WooCommerce/BigCommerce** - E-commerce
 
 ---
@@ -203,7 +244,10 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY
 ANTHROPIC_API_KEY           # Claude for reasoning
 OPENROUTER_API_KEY          # Multi-model access
 HYPER3D_API_KEY             # AI 3D generation
-COMFYUI_API_URL             # Local ComfyUI instance
+
+# ComfyUI (key integration for GenAI workflows)
+COMFYUI_API_URL             # Local or remote ComfyUI instance
+COMFYUI_API_KEY             # If using remote/cloud ComfyUI
 
 # Audio AI (optional)
 SUNO_API_KEY                # AI music generation
@@ -285,6 +329,7 @@ Bisect/
 - [x] Blender MCP bridge
 
 ### In Progress
+- [ ] ComfyUI integration (THE KEY - orchestrate GenAI without nodes)
 - [ ] Audio Hub (music/SFX library, AI generation, timeline)
 - [ ] Cross-studio drag & drop
 - [ ] AI workflow orchestrator
@@ -292,7 +337,6 @@ Bisect/
 
 ### Planned
 - [ ] Audio-to-video sync (beat detection, auto-sync)
-- [ ] ComfyUI integration
 - [ ] Hyper3D pipeline
 - [ ] CLI tool (`bisect create`, `bisect export`)
 - [ ] Plugin system

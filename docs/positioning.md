@@ -1,5 +1,76 @@
 # Bisect Positioning Strategy
 
+## The Core Thesis: The Creative Precision Stack
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    THE CREATIVE PRECISION STACK                          │
+│              Blender Power + ComfyUI Workflows + Visual Interface        │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│                         ┌──────────────┐                                 │
+│                         │   BISECT     │                                 │
+│                         │  (The Glue)  │                                 │
+│                         └───────┬──────┘                                 │
+│                                 │                                        │
+│               ┌─────────────────┼─────────────────┐                      │
+│               │                 │                 │                      │
+│               ▼                 ▼                 ▼                      │
+│      ┌─────────────┐   ┌─────────────┐   ┌─────────────┐                │
+│      │  BLENDER    │   │  COMFYUI    │   │   BISECT    │                │
+│      │   (MCP)     │◄─►│  (Workflows)│◄─►│  (Studios)  │                │
+│      │             │   │             │   │             │                │
+│      │ • Materials │   │ • Textures  │   │ • Vector    │                │
+│      │ • Rendering │   │ • Video Gen │   │ • 3D Scene  │                │
+│      │ • Physics   │   │ • Upscaling │   │ • Audio     │                │
+│      │ • Animation │   │ • ControlNet│   │ • Export    │                │
+│      │ • Geometry  │   │ • IP-Adapter│   │ • Configure │                │
+│      └─────────────┘   └─────────────┘   └─────────────┘                │
+│               │                 │                 │                      │
+│               └─────────────────┴─────────────────┘                      │
+│                                 │                                        │
+│                     ┌───────────▼───────────┐                            │
+│                     │   EVERYDAY CREATOR    │                            │
+│                     │  (No nodes, no code)  │                            │
+│                     └───────────────────────┘                            │
+│                                                                          │
+│   THE UNLOCK: Pro-level 3D + GenAI pipelines WITHOUT the complexity     │
+│                                                                          │
+│   Today's Reality:                                                       │
+│   • Blender users → Powerful but steep learning curve                   │
+│   • ComfyUI users → Powerful but node complexity                        │
+│   • Everyday creators → Locked out of both                              │
+│                                                                          │
+│   Bisect's Role:                                                         │
+│   • Bridge TO Blender (not replace it)                                  │
+│   • Orchestrate ComfyUI (hide the nodes)                                │
+│   • Deliver BOTH to creators who want results, not pipelines            │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Why This Matters
+
+**The Gap No One Is Filling:**
+- Blender + ComfyUI together = incredible creative power
+- But: Requires expertise in BOTH systems
+- But: No unified interface exists
+- But: Everyday creators can't access this power
+
+**Bisect Is The Glue:**
+| Component | What It Provides | How Bisect Uses It |
+|-----------|------------------|-------------------|
+| **Blender MCP** | Pro 3D rendering, materials, physics | Live bridge - real-time sync |
+| **ComfyUI** | GenAI workflows, textures, video | Backend orchestration - visual triggers |
+| **Bisect Studios** | Visual interface, cross-domain pipeline | The unified experience |
+
+**The Creative Opportunities Unlocked:**
+1. "Generate a texture" → ComfyUI runs → Apply in Blender → Preview in Bisect
+2. "Render this angle" → Bisect sends to Blender MCP → Returns in seconds
+3. "Make a video" → Scene from Bisect → ComfyUI AnimateDiff → Audio Hub sync
+4. "Create variations" → One design → ComfyUI IP-Adapter → 10 outputs
+
+---
+
 ## The Positioning Matrix
 
 ```
@@ -156,11 +227,108 @@
 4. **Developer exports** - React, Three.js, code
 
 ### Build (Gaps to Fill)
-1. **Video Studio** - Complete the pipeline
-2. **Audio Hub** - Music/SFX library + AI generation (can't ship videos without audio)
-3. **ComfyUI integration** - Leverage node workflows without complexity
+1. **ComfyUI integration** - THE KEY - Leverage node workflows without complexity
+2. **Video Studio** - Complete the pipeline (uses ComfyUI for generation)
+3. **Audio Hub** - Music/SFX library + AI generation (can't ship videos without audio)
 4. **CLI tools** - Developer experience like Cursor
 5. **Hyper3D/Meshy** - AI 3D generation in pipeline
+
+---
+
+## The Integration Architecture
+
+### Blender MCP + ComfyUI + Bisect Flow
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                         EXAMPLE WORKFLOW                                  │
+│                    "Create a Product Video"                               │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  USER ACTION              BISECT                BACKEND                   │
+│  ───────────────────────────────────────────────────────────────────────  │
+│                                                                           │
+│  1. Upload logo      →    Vector Studio    →    (stores SVG)             │
+│                           ↓                                               │
+│  2. "Make it 3D"     →    AI Agent         →    Blender MCP              │
+│                           ↓                     (extrude, bevel)          │
+│  3. "Gold material"  →    Material System  →    Blender MCP              │
+│                           ↓                     (PBR shader)              │
+│  4. "Generate        →    Texture Studio   →    ComfyUI                  │
+│      marble base"         ↓                     (Stable Diffusion)       │
+│  5. "Render preview" →    3D Studio        →    Blender MCP              │
+│                           ↓                     (Cycles render)           │
+│  6. "Animate spin"   →    Animation        →    Blender MCP              │
+│                           ↓                     (keyframes)               │
+│  7. "Make video"     →    Video Studio     →    ComfyUI                  │
+│                           ↓                     (AnimateDiff/SVD)         │
+│  8. "Add music"      →    Audio Hub        →    Suno API                 │
+│                           ↓                     (AI music gen)            │
+│  9. Export           →    Export Hub       →    Final video + React      │
+│                                                                           │
+│  ───────────────────────────────────────────────────────────────────────  │
+│  User touched: 9 buttons                                                  │
+│  Systems orchestrated: 4 (Bisect, Blender, ComfyUI, Suno)                │
+│  Complexity hidden: 100%                                                  │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+### ComfyUI Workflows We Orchestrate
+
+| Workflow | User Sees | ComfyUI Does |
+|----------|-----------|--------------|
+| **Texture Generation** | "Generate marble texture" | SD + ControlNet tiling |
+| **Material Variations** | "10 color variations" | IP-Adapter + batch |
+| **Video from Scene** | "Make it move" | AnimateDiff / SVD |
+| **Upscaling** | "Higher quality" | ESRGAN / RealESRGAN |
+| **Style Transfer** | "Make it cyberpunk" | ControlNet + LoRA |
+| **Background Removal** | "Remove background" | Segment Anything |
+| **Depth Maps** | "Add depth" | MiDaS / Depth Anything |
+| **Normal Maps** | "Generate normals" | Normal-from-diffuse |
+
+### Blender MCP Operations
+
+| Operation | User Sees | Blender Does |
+|-----------|-----------|--------------|
+| **Render** | "Render this" | Cycles/EEVEE render |
+| **Materials** | "Gold finish" | PBR node setup |
+| **Geometry** | "Bevel edges" | Modifier stack |
+| **Animation** | "Spin 360°" | Keyframe animation |
+| **Physics** | "Add physics" | Rigid body sim |
+| **Export** | "Download GLB" | GLTF export |
+| **Lighting** | "Studio lighting" | HDRI + area lights |
+
+### The Competitive Moat
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                       WHY THIS IS HARD TO COPY                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  1. BLENDER MCP BRIDGE                                                   │
+│     • We built the integration                                           │
+│     • Live bidirectional sync                                            │
+│     • No competitor has this                                             │
+│                                                                          │
+│  2. COMFYUI ORCHESTRATION                                                │
+│     • Pre-built workflow library                                         │
+│     • Visual triggers (not nodes)                                        │
+│     • Error handling + retry logic                                       │
+│     • Queue management                                                   │
+│                                                                          │
+│  3. CROSS-DOMAIN STATE                                                   │
+│     • Vector → 3D → Video unified                                        │
+│     • Shared material system                                             │
+│     • Single project context                                             │
+│                                                                          │
+│  4. AI AGENT LAYER                                                       │
+│     • Natural language to actions                                        │
+│     • Multi-system routing                                               │
+│     • Context-aware suggestions                                          │
+│                                                                          │
+│  TIME TO REPLICATE: 12-18 months of integration work                     │
+└─────────────────────────────────────────────────────────────────────────┘
+```
 
 ### Avoid (Not Our Game)
 1. Feature parity with Blender (we bridge, not replace)
