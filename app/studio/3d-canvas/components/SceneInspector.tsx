@@ -4,17 +4,17 @@ import { useState } from 'react';
 import { MaterialSelector } from './MaterialSelector';
 import ObjectEditor from './ObjectEditor';
 import EnvironmentControls from './EnvironmentControls';
-import EffectsControls from './EffectsControls';
+import EventsPanel from './EventsPanel';
 import { SceneEnvironment, EnvironmentPreset } from '@/lib/core/materials/types';
 
 /**
  * SceneInspector - 3D Canvas Control Panel
  *
- * Tabbed interface for Material, Object, Animation, and Scene controls
- * Simplified structure: only functional containers
+ * Tabbed interface for Material, Object, Animation, Scene, and Events controls
+ * 5 solid, focused panels for professional 3D editing
  */
 
-type TabId = 'material' | 'object' | 'animation' | 'scene' | 'effects';
+type TabId = 'material' | 'object' | 'animation' | 'scene' | 'events';
 
 interface TabConfig {
   id: TabId;
@@ -24,9 +24,9 @@ interface TabConfig {
 const tabs: TabConfig[] = [
   { id: 'material', label: 'Material' },
   { id: 'object', label: 'Object' },
-  { id: 'animation', label: 'Animation' },
+  { id: 'animation', label: 'Animate' },
   { id: 'scene', label: 'Scene' },
-  { id: 'effects', label: 'Effects' },
+  { id: 'events', label: 'Events' },
 ];
 
 interface SceneInspectorProps {
@@ -109,10 +109,10 @@ export default function SceneInspector({ onTabChange, environment, onEnvironment
           </>
         )}
 
-        {activeTab === 'effects' && (
+        {activeTab === 'events' && (
           <>
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Visual Effects</h3>
-            <EffectsControls />
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">Events & Effects</h3>
+            <EventsPanel />
           </>
         )}
       </div>

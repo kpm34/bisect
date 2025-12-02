@@ -27,11 +27,32 @@ type SemanticSceneGraph = import('@/lib/core/ai/scene-graph-builder').SemanticSc
 // Unified bridge port (shared with Blender Addon and AI agents)
 const UNIFIED_BRIDGE_PORT = 9877;
 
-// Protocol types (mirror mcp-server/protocol.js)
+// Protocol types (unified protocol - mirrors bridge-server/unified-protocol.js)
 const MessageType = {
+  // Legacy types (uppercase for backwards compat)
   REQUEST: 'REQUEST',
   RESPONSE: 'RESPONSE',
   CLI_COMMAND: 'CLI_COMMAND',
+
+  // Unified bridge types (lowercase to match unified-protocol.js)
+  JOIN: 'join',
+  LEAVE: 'leave',
+  SCENE_STATE: 'scene_state',
+  SCENE_REQUEST: 'scene_request',
+  OBJECT_SELECT: 'object_select',
+  TRANSFORM: 'transform',
+
+  // AI Orchestration types (Gemini routes, specialists execute)
+  AI_ROUTE: 'ai_route',
+  AI_ROUTE_RESULT: 'ai_route_result',
+  AI_SPECIALIST_EXECUTE: 'ai_specialist_execute',
+  AI_SPECIALIST_RESULT: 'ai_specialist_result',
+
+  // AI Debate types (multi-model reasoning)
+  AI_DEBATE_START: 'ai_debate_start',
+  AI_DEBATE_PROPOSAL: 'ai_debate_proposal',
+  AI_DEBATE_ROUND: 'ai_debate_round',
+  AI_DEBATE_RESULT: 'ai_debate_result',
 } as const;
 
 const OperationType = {
@@ -68,7 +89,57 @@ interface LegacyMessage {
   command: LegacyCommand;
 }
 
-type MCPMessage = MCPRequest | LegacyMessage;
+// Unified protocol message interfaces
+interface UnifiedMeta {
+  sessionId: string;
+  source?: string;
+  timestamp: number;
+}
+
+interface UnifiedMessage {
+  type: string;
+  payload: Record<string, unknown>;
+  meta: UnifiedMeta;
+}
+
+interface SceneStateMessage extends UnifiedMessage {
+  type: 'scene_state';
+  payload: {
+    objects: Array<{
+      id: string;
+      name: string;
+      type: string;
+      position: [number, number, number];
+      rotation: [number, number, number];
+      scale: [number, number, number];
+    }>;
+    activeObject?: string;
+  };
+}
+
+interface AIRouteResultMessage extends UnifiedMessage {
+  type: 'ai_route_result';
+  payload: {
+    selectedAgent: 'gpt4o' | 'gemini' | 'claude';
+    reason: string;
+    confidence: number;
+    needsDebate: boolean;
+    sceneAnalysis?: Record<string, unknown>;
+  };
+}
+
+interface AISpecialistResultMessage extends UnifiedMessage {
+  type: 'ai_specialist_result';
+  payload: {
+    specialist: string;
+    success: boolean;
+    plan?: Record<string, unknown>;
+    error?: string;
+    tokensUsed?: number;
+  };
+}
+
+type MCPMessage = MCPRequest | LegacyMessage | UnifiedMessage;
 
 // Scene context interface
 interface SceneContext {
@@ -174,21 +245,21 @@ class MCPBridgeHandler {
         this.reconnectAttempts = 0;
 
         // Register with unified bridge as 'bisect' client type
-        // Uses unified protocol JOIN message
+        // Uses unified protocol join message (lowercase)
         const joinMessage = {
-          type: 'JOIN',
+          type: 'join',
           payload: {
             clientType: 'bisect',
             clientId: `bisect-web-${Date.now()}`,
             capabilities: ['scene', 'materials', 'ai'],
           },
           meta: {
-            sessionId: 'default',
+            sessionId: 'my-scene',
             timestamp: Date.now(),
           },
         };
         this.socket?.send(JSON.stringify(joinMessage));
-        console.log('[MCP Bridge] Joined unified bridge as bisect client');
+        console.log('[MCP Bridge] Joined unified bridge as bisect client (session: my-scene)');
 
         this.emit('connected', {});
       };
@@ -246,23 +317,104 @@ class MCPBridgeHandler {
       return;
     }
 
-    console.log('[MCP Bridge] Received:', message.type, (message as MCPRequest).operation || '');
+    const messageType = message.type;
+    console.log('[MCP Bridge] Received:', messageType, (message as MCPRequest).operation || '');
 
-    // Handle request-response messages
-    if (message.type === MessageType.REQUEST) {
+    // Handle request-response messages (legacy)
+    if (messageType === MessageType.REQUEST) {
       const request = message as MCPRequest;
       await this.handleRequest(request);
       return;
     }
 
     // Handle legacy CLI_COMMAND messages
-    if (message.type === MessageType.CLI_COMMAND) {
+    if (messageType === MessageType.CLI_COMMAND) {
       const legacyMessage = message as LegacyMessage;
       this.handleLegacyCommand(legacyMessage.command);
       return;
     }
 
-    console.warn('[MCP Bridge] Unknown message type:', (message as { type?: string }).type);
+    // Handle unified protocol messages
+    switch (messageType) {
+      case MessageType.SCENE_STATE:
+        // Scene state from Blender - update local scene context
+        this.handleSceneState(message as SceneStateMessage);
+        break;
+
+      case MessageType.OBJECT_SELECT:
+        // Object selection from Blender
+        this.handleObjectUpdate(message as UnifiedMessage);
+        break;
+
+      case MessageType.TRANSFORM:
+        // Transform update from Blender
+        this.handleObjectUpdate(message as UnifiedMessage);
+        break;
+
+      case MessageType.AI_ROUTE_RESULT:
+        // Gemini orchestrator routing result
+        this.emit('ai-route-result', (message as AIRouteResultMessage).payload);
+        break;
+
+      case MessageType.AI_SPECIALIST_EXECUTE:
+        // Request to execute in Bisect (from AI agent)
+        await this.handleSpecialistExecute(message as UnifiedMessage);
+        break;
+
+      case MessageType.AI_SPECIALIST_RESULT:
+        // Specialist execution result (from Claude/Blender)
+        this.emit('ai-specialist-result', (message as AISpecialistResultMessage).payload);
+        break;
+
+      case MessageType.AI_DEBATE_START:
+      case MessageType.AI_DEBATE_PROPOSAL:
+      case MessageType.AI_DEBATE_ROUND:
+      case MessageType.AI_DEBATE_RESULT:
+        // Debate mode messages - emit to UI
+        this.emit('ai-debate', { type: messageType, payload: (message as UnifiedMessage).payload });
+        break;
+
+      default:
+        console.log('[MCP Bridge] Unhandled message type:', messageType);
+    }
+  }
+
+  /**
+   * Handle scene state updates from Blender
+   */
+  private handleSceneState(message: SceneStateMessage): void {
+    console.log('[MCP Bridge] Scene state from Blender:', message.payload.objects?.length, 'objects');
+    this.emit('scene-state', message.payload);
+  }
+
+  /**
+   * Handle object updates from Blender
+   */
+  private handleObjectUpdate(message: UnifiedMessage): void {
+    console.log('[MCP Bridge] Object update from Blender:', message.payload);
+    this.emit('object-update', message.payload);
+  }
+
+  /**
+   * Handle specialist execute request (AI agent wants Bisect to do something)
+   */
+  private async handleSpecialistExecute(message: UnifiedMessage): Promise<void> {
+    const { specialist, command, plan } = message.payload as {
+      specialist: string;
+      command: string;
+      plan?: Record<string, unknown>;
+    };
+
+    console.log(`[MCP Bridge] Specialist execute request from ${specialist}:`, command);
+
+    // Emit for UI handling (React components will execute)
+    this.emit('specialist-execute', { specialist, command, plan });
+
+    // If this is for materials/scene editing, route through AI
+    if (specialist === 'gpt4o' && plan) {
+      // Execute material commands locally
+      this.emit('execute-plan', plan);
+    }
   }
 
   /**
@@ -615,6 +767,89 @@ class MCPBridgeHandler {
   }
 
   /**
+   * Send AI routing request through unified bridge
+   * Gemini 3 will analyze and route to the appropriate specialist
+   */
+  requestAIRoute(command: string, options?: {
+    screenshot?: string;
+    forceDebate?: boolean;
+  }): void {
+    if (!this.socket || !this.isConnected) {
+      console.error('[MCP Bridge] Cannot request AI route - not connected');
+      return;
+    }
+
+    const message = {
+      type: MessageType.AI_ROUTE,
+      payload: {
+        command,
+        screenshot: options?.screenshot,
+        forceDebate: options?.forceDebate || false,
+        sceneContext: this.extractSceneData(),
+      },
+      meta: {
+        sessionId: 'my-scene',
+        source: 'bisect',
+        timestamp: Date.now(),
+      },
+    };
+
+    console.log('[MCP Bridge] Requesting AI route for:', command);
+    this.socket.send(JSON.stringify(message));
+  }
+
+  /**
+   * Sync local scene state to the unified bridge
+   * This allows Blender and other clients to see the current state
+   */
+  syncSceneState(): void {
+    if (!this.socket || !this.isConnected) {
+      console.error('[MCP Bridge] Cannot sync scene - not connected');
+      return;
+    }
+
+    const sceneData = this.extractSceneData();
+    const message = {
+      type: MessageType.SCENE_STATE,
+      payload: {
+        objects: sceneData.objects,
+        activeObject: this.sceneContext.selectedObject?.uuid,
+      },
+      meta: {
+        sessionId: 'my-scene',
+        source: 'bisect',
+        timestamp: Date.now(),
+      },
+    };
+
+    console.log('[MCP Bridge] Syncing scene state:', sceneData.objects.length, 'objects');
+    this.socket.send(JSON.stringify(message));
+  }
+
+  /**
+   * Request scene state from Blender
+   */
+  requestBlenderScene(): void {
+    if (!this.socket || !this.isConnected) {
+      console.error('[MCP Bridge] Cannot request Blender scene - not connected');
+      return;
+    }
+
+    const message = {
+      type: MessageType.SCENE_REQUEST,
+      payload: {},
+      meta: {
+        sessionId: 'my-scene',
+        source: 'bisect',
+        timestamp: Date.now(),
+      },
+    };
+
+    console.log('[MCP Bridge] Requesting Blender scene');
+    this.socket.send(JSON.stringify(message));
+  }
+
+  /**
    * Set scene context (called by React components)
    */
   setSceneContext(context: Partial<SceneContext>): void {
@@ -697,6 +932,12 @@ export const mcpBridgeHandler = {
   on: (event: string, callback: (data: unknown) => void) => getMCPBridgeHandler().on(event, callback),
   off: (event: string, callback: (data: unknown) => void) => getMCPBridgeHandler().off(event, callback),
   get connected() { return _mcpBridgeHandler?.connected ?? false; },
+
+  // New unified bridge methods
+  requestAIRoute: (command: string, options?: { screenshot?: string; forceDebate?: boolean }) =>
+    getMCPBridgeHandler().requestAIRoute(command, options),
+  syncSceneState: () => getMCPBridgeHandler().syncSceneState(),
+  requestBlenderScene: () => getMCPBridgeHandler().requestBlenderScene(),
 };
 
 // Convenience init function

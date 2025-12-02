@@ -2,11 +2,22 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSelection } from '../r3f/SceneSelectionContext';
-import { Box, Circle, Cylinder, Type, Move, Rotate3d, Scaling, Scissors, Layers, MousePointerClick, Maximize, PenTool } from 'lucide-react';
+import { Box, Move, Maximize, Scissors, PenTool } from 'lucide-react';
 import * as THREE from 'three';
 import { Brush, Evaluator, SUBTRACTION, ADDITION, INTERSECTION } from 'three-bvh-csg';
 
-type EditorTab = 'transform' | 'geometry' | 'boolean' | 'path' | 'physics' | 'events';
+/**
+ * ObjectEditor - Full object editing controls
+ *
+ * 5-tab interface:
+ * - Transform: Position, Rotation, Scale
+ * - Geometry: Extrusion & Bevel
+ * - Physics: Enable/disable, type, mass, restitution
+ * - Boolean: Union, Subtract, Intersect operations
+ * - Path: Vertex editing (coming soon)
+ */
+
+type EditorTab = 'transform' | 'geometry' | 'physics' | 'boolean' | 'path';
 
 export default function ObjectEditor() {
     const { selectedObject, setPosition, setRotation, setScale, r3fScene, addedObjects, updateObject } = useSelection();
@@ -57,19 +68,10 @@ export default function ObjectEditor() {
     const handleExtrude = () => {
         if (!selectedObject) return;
 
-        // Check if object is a shape/path that can be extruded
-        // This is a simplified implementation assuming we can replace the geometry
         if ((selectedObject as any).geometry) {
-            // In a real implementation, we'd need to check if the geometry is derived from a shape
-            // For now, we'll log a placeholder action
             console.log(`Extruding ${selectedObject.name} by ${extrudeDepth}`);
-
-            // If it's a Mesh with ShapeGeometry, we can convert to ExtrudeGeometry
             const mesh = selectedObject as THREE.Mesh;
             if (mesh.geometry.type === 'ShapeGeometry') {
-                const shapeGeometry = mesh.geometry as THREE.ShapeGeometry;
-                // We need access to the original shapes, which might be lost in the geometry
-                // This often requires storing metadata on the object
                 console.warn('Extrusion requires original Shape data');
             }
         }
@@ -86,11 +88,9 @@ export default function ObjectEditor() {
             return;
         }
 
-        // Perform CSG
         sourceObj.updateMatrixWorld();
         targetObj.updateMatrixWorld();
 
-        // Create Brushes
         const brushA = new Brush(sourceObj.geometry, sourceObj.material);
         brushA.position.copy(sourceObj.position);
         brushA.rotation.copy(sourceObj.rotation);
@@ -113,12 +113,9 @@ export default function ObjectEditor() {
         if (resultBrush) {
             const resultMesh = new THREE.Mesh(resultBrush.geometry, sourceObj.material);
             resultMesh.name = `${sourceObj.name}-${booleanOp}-${targetObj.name}`;
-
-            // Add result to scene and remove originals (or hide them)
             sourceObj.parent?.add(resultMesh);
             sourceObj.visible = false;
             targetObj.visible = false;
-
             console.log('Boolean operation complete');
         }
     };
@@ -134,7 +131,7 @@ export default function ObjectEditor() {
 
     return (
         <div className="flex flex-col h-full">
-            {/* Tab Navigation */}
+            {/* Tab Navigation - 5 sub-tabs */}
             <div className="flex border-b border-gray-200 mb-4">
                 <button
                     onClick={() => setActiveTab('transform')}
@@ -156,13 +153,6 @@ export default function ObjectEditor() {
                     title="Physics"
                 >
                     <Box size={16} />
-                </button>
-                <button
-                    onClick={() => setActiveTab('events')}
-                    className={`p-2 flex-1 flex justify-center ${activeTab === 'events' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-500'}`}
-                    title="Events"
-                >
-                    <MousePointerClick size={16} />
                 </button>
                 <button
                     onClick={() => setActiveTab('boolean')}
@@ -314,109 +304,6 @@ export default function ObjectEditor() {
                         ) : (
                             <div className="p-4 bg-yellow-50 text-yellow-800 text-xs rounded">
                                 Physics editing is currently only supported for added shapes (Box, Sphere, Plane).
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* EVENTS TAB */}
-                {activeTab === 'events' && (
-                    <div className="space-y-4">
-                        <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Events & Actions</h4>
-
-                        {selectedObject && (selectedObject.userData as any).isAddedObject ? (
-                            <>
-                                {/* Event List */}
-                                <div className="space-y-2">
-                                    {addedObjects.find(o => o.id === (selectedObject.userData as any).id)?.events.map((event, index) => (
-                                        <div key={event.id} className="bg-gray-50 p-3 rounded border border-gray-200 relative group">
-                                            <button
-                                                className="absolute top-2 right-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                onClick={() => {
-                                                    const id = (selectedObject.userData as any).id;
-                                                    const obj = addedObjects.find(o => o.id === id);
-                                                    if (obj) {
-                                                        const newEvents = obj.events.filter(e => e.id !== event.id);
-                                                        updateObject(id, { events: newEvents });
-                                                    }
-                                                }}
-                                            >
-                                                <Scissors size={12} />
-                                            </button>
-
-                                            <div className="space-y-2">
-                                                <div>
-                                                    <label className="text-[10px] text-gray-500 uppercase font-bold">Trigger</label>
-                                                    <select
-                                                        className="w-full px-2 py-1 text-xs border rounded mt-1"
-                                                        value={event.trigger}
-                                                        onChange={(e) => {
-                                                            const id = (selectedObject.userData as any).id;
-                                                            const obj = addedObjects.find(o => o.id === id);
-                                                            if (obj) {
-                                                                const newEvents = [...obj.events];
-                                                                newEvents[index] = { ...event, trigger: e.target.value as any };
-                                                                updateObject(id, { events: newEvents });
-                                                            }
-                                                        }}
-                                                    >
-                                                        <option value="start">Start</option>
-                                                        <option value="click">Mouse Click</option>
-                                                        <option value="hover">Mouse Hover</option>
-                                                        <option value="collision">Collision</option>
-                                                    </select>
-                                                </div>
-
-                                                <div>
-                                                    <label className="text-[10px] text-gray-500 uppercase font-bold">Action</label>
-                                                    <select
-                                                        className="w-full px-2 py-1 text-xs border rounded mt-1"
-                                                        value={event.action}
-                                                        onChange={(e) => {
-                                                            const id = (selectedObject.userData as any).id;
-                                                            const obj = addedObjects.find(o => o.id === id);
-                                                            if (obj) {
-                                                                const newEvents = [...obj.events];
-                                                                newEvents[index] = { ...event, action: e.target.value as any };
-                                                                updateObject(id, { events: newEvents });
-                                                            }
-                                                        }}
-                                                    >
-                                                        <option value="scale">Scale Up</option>
-                                                        <option value="color">Random Color</option>
-                                                        <option value="move">Move Up</option>
-                                                        <option value="destroy">Destroy Object</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Add Event Button */}
-                                <button
-                                    className="w-full py-2 border-2 border-dashed border-gray-300 rounded text-gray-500 text-xs hover:border-blue-500 hover:text-blue-500 transition-colors flex items-center justify-center gap-2"
-                                    onClick={() => {
-                                        const id = (selectedObject.userData as any).id;
-                                        const obj = addedObjects.find(o => o.id === id);
-                                        if (obj) {
-                                            const newEvent = {
-                                                id: Math.random().toString(36).substr(2, 9),
-                                                trigger: 'click' as const,
-                                                action: 'scale' as const,
-                                                parameters: {}
-                                            };
-                                            updateObject(id, { events: [...obj.events, newEvent] });
-                                        }
-                                    }}
-                                >
-                                    <MousePointerClick size={14} />
-                                    Add Event
-                                </button>
-                            </>
-                        ) : (
-                            <div className="p-4 bg-yellow-50 text-yellow-800 text-xs rounded">
-                                Events are currently only supported for added shapes.
                             </div>
                         )}
                     </div>

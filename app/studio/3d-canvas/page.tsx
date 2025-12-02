@@ -71,93 +71,130 @@ export default function EditorPage() {
  * - Works with both Spline and GLTF scenes
  */
 /**
- * MCPBridgeConnector - Connects the MCP bridge to the scene context
+ * UnifiedBridgeConnector - Connects to the Unified Bridge (port 9877)
+ * Uses the useUnifiedBridge hook for auto-reconnection and real-time sync
  * Must be inside SelectionProvider to access scene/renderer
  */
-function MCPBridgeConnector() {
-  const { r3fScene, r3fRenderer, selectedObject, addedObjects, addObject } = useSelection();
-  const [bridgeReady, setBridgeReady] = useState(false);
-  const mcpBridgeHandlerRef = useRef<any>(null);
+function UnifiedBridgeConnector() {
+  const { r3fScene, r3fRenderer, selectedObject, addedObjects, addObject, setSelectedObject } = useSelection();
 
-  // Initialize MCP bridge on mount (client-side only) - delayed to not block page load
-  useEffect(() => {
-    // Delay initialization to let page render first
-    const timeoutId = setTimeout(() => {
-      const initBridge = async () => {
-        try {
-          // Dynamic import on client side
-          const mod = await import('@/lib/services/mcp-bridge-handler');
-          mcpBridgeHandlerRef.current = mod.mcpBridgeHandler;
-          const initMCPBridge = mod.initMCPBridge;
+  // Use the unified bridge hook with auto-connect and auto-reconnect
+  const bridge = useUnifiedBridge({
+    sessionId: 'my-scene', // Match Blender's session ID
+    autoConnect: true,
 
-          console.log('🔌 Initializing MCP Bridge...');
-          await initMCPBridge({
-            openaiApiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-          });
-          setBridgeReady(true);
-          console.log('🔌 MCP Bridge ready');
-        } catch (err) {
-          console.warn('⚠️ MCP Bridge init failed:', err);
-        }
-      };
+    // Connection events
+    onConnect: () => {
+      console.log('🔌 Unified Bridge connected to port 9877');
+    },
 
-      initBridge();
-    }, 2000); // Wait 2 seconds after page load
+    onDisconnect: () => {
+      console.log('🔌 Unified Bridge disconnected (will auto-reconnect)');
+    },
 
-    return () => {
-      clearTimeout(timeoutId);
-      if (mcpBridgeHandlerRef.current) {
-        console.log('🔌 Disconnecting MCP Bridge...');
-        mcpBridgeHandlerRef.current.disconnect();
-      }
-    };
-  }, []);
+    // Scene state from Blender
+    onSceneState: (state) => {
+      console.log('🔌 Scene state from Blender:', state.objects?.length || 0, 'objects');
+      // TODO: Sync Blender objects into Three.js scene
+    },
 
-  // Update bridge with scene context when it changes
-  useEffect(() => {
-    if (!bridgeReady || !mcpBridgeHandlerRef.current) return;
-
-    mcpBridgeHandlerRef.current.setSceneContext({
-      scene: r3fScene as any,
-      renderer: r3fRenderer as any,
-      selectedObject: selectedObject as any,
-      addedObjects: addedObjects.map((obj) => ({
-        id: obj.id,
-        type: obj.type,
-        name: obj.name,
-        position: obj.position,
-        color: obj.color,
-      })),
-    });
-  }, [bridgeReady, r3fScene, r3fRenderer, selectedObject, addedObjects]);
-
-  // Set up legacy command callbacks
-  useEffect(() => {
-    if (!bridgeReady || !mcpBridgeHandlerRef.current) return;
-
-    mcpBridgeHandlerRef.current.setLegacyCallbacks({
-      onAddObject: (type: string) => {
-        console.log('🔌 MCP: Adding object:', type);
-        addObject(type as any);
-      },
-      onUpdateObject: (updates: any) => {
-        console.log('🔌 MCP: Updating object:', updates);
-        // Update selected object if we have one
-        if (selectedObject) {
-          // Handle color updates directly on Three.js mesh
-          if (updates.color && typeof updates.color === 'string') {
-            selectedObject.traverse((child: any) => {
-              if (child.isMesh && child.material?.color) {
-                child.material.color.set(updates.color as string);
-              }
-            });
+    // Transform updates from Blender
+    onTransform: (objectId, transform) => {
+      console.log('🔌 Transform update:', objectId, transform.position);
+      // Find and update object in Three.js scene
+      if (r3fScene) {
+        r3fScene.traverse((child: any) => {
+          if (child.uuid === objectId || child.name === objectId) {
+            child.position.set(...transform.position);
+            if (transform.rotation) {
+              child.quaternion.set(...transform.rotation);
+            }
+            if (transform.scale) {
+              child.scale.set(...transform.scale);
+            }
           }
-        }
-      },
-    });
-  }, [bridgeReady, addObject, selectedObject]);
+        });
+      }
+    },
 
-  return null; // This is a connector component, no UI
+    // Object selection from Blender
+    onObjectSelect: (objectIds) => {
+      console.log('🔌 Selection from Blender:', objectIds);
+      // Find and select object in Three.js scene
+      if (r3fScene && objectIds.length > 0) {
+        r3fScene.traverse((child: any) => {
+          if (child.uuid === objectIds[0] || child.name === objectIds[0]) {
+            setSelectedObject(child);
+          }
+        });
+      }
+    },
+
+    // Object added from Blender
+    onObjectAdd: (object) => {
+      console.log('🔌 Object added from Blender:', object.name);
+      // TODO: Create corresponding object in Three.js
+    },
+
+    // Object deleted from Blender
+    onObjectDelete: (objectId) => {
+      console.log('🔌 Object deleted from Blender:', objectId);
+      // TODO: Remove corresponding object from Three.js
+    },
+
+    // Material changes from Blender
+    onMaterialAssign: (objectId, materialId) => {
+      console.log('🔌 Material assigned:', objectId, materialId);
+    },
+
+    onMaterialUpdate: (materialId, properties) => {
+      console.log('🔌 Material updated:', materialId, properties);
+    },
+
+    // AI responses
+    onSmartEditResult: (result) => {
+      console.log('🔌 Smart edit result:', result);
+    },
+
+    // Client events
+    onClientJoined: (clientType, info) => {
+      console.log(`🔌 ${clientType} joined (B:${info.blender} W:${info.bisect} AI:${info.ai})`);
+    },
+
+    onClientLeft: (clientType, info) => {
+      console.log(`🔌 ${clientType} left (B:${info.blender} W:${info.bisect} AI:${info.ai})`);
+    },
+
+    onError: (error) => {
+      console.error('🔌 Bridge error:', error);
+    },
+  });
+
+  // Request scene when connected
+  useEffect(() => {
+    if (bridge.connected) {
+      bridge.requestScene();
+    }
+  }, [bridge.connected, bridge.requestScene]);
+
+  // Sync selection to Blender when it changes in Bisect
+  useEffect(() => {
+    if (bridge.connected && selectedObject) {
+      bridge.sendSelection([selectedObject.uuid || selectedObject.name]);
+    }
+  }, [bridge.connected, selectedObject, bridge.sendSelection]);
+
+  // Show connection status indicator
+  return (
+    <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-sm text-xs">
+      <div className={`w-2 h-2 rounded-full ${bridge.connected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+      <span className="text-white/80">
+        {bridge.connected
+          ? `Synced ${bridge.sessionInfo ? `(B:${bridge.sessionInfo.blender} W:${bridge.sessionInfo.bisect})` : ''}`
+          : 'Connecting...'}
+      </span>
+    </div>
+  );
 }
 
 function EditorContent() {
@@ -353,8 +390,8 @@ function EditorContent() {
 
   return (
     <SelectionProvider>
-      {/* MCP Bridge Connector - connects to ws://localhost:8080 for Claude Code integration */}
-      <MCPBridgeConnector />
+      {/* Unified Bridge Connector - connects to ws://localhost:9877 for Blender + AI orchestration */}
+      <UnifiedBridgeConnector />
       <Shell
         rightPanel={
           <div

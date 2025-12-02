@@ -677,13 +677,13 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     height: '100%',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#2d2d2d',
     overflow: 'visible', // Allow material popups to overflow container
   },
 
   header: {
     padding: '16px 24px',
-    borderBottom: '1px solid #2a2a2a',
+    borderBottom: '1px solid #3d3d3d',
   },
 
   title: {
@@ -698,18 +698,18 @@ const styles: Record<string, React.CSSProperties> = {
   subtitle: {
     margin: '4px 0 0',
     fontSize: '12px',
-    color: '#a1a1a1',
+    color: '#b0b0b0',
   },
 
   subtitleInactive: {
     margin: '4px 0 0',
     fontSize: '12px',
-    color: '#6b6b6b',
+    color: '#808080',
   },
 
   divider: {
     height: '1px',
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#3d3d3d',
   },
 
   section: {
@@ -719,14 +719,14 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '16px',
     padding: '24px',
     overflow: 'visible', // Allow material popups to overflow
-    backgroundColor: '#141414',
+    backgroundColor: '#262626',
   },
 
   sectionTitle: {
     margin: 0,
     fontSize: '11px',
     fontWeight: 600,
-    color: '#6b6b6b',
+    color: '#909090',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
   },
@@ -856,8 +856,8 @@ const styles: Record<string, React.CSSProperties> = {
 
   footer: {
     padding: '12px 24px',
-    borderTop: '1px solid #2a2a2a',
-    backgroundColor: '#1a1a1a',
+    borderTop: '1px solid #3d3d3d',
+    backgroundColor: '#2d2d2d',
   },
 };
 
