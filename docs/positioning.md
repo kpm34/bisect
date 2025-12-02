@@ -273,6 +273,18 @@
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
+### The Killer Workflows This Unlocks
+
+| Workflow | Description | Who Wants This |
+|----------|-------------|----------------|
+| **3D-aware ControlNet** | Blender depth/normal maps → ComfyUI → consistent AI generation | VFX artists, game devs |
+| **AI Texture Baking** | Generate in ComfyUI → auto-apply as PBR material in Blender | 3D artists |
+| **Consistent Characters** | 3D model as "ground truth" → AI variations that match | Animators, game devs |
+| **AI Video with 3D Camera** | Blender camera path → ComfyUI video gen with motion control | Motion designers |
+| **Iterative Refinement** | ComfyUI inpaint → Blender update → re-render loop | Everyone |
+| **Style Transfer to 3D** | 2D concept art → ComfyUI processing → Blender material/lighting match | Concept artists |
+| **Batch Asset Generation** | One Blender model → 100 AI variations via ComfyUI | Game studios, e-commerce |
+
 ### ComfyUI Workflows We Orchestrate
 
 | Workflow | User Sees | ComfyUI Does |
