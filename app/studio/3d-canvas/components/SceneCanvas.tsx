@@ -113,16 +113,8 @@ export default function R3FCanvas({
           far={1000}
         />
 
-        {/* Lighting Setup */}
-        <ambientLight intensity={0.4} />
-        <directionalLight
-          position={[10, 10, 5]}
-          intensity={0.8}
-          castShadow
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
-        />
-        <hemisphereLight intensity={0.2} groundColor="#444444" />
+        {/* Dynamic Lighting Setup */}
+        <SceneLighting />
 
         {/* Sync R3F scene to SelectionContext */}
         <SceneSync />
@@ -251,6 +243,72 @@ function EditorUIOverlay({
   );
 }
 
+
+/**
+ * SceneLighting - Dynamic lighting based on SelectionContext lighting state
+ */
+function SceneLighting() {
+  const { lighting } = useSelection();
+
+  return (
+    <>
+      {/* Ambient Light */}
+      {lighting.ambient.enabled && (
+        <ambientLight
+          intensity={lighting.ambient.intensity}
+          color={lighting.ambient.color}
+        />
+      )}
+
+      {/* Directional Light */}
+      {lighting.directional.enabled && (
+        <directionalLight
+          intensity={lighting.directional.intensity}
+          color={lighting.directional.color}
+          position={lighting.directional.position}
+          castShadow={lighting.directional.castShadow}
+          shadow-mapSize={[2048, 2048]}
+          shadow-camera-far={50}
+          shadow-camera-left={-10}
+          shadow-camera-right={10}
+          shadow-camera-top={10}
+          shadow-camera-bottom={-10}
+        />
+      )}
+
+      {/* Point Light */}
+      {lighting.point.enabled && (
+        <pointLight
+          intensity={lighting.point.intensity}
+          color={lighting.point.color}
+          position={lighting.point.position}
+          distance={lighting.point.distance}
+        />
+      )}
+
+      {/* Spot Light */}
+      {lighting.spot.enabled && (
+        <spotLight
+          intensity={lighting.spot.intensity}
+          color={lighting.spot.color}
+          position={lighting.spot.position}
+          angle={lighting.spot.angle}
+          penumbra={lighting.spot.penumbra}
+          castShadow
+        />
+      )}
+
+      {/* Hemisphere Light */}
+      {lighting.hemisphere.enabled && (
+        <hemisphereLight
+          intensity={lighting.hemisphere.intensity}
+          color={lighting.hemisphere.skyColor}
+          groundColor={lighting.hemisphere.groundColor}
+        />
+      )}
+    </>
+  );
+}
 
 /**
  * SceneSync - Syncs R3F scene and renderer to SelectionContext for hierarchy panel and MCP bridge

@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Sun, Moon, Cloud, Building2, Trees, Warehouse, Sunset, Focus } from 'lucide-react';
+import { Sun, Moon, Cloud, Building2, Trees, Warehouse, Sunset, Focus, ChevronDown, ChevronRight, Lightbulb, CircleDot, Cone } from 'lucide-react';
 import { EnvironmentPreset } from '@/lib/core/materials/types';
+import { useSelection } from '../r3f/SceneSelectionContext';
 
 interface EnvironmentControlsProps {
   currentPreset: EnvironmentPreset;
@@ -41,7 +42,8 @@ export default function EnvironmentControls({
   intensity,
   onIntensityChange,
 }: EnvironmentControlsProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [showAdvancedLighting, setShowAdvancedLighting] = useState(false);
+  const { lighting, updateLight } = useSelection();
 
   return (
     <div className="space-y-4">
@@ -125,15 +127,161 @@ export default function EnvironmentControls({
         </div>
       </div>
 
-      {/* Quick Tips */}
-      <div className="mt-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-600">
-        <p className="font-medium mb-1">Tips:</p>
-        <ul className="list-disc list-inside space-y-1">
-          <li>Studio is best for product shots</li>
-          <li>Higher intensity = stronger reflections</li>
-          <li>Blur softens the background</li>
-        </ul>
+      {/* Advanced Lighting - Progressive Disclosure */}
+      <div className="mt-4 border-t border-gray-200 pt-4">
+        <button
+          onClick={() => setShowAdvancedLighting(!showAdvancedLighting)}
+          className="w-full flex items-center justify-between text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            <Lightbulb className="w-4 h-4" />
+            Advanced Lighting
+          </span>
+          {showAdvancedLighting ? (
+            <ChevronDown className="w-4 h-4 text-gray-400" />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-gray-400" />
+          )}
+        </button>
+
+        {showAdvancedLighting && (
+          <div className="mt-4 space-y-4">
+            {/* Ambient Light */}
+            <LightControl
+              label="Ambient"
+              icon={<Sun className="w-3.5 h-3.5" />}
+              enabled={lighting.ambient.enabled}
+              onToggle={(v) => updateLight('ambient', { enabled: v })}
+              intensity={lighting.ambient.intensity}
+              onIntensityChange={(v) => updateLight('ambient', { intensity: v })}
+              maxIntensity={2}
+              color={lighting.ambient.color}
+              onColorChange={(v) => updateLight('ambient', { color: v })}
+            />
+
+            {/* Directional Light */}
+            <LightControl
+              label="Directional"
+              icon={<Lightbulb className="w-3.5 h-3.5" />}
+              enabled={lighting.directional.enabled}
+              onToggle={(v) => updateLight('directional', { enabled: v })}
+              intensity={lighting.directional.intensity}
+              onIntensityChange={(v) => updateLight('directional', { intensity: v })}
+              maxIntensity={3}
+              color={lighting.directional.color}
+              onColorChange={(v) => updateLight('directional', { color: v })}
+            />
+
+            {/* Point Light */}
+            <LightControl
+              label="Point"
+              icon={<CircleDot className="w-3.5 h-3.5" />}
+              enabled={lighting.point.enabled}
+              onToggle={(v) => updateLight('point', { enabled: v })}
+              intensity={lighting.point.intensity}
+              onIntensityChange={(v) => updateLight('point', { intensity: v })}
+              maxIntensity={5}
+              color={lighting.point.color}
+              onColorChange={(v) => updateLight('point', { color: v })}
+            />
+
+            {/* Spot Light */}
+            <LightControl
+              label="Spot"
+              icon={<Cone className="w-3.5 h-3.5" />}
+              enabled={lighting.spot.enabled}
+              onToggle={(v) => updateLight('spot', { enabled: v })}
+              intensity={lighting.spot.intensity}
+              onIntensityChange={(v) => updateLight('spot', { intensity: v })}
+              maxIntensity={5}
+              color={lighting.spot.color}
+              onColorChange={(v) => updateLight('spot', { color: v })}
+            />
+
+            {/* Quick tip for lighting */}
+            <div className="p-2 bg-blue-50 rounded-lg text-xs text-blue-700">
+              <p>💡 Ambient + Directional is usually enough. Add Point/Spot for dramatic effects.</p>
+            </div>
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * LightControl - Compact light control with toggle, intensity slider, and color picker
+ */
+function LightControl({
+  label,
+  icon,
+  enabled,
+  onToggle,
+  intensity,
+  onIntensityChange,
+  maxIntensity,
+  color,
+  onColorChange,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  enabled: boolean;
+  onToggle: (enabled: boolean) => void;
+  intensity: number;
+  onIntensityChange: (intensity: number) => void;
+  maxIntensity: number;
+  color: string;
+  onColorChange: (color: string) => void;
+}) {
+  return (
+    <div className={`p-3 rounded-lg border transition-all ${enabled ? 'bg-white border-blue-200' : 'bg-gray-50 border-gray-200'}`}>
+      {/* Header with toggle */}
+      <div className="flex items-center justify-between mb-2">
+        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <span className={enabled ? 'text-blue-500' : 'text-gray-400'}>{icon}</span>
+          {label}
+        </label>
+        <button
+          onClick={() => onToggle(!enabled)}
+          className={`relative w-9 h-5 rounded-full transition-colors ${enabled ? 'bg-blue-500' : 'bg-gray-300'}`}
+        >
+          <span
+            className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${enabled ? 'translate-x-4' : 'translate-x-0'}`}
+          />
+        </button>
+      </div>
+
+      {/* Controls - only show when enabled */}
+      {enabled && (
+        <div className="space-y-2">
+          {/* Intensity */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 w-14">Intensity</span>
+            <input
+              type="range"
+              min="0"
+              max={maxIntensity}
+              step="0.1"
+              value={intensity}
+              onChange={(e) => onIntensityChange(parseFloat(e.target.value))}
+              className="flex-1 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+            />
+            <span className="text-xs text-gray-600 w-8 text-right">{intensity.toFixed(1)}</span>
+          </div>
+
+          {/* Color */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 w-14">Color</span>
+            <input
+              type="color"
+              value={color}
+              onChange={(e) => onColorChange(e.target.value)}
+              className="w-6 h-6 rounded border border-gray-300 cursor-pointer"
+            />
+            <span className="text-xs text-gray-500 uppercase">{color}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

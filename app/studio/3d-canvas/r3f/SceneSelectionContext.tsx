@@ -121,6 +121,17 @@ type SelectionContextValue = {
   };
   setEffects: (effects: { bloom: boolean; glitch: boolean; noise: boolean; vignette: boolean }) => void;
 
+  // Lighting
+  lighting: {
+    ambient: { enabled: boolean; intensity: number; color: string };
+    directional: { enabled: boolean; intensity: number; color: string; position: [number, number, number]; castShadow: boolean };
+    point: { enabled: boolean; intensity: number; color: string; position: [number, number, number]; distance: number };
+    spot: { enabled: boolean; intensity: number; color: string; position: [number, number, number]; angle: number; penumbra: number };
+    hemisphere: { enabled: boolean; intensity: number; skyColor: string; groundColor: string };
+  };
+  setLighting: (lighting: SelectionContextValue['lighting']) => void;
+  updateLight: (type: keyof SelectionContextValue['lighting'], updates: Partial<any>) => void;
+
   // Scene Objects
   addedObjects: SceneObject[];
   addObject: (type: SceneObjectType, url?: string, formula?: any, text?: string) => void;
@@ -532,6 +543,22 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
     vignette: false,
   });
 
+  // Lighting State
+  const [lighting, setLighting] = useState({
+    ambient: { enabled: true, intensity: 0.4, color: '#ffffff' },
+    directional: { enabled: true, intensity: 0.8, color: '#ffffff', position: [10, 10, 5] as [number, number, number], castShadow: true },
+    point: { enabled: false, intensity: 1, color: '#ffffff', position: [0, 5, 0] as [number, number, number], distance: 10 },
+    spot: { enabled: false, intensity: 1, color: '#ffffff', position: [0, 10, 0] as [number, number, number], angle: 0.5, penumbra: 0.5 },
+    hemisphere: { enabled: true, intensity: 0.2, skyColor: '#ffffff', groundColor: '#444444' },
+  });
+
+  const updateLight = useCallback((type: keyof typeof lighting, updates: Partial<any>) => {
+    setLighting(prev => ({
+      ...prev,
+      [type]: { ...prev[type], ...updates }
+    }));
+  }, []);
+
   // Scene Objects State (for added shapes)
   const [addedObjects, setAddedObjects] = useState<SceneObject[]>([]);
 
@@ -694,6 +721,9 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
       isFaceSelected,
       effects,
       setEffects,
+      lighting,
+      setLighting,
+      updateLight,
       addedObjects,
       addObject,
       removeObject,
@@ -733,6 +763,8 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
       isFaceSelected,
       effects,
       setEffects,
+      lighting,
+      updateLight,
       addedObjects,
       addObject,
       removeObject,
@@ -789,6 +821,15 @@ export function useSelection() {
     isFaceSelected: noopBool,
     effects: { bloom: false, glitch: false, noise: false, vignette: false },
     setEffects: noop,
+    lighting: {
+      ambient: { enabled: true, intensity: 0.4, color: '#ffffff' },
+      directional: { enabled: true, intensity: 0.8, color: '#ffffff', position: [10, 10, 5] as [number, number, number], castShadow: true },
+      point: { enabled: false, intensity: 1, color: '#ffffff', position: [0, 5, 0] as [number, number, number], distance: 10 },
+      spot: { enabled: false, intensity: 1, color: '#ffffff', position: [0, 10, 0] as [number, number, number], angle: 0.5, penumbra: 0.5 },
+      hemisphere: { enabled: true, intensity: 0.2, skyColor: '#ffffff', groundColor: '#444444' },
+    },
+    setLighting: noop,
+    updateLight: noop,
     addedObjects: [],
     addObject: noop,
     removeObject: noop,
