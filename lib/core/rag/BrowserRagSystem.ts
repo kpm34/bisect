@@ -5,7 +5,7 @@
  * using fetch-based ChromaDB client and OpenAI embeddings
  */
 
-import { BrowserChromaClient, type BrowserChromaDocument } from './browser-chroma-client';
+import { BrowserChromaClient, type BrowserChromaDocument } from './BrowserChromaClient';
 import type { SimilarEdit, SceneData } from '../ai/unified-spline-agent';
 
 export interface BrowserRAGConfig {
