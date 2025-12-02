@@ -94,6 +94,55 @@
 | **ComfyUI** | GenAI workflows, textures, video | Backend orchestration - visual triggers |
 | **Bisect Studios** | Visual interface, cross-domain pipeline | The unified experience |
 
+**Cloud-Native Architecture (Local OR Cloud - User's Choice):**
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    FLEXIBLE DEPLOYMENT                                   │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│                         ┌──────────────┐                                 │
+│                         │   BISECT     │                                 │
+│                         │   (Web UI)   │                                 │
+│                         └───────┬──────┘                                 │
+│                                 │                                        │
+│               ┌─────────────────┼─────────────────┐                      │
+│               │                 │                 │                      │
+│       ┌───────▼───────┐ ┌───────▼───────┐ ┌───────▼───────┐             │
+│       │   BLENDER     │ │   COMFYUI     │ │    AUDIO      │             │
+│       └───────┬───────┘ └───────┬───────┘ └───────┬───────┘             │
+│               │                 │                 │                      │
+│       ┌───────┴───────┐ ┌───────┴───────┐ ┌───────┴───────┐             │
+│       │               │ │               │ │               │             │
+│       ▼               ▼ ▼               ▼ ▼               ▼             │
+│   ┌───────┐     ┌───────┐ ┌───────┐ ┌───────┐ ┌───────┐                │
+│   │ LOCAL │     │ CLOUD │ │ LOCAL │ │RUNPOD │ │ SUNO  │                │
+│   │Blender│     │Render │ │ComfyUI│ │ComfyUI│ │ELEVEN │                │
+│   │  MCP  │     │ Farm  │ │       │ │  GPU  │ │ LABS  │                │
+│   └───────┘     └───────┘ └───────┘ └───────┘ └───────┘                │
+│                                                                          │
+│   USER CHOOSES:                                                          │
+│   • Local Blender (free, your GPU) OR Cloud render farm (pay per render)│
+│   • Local ComfyUI (free, your GPU) OR RunPod (pay per minute, any GPU)  │
+│   • Always cloud for AI audio (Suno, ElevenLabs APIs)                   │
+│                                                                          │
+│   WHY THIS MATTERS:                                                      │
+│   • Hobbyist: Run everything local, $0 cost                             │
+│   • Pro: Burst to cloud for heavy jobs, pay only when needed            │
+│   • Team: Cloud-first for collaboration, consistent results             │
+│   • Enterprise: Self-hosted everything for security                     │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**Cloud Providers We Support:**
+| Service | Provider Options | Use Case |
+|---------|------------------|----------|
+| **Blender Rendering** | Local MCP, Render.st, SheepIt, Concierge | Heavy renders, animations |
+| **ComfyUI GPU** | Local, RunPod, Vast.ai, Modal | Texture gen, video gen, upscaling |
+| **AI Audio** | Suno API, ElevenLabs API | Music, SFX, voiceover |
+| **AI 3D Models** | Hyper3D, Meshy, Tripo | Model generation |
+| **AI Video** | Runway API, Pika API, Kling | Video generation |
+
 **What Bisect Adds (Our Unique Features):**
 | Feature | What It Does | Why It Matters |
 |---------|--------------|----------------|

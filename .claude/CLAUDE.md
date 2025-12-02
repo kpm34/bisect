@@ -77,6 +77,17 @@
 | **Suno/ElevenLabs** | AI music, SFX, voiceover | Audio Hub generation |
 | **Hyper3D/Meshy** | AI 3D model generation | Import pipeline |
 
+### Cloud-Native (Local OR Cloud - User's Choice)
+| Service | Local Option | Cloud Option |
+|---------|--------------|--------------|
+| **Blender** | Local MCP (free) | Render.st, SheepIt, Concierge |
+| **ComfyUI** | Local GPU (free) | RunPod, Vast.ai, Modal |
+| **Audio** | - | Suno, ElevenLabs (API only) |
+| **3D Gen** | - | Hyper3D, Meshy, Tripo |
+| **Video** | - | Runway, Pika, Kling |
+
+> Hobbyist = local ($0) | Pro = burst to cloud | Enterprise = self-hosted
+
 ---
 
 ## Target Workflows
@@ -248,6 +259,15 @@ HYPER3D_API_KEY             # AI 3D generation
 # ComfyUI (key integration for GenAI workflows)
 COMFYUI_API_URL             # Local or remote ComfyUI instance
 COMFYUI_API_KEY             # If using remote/cloud ComfyUI
+
+# Cloud GPU (optional - for serverless ComfyUI)
+RUNPOD_API_KEY              # RunPod serverless GPU
+VASTAI_API_KEY              # Vast.ai GPU rental
+MODAL_API_KEY               # Modal serverless
+
+# Cloud Rendering (optional - for heavy Blender jobs)
+RENDERST_API_KEY            # Render.st cloud rendering
+CONCIERGE_API_KEY           # Concierge render farm
 
 # Audio AI (optional)
 SUNO_API_KEY                # AI music generation
