@@ -15,20 +15,22 @@ import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useSelection } from '../r3f/SceneSelectionContext';
 
-// Constants
+// Constants - Subtle, professional gizmo styling
 const AXIS_COLORS = {
-  x: 0xff3b30, // Red
-  y: 0x34c759, // Green
-  z: 0x007aff, // Blue
+  x: 0xe53935, // Softer Red
+  y: 0x43a047, // Softer Green
+  z: 0x1e88e5, // Softer Blue
 };
 
-const GIZMO_SCALE = 1.5;
-const ARROW_LENGTH = 1.0;
-const ARROW_HEAD_LENGTH = 0.2;
-const ARROW_HEAD_RADIUS = 0.08;
-const ARROW_SHAFT_RADIUS = 0.025;
-const RING_RADIUS = 0.85;
-const RING_TUBE = 0.02;
+const GIZMO_SCALE = 1.0; // Reduced from 1.5
+const ARROW_LENGTH = 0.8; // Reduced from 1.0
+const ARROW_HEAD_LENGTH = 0.15; // Reduced from 0.2
+const ARROW_HEAD_RADIUS = 0.05; // Reduced from 0.08
+const ARROW_SHAFT_RADIUS = 0.015; // Reduced from 0.025
+const RING_RADIUS = 0.65; // Reduced from 0.85
+const RING_TUBE = 0.012; // Reduced from 0.02
+const DEFAULT_OPACITY = 0.5; // More transparent by default
+const HOVER_OPACITY = 0.85;
 
 interface DragState {
   active: boolean;
@@ -284,6 +286,7 @@ export function CombinedTransformGizmo() {
         );
         const name = `translate-${axis}`;
         const color = getAxisColor(axis, name);
+        const isActive = hovered === name || (dragState.active && dragState.axis === axis);
 
         return (
           <group key={`arrow-${axis}`} rotation={rotation}>
@@ -292,7 +295,7 @@ export function CombinedTransformGizmo() {
               <meshBasicMaterial
                 color={color}
                 transparent
-                opacity={hovered === name || (dragState.active && dragState.axis === axis) ? 1 : 0.85}
+                opacity={isActive ? HOVER_OPACITY : DEFAULT_OPACITY}
               />
             </mesh>
             {/* Head */}
@@ -300,22 +303,34 @@ export function CombinedTransformGizmo() {
               <meshBasicMaterial
                 color={color}
                 transparent
-                opacity={hovered === name || (dragState.active && dragState.axis === axis) ? 1 : 0.85}
+                opacity={isActive ? HOVER_OPACITY : DEFAULT_OPACITY}
               />
             </mesh>
           </group>
         );
       })}
 
-      {/* ROTATION RINGS */}
+      {/* ROTATION RINGS - Each ring is perpendicular to its axis */}
+      {/* Torus is created in XY plane by default (flat when looking down Z) */}
+      {/* X ring (red): ring in YZ plane → rotate 90° around Y */}
+      {/* Y ring (green): ring in XZ plane (horizontal) → rotate 90° around X */}
+      {/* Z ring (blue): ring in XY plane (default) → no rotation */}
       {(['x', 'y', 'z'] as const).map((axis) => {
-        const rotation = new THREE.Euler(
-          axis === 'x' ? Math.PI / 2 : 0,
-          axis === 'y' ? 0 : 0,
-          axis === 'z' ? Math.PI / 2 : 0
-        );
+        let rotation: THREE.Euler;
+        if (axis === 'x') {
+          // YZ plane: rotate 90° around Y axis
+          rotation = new THREE.Euler(0, Math.PI / 2, 0);
+        } else if (axis === 'y') {
+          // XZ plane (horizontal): rotate 90° around X axis
+          rotation = new THREE.Euler(Math.PI / 2, 0, 0);
+        } else {
+          // XY plane (default): no rotation
+          rotation = new THREE.Euler(0, 0, 0);
+        }
+
         const name = `rotate-${axis}`;
         const color = getAxisColor(axis, name);
+        const isActive = hovered === name || (dragState.active && dragState.axis === axis);
 
         return (
           <mesh
@@ -327,17 +342,17 @@ export function CombinedTransformGizmo() {
             <meshBasicMaterial
               color={color}
               transparent
-              opacity={hovered === name || (dragState.active && dragState.axis === axis) ? 0.9 : 0.6}
+              opacity={isActive ? HOVER_OPACITY : DEFAULT_OPACITY}
               side={THREE.DoubleSide}
             />
           </mesh>
         );
       })}
 
-      {/* Center sphere */}
+      {/* Center sphere - smaller and more subtle */}
       <mesh>
-        <sphereGeometry args={[0.08, 16, 16]} />
-        <meshBasicMaterial color={0xffffff} transparent opacity={0.9} />
+        <sphereGeometry args={[0.04, 12, 12]} />
+        <meshBasicMaterial color={0xffffff} transparent opacity={0.6} />
       </mesh>
     </group>
   );
