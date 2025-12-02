@@ -56,12 +56,56 @@
 - But: No unified interface exists
 - But: Everyday creators can't access this power
 
+**Our Philosophy: Build ON, Not Duplicate**
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    BUILD ON, NOT DUPLICATE                               │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ❌ WRONG APPROACH (What others do)                                      │
+│  ────────────────────────────────────                                    │
+│  • Build another 3D editor → compete with Blender                       │
+│  • Build another node system → compete with ComfyUI                     │
+│  • Build another video generator → compete with Runway                  │
+│  • Result: Worse version of existing tools                              │
+│                                                                          │
+│  ✅ BISECT APPROACH                                                      │
+│  ────────────────────────────────────                                    │
+│  • USE Blender via MCP → get pro quality without building renderer      │
+│  • ORCHESTRATE ComfyUI → get GenAI without building diffusion models   │
+│  • AGGREGATE video APIs → get Runway/Pika without training models       │
+│  • ADD our features → configurator, events, hotspots, cross-domain     │
+│  • Result: Unique product that multiplies existing tools                │
+│                                                                          │
+│  THE EQUATION:                                                           │
+│  ──────────────                                                          │
+│  (Blender power) + (ComfyUI workflows) + (Bisect features)              │
+│  ─────────────────────────────────────────────────────────              │
+│                    Visual Interface                                      │
+│  = Something no one else can offer                                       │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
 **Bisect Is The Glue:**
 | Component | What It Provides | How Bisect Uses It |
 |-----------|------------------|-------------------|
 | **Blender MCP** | Pro 3D rendering, materials, physics | Live bridge - real-time sync |
 | **ComfyUI** | GenAI workflows, textures, video | Backend orchestration - visual triggers |
 | **Bisect Studios** | Visual interface, cross-domain pipeline | The unified experience |
+
+**What Bisect Adds (Our Unique Features):**
+| Feature | What It Does | Why It Matters |
+|---------|--------------|----------------|
+| **Product Configurator** | Variants, pricing, cart integration | E-commerce ready |
+| **Events System** | 15+ triggers, animations, state machines | Interactive experiences |
+| **Hotspots** | 3D annotations, tooltips, media embeds | Guided experiences |
+| **Cloner/Instancing** | 6 modes, 5 effectors, GPU instancing | Complex scenes fast |
+| **Material Library** | 600+ PBR presets with Blender renders | One-click pro materials |
+| **Audio Hub** | AI music/SFX, timeline, video sync | Complete video pipeline |
+| **Cross-Studio Pipeline** | Vector → 3D → Video in one project | No export/import hell |
+| **Code Export** | React, Three.js, vanilla JS | Developer-ready output |
+| **Webhooks/API** | Automation, e-commerce sync | Production integration |
 
 **The Creative Opportunities Unlocked:**
 1. "Generate a texture" → ComfyUI runs → Apply in Blender → Preview in Bisect
