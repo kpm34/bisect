@@ -19,6 +19,7 @@ import { VideoTexturePanel } from './VideoTexturePanel';
 import { InteractiveObject } from './InteractiveObject';
 import { CliBridge } from './CliBridge';
 import { CodeExportModal } from './CodeExportModal';
+import { BoxSelection } from './BoxSelection';
 import { SceneEnvironment } from '@/lib/core/materials/types';
 
 interface R3FCanvasProps {
@@ -168,6 +169,9 @@ export default function R3FCanvas({
 
         {/* Selection Outline */}
         <SelectionOutline />
+
+        {/* Box Selection - Click and drag on empty space to select multiple */}
+        <BoxSelection />
 
         {/* Post-Processing Effects */}
         <SceneEffects />
@@ -450,9 +454,34 @@ function SceneEffects() {
 
 /**
  * AddedObjectsRenderer - Renders user-added shapes with physics
+ * Also handles auto-selection of newly added objects
  */
 function AddedObjectsRenderer() {
-  const { addedObjects } = useSelection();
+  const { addedObjects, pendingSelectionId, clearPendingSelection, setSelectedObject, r3fScene } = useSelection();
+
+  // Auto-select newly added object once it's rendered
+  useEffect(() => {
+    if (!pendingSelectionId || !r3fScene) return;
+
+    // Small delay to ensure mesh is rendered
+    const timer = setTimeout(() => {
+      // Find the mesh by userData.id
+      let foundMesh: THREE.Object3D | undefined;
+      r3fScene.traverse((child) => {
+        if (child.userData?.id === pendingSelectionId) {
+          foundMesh = child;
+        }
+      });
+
+      if (foundMesh) {
+        setSelectedObject(foundMesh);
+        console.log('✅ Auto-selected newly added object:', (foundMesh as THREE.Object3D).name);
+      }
+      clearPendingSelection();
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [pendingSelectionId, r3fScene, setSelectedObject, clearPendingSelection]);
 
   return (
     <>
@@ -631,7 +660,7 @@ function GLBScene({
   setIsSceneReady?: (ready: boolean) => void;
   setLoadingProgress?: (progress: number) => void;
 }) {
-  const { selectedObject, setSelectedObject } = useSelection();
+  const { selectedObject, setSelectedObject, deletedObjectNames } = useSelection();
   const [hasNotified, setHasNotified] = useState(false);
 
   // Reset when URL changes
@@ -714,6 +743,48 @@ function GLBScene({
 
     setHasNotified(true);
   }, [gltf, setIsSceneReady, setLoadingProgress, hasNotified]);
+
+  // Track which objects we've already filtered (by name) to avoid re-filtering
+  const [filteredNames, setFilteredNames] = useState<Set<string>>(new Set());
+
+  // Filter out deleted objects from loaded scene
+  // Re-runs when deletedObjectNames changes (e.g., after state restoration)
+  useEffect(() => {
+    if (!gltf?.scene || deletedObjectNames.length === 0) return;
+
+    // Find objects that need to be removed (not already filtered)
+    const objectsToRemove: THREE.Object3D[] = [];
+    const newFilteredNames = new Set(filteredNames);
+
+    gltf.scene.traverse((child) => {
+      if (child.name && deletedObjectNames.includes(child.name) && !filteredNames.has(child.name)) {
+        objectsToRemove.push(child);
+        newFilteredNames.add(child.name);
+      }
+    });
+
+    if (objectsToRemove.length > 0) {
+      objectsToRemove.forEach((obj) => {
+        if (obj.parent) {
+          console.log(`🗑️ Filtering out previously deleted object: "${obj.name}"`);
+          obj.parent.remove(obj);
+          // Dispose of geometry and materials
+          obj.traverse((child: any) => {
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+              if (Array.isArray(child.material)) {
+                child.material.forEach((mat: any) => mat.dispose());
+              } else {
+                child.material.dispose();
+              }
+            }
+          });
+        }
+      });
+      console.log(`✅ Filtered ${objectsToRemove.length} previously deleted objects`);
+      setFilteredNames(newFilteredNames);
+    }
+  }, [gltf, deletedObjectNames, filteredNames]);
 
   // Handle clicks
   const handleClick = (event: any) => {

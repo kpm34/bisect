@@ -163,13 +163,19 @@ type SelectionContextValue = {
 
   // Scene Objects
   addedObjects: SceneObject[];
-  addObject: (type: SceneObjectType, url?: string, formula?: any, text?: string) => void;
+  addObject: (type: SceneObjectType, url?: string, formula?: any, text?: string) => string; // Returns the new object ID
   removeObject: (id: string) => void;
   updateObject: (id: string, updates: Partial<SceneObject>) => void;
   setAddedObjects: (objects: SceneObject[]) => void; // For state restoration
+  pendingSelectionId: string | null; // ID of newly added object to auto-select
+  clearPendingSelection: () => void;
 
   // Delete selected object (handles both added objects and scene objects)
   deleteSelectedObject: () => void;
+
+  // ============== DELETED OBJECTS FROM LOADED FILES ==============
+  deletedObjectNames: string[];
+  setDeletedObjectNames: (names: string[]) => void;
 
   // ============== SCENE VARIABLES ==============
   sceneVariables: SceneVariable[];
@@ -604,6 +610,12 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
   // Scene Objects State (for added shapes)
   const [addedObjects, setAddedObjects] = useState<SceneObject[]>([]);
 
+  // Pending selection - ID of newly added object to select once rendered
+  const [pendingSelectionId, setPendingSelectionId] = useState<string | null>(null);
+
+  // ============== DELETED OBJECTS FROM LOADED FILES ==============
+  const [deletedObjectNames, setDeletedObjectNames] = useState<string[]>([]);
+
   // ============== SCENE VARIABLES STATE ==============
   const [sceneVariables, setSceneVariables] = useState<SceneVariable[]>([]);
 
@@ -710,7 +722,7 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
     console.log('🔇 Stopped all sounds');
   }, []);
 
-  const addObject = (type: SceneObjectType, url?: string, formula?: any, text?: string) => {
+  const addObject = (type: SceneObjectType, url?: string, formula?: any, text?: string): string => {
     console.log('🏗️ [Context] addObject called:', { type, url, formula, text });
 
     // Generate friendly name based on type
@@ -727,8 +739,9 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
       parametric: 'Parametric',
     };
 
+    const newId = Math.random().toString(36).substr(2, 9);
     const newObj: SceneObject = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: newId,
       type,
       url,
       formula,
@@ -757,7 +770,16 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
       }
     };
     setAddedObjects(prev => [...prev, newObj]);
+
+    // Set pending selection - will be selected once the mesh is created
+    setPendingSelectionId(newId);
+
+    return newId;
   };
+
+  const clearPendingSelection = useCallback(() => {
+    setPendingSelectionId(null);
+  }, []);
 
   const removeObject = useCallback((id: string) => {
     setAddedObjects(prev => prev.filter(o => o.id !== id));
@@ -784,9 +806,20 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
       setAddedObjects(prev => prev.filter(o => o.id !== objectUuid));
       console.log(`🗑️ Deleted added object: "${objectName}"`);
     } else if (r3fScene) {
-      // Remove from R3F scene directly
+      // Remove from R3F scene directly (this is an object from a loaded GLB/GLTF)
       const objToRemove = r3fScene.getObjectByProperty('uuid', objectUuid);
       if (objToRemove && objToRemove.parent) {
+        // Track the deleted object name for persistence
+        if (objectName && objectName !== 'Unnamed Object') {
+          setDeletedObjectNames(prev => {
+            if (!prev.includes(objectName)) {
+              console.log(`📝 Tracking deleted object: "${objectName}"`);
+              return [...prev, objectName];
+            }
+            return prev;
+          });
+        }
+
         objToRemove.parent.remove(objToRemove);
         // Dispose of geometry and materials to free memory
         objToRemove.traverse((child: any) => {
@@ -877,7 +910,12 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
       removeObject,
       updateObject,
       setAddedObjects,
+      pendingSelectionId,
+      clearPendingSelection,
       deleteSelectedObject,
+      // Deleted Objects from loaded files
+      deletedObjectNames,
+      setDeletedObjectNames,
       // Scene Variables
       sceneVariables,
       addVariable,
@@ -929,7 +967,11 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
       removeObject,
       updateObject,
       setAddedObjects,
+      pendingSelectionId,
+      clearPendingSelection,
       deleteSelectedObject,
+      // Deleted Objects
+      deletedObjectNames,
       // Scene Variables
       sceneVariables,
       addVariable,
@@ -1001,11 +1043,16 @@ export function useSelection() {
     setLighting: noop,
     updateLight: noop,
     addedObjects: [],
-    addObject: noop,
+    addObject: () => '',
     removeObject: noop,
     updateObject: noop,
     setAddedObjects: noop,
+    pendingSelectionId: null,
+    clearPendingSelection: noop,
     deleteSelectedObject: noop,
+    // Deleted Objects from loaded files
+    deletedObjectNames: [],
+    setDeletedObjectNames: noop,
     // Scene Variables
     sceneVariables: [],
     addVariable: noop,

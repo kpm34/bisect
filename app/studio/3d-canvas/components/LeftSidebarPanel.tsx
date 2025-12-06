@@ -6,7 +6,8 @@ import { Tree, NodeRendererProps } from 'react-arborist';
 import { useSelection } from '../r3f/SceneSelectionContext';
 import { parseCommand } from '../utils/command-parser';
 import { useAIMaterialEditor } from '../hooks/useAIMaterialEditor';
-import { Layers, Sparkles, FolderOpen, ChevronRight, Eye, EyeOff, Lock, Unlock, Search, X, ArrowUp, PanelLeftClose, Box, Palette, Video } from 'lucide-react';
+import { Layers, Sparkles, FolderOpen, ChevronRight, Eye, EyeOff, Lock, Unlock, Search, X, ArrowUp, PanelLeftClose, Box, Palette, Video, Trash2 } from 'lucide-react';
+import { sceneSyncService } from '@/lib/services/supabase/scene-sync';
 
 // ============================================================================
 // Types
@@ -36,10 +37,15 @@ interface TreeNode {
 // Utility Functions
 // ============================================================================
 
+/**
+ * Check if object is a system/internal object that should be hidden from hierarchy
+ * We hide all default scene elements - only show user-added objects and loaded models
+ */
 function isSystemObject(obj: Object3D): boolean {
   const name = obj.name?.toLowerCase() || '';
   const type = obj.type || '';
 
+  // Filter out transform controls and gizmos
   if (
     type === 'TransformControls' ||
     name.includes('transformcontrols') ||
@@ -50,6 +56,7 @@ function isSystemObject(obj: Object3D): boolean {
     return true;
   }
 
+  // Filter out children of TransformControls (gizmo parts)
   let parent = obj.parent;
   while (parent) {
     if (parent.type === 'TransformControls' || parent.name?.toLowerCase().includes('transformcontrols')) {
@@ -58,22 +65,94 @@ function isSystemObject(obj: Object3D): boolean {
     parent = parent.parent;
   }
 
+  // Filter out all lights (default scene lights)
+  const lightTypes = [
+    'AmbientLight',
+    'DirectionalLight',
+    'PointLight',
+    'SpotLight',
+    'HemisphereLight',
+    'RectAreaLight',
+    'Light',
+  ];
+  if (lightTypes.includes(type)) {
+    return true;
+  }
+
+  // Filter out cameras
+  const cameraTypes = ['Camera', 'PerspectiveCamera', 'OrthographicCamera'];
+  if (cameraTypes.includes(type)) {
+    return true;
+  }
+
+  // Filter out THREE.js helpers and editing tools
   const helperTypes = ['GridHelper', 'AxesHelper', 'BoxHelper', 'PlaneHelper', 'ArrowHelper', 'PolarGridHelper'];
   if (helperTypes.includes(type)) {
     return true;
   }
 
-  return (
+  // Filter out environment/background objects and Scene root
+  if (type === 'Scene' || name === 'scene') {
+    return true;
+  }
+
+  // Filter out Spline internal objects and common system objects
+  if (
     name.startsWith('buildin') ||
     name.startsWith('__') ||
     name === 'helper' ||
     name === 'grid' ||
     name.includes('helper') ||
-    name.includes('outline')
-  );
+    name.includes('outline') ||
+    name.includes('environment') ||
+    name.includes('background')
+  ) {
+    return true;
+  }
+
+  // Filter out empty groups (groups with no meaningful children)
+  if (type === 'Group' && obj.children.length === 0) {
+    return true;
+  }
+
+  return false;
 }
 
-function buildTree(obj: Object3D, lockedObjects: Set<string>, onRefresh?: () => void): TreeNode {
+/**
+ * Check if a node has any meaningful (non-system) descendants
+ */
+function hasMeaningfulContent(obj: Object3D): boolean {
+  // If it's a mesh, it's meaningful
+  if ((obj as any).isMesh) {
+    return true;
+  }
+
+  // Check children recursively
+  for (const child of obj.children) {
+    if (!isSystemObject(child) && hasMeaningfulContent(child)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Build hierarchical tree from THREE.js scene graph
+ * Only includes objects with meaningful content (meshes or groups containing meshes)
+ */
+function buildTree(obj: Object3D, lockedObjects: Set<string>, onRefresh?: () => void): TreeNode | null {
+  // Filter children first
+  const meaningfulChildren = obj.children
+    .filter((child) => !isSystemObject(child) && hasMeaningfulContent(child))
+    .map((child) => buildTree(child, lockedObjects, onRefresh))
+    .filter((child): child is TreeNode => child !== null);
+
+  // If this is a Group with no meaningful children, skip it
+  if (obj.type === 'Group' && meaningfulChildren.length === 0 && !(obj as any).isMesh) {
+    return null;
+  }
+
   return {
     id: obj.uuid,
     name: obj.name || obj.type,
@@ -82,10 +161,18 @@ function buildTree(obj: Object3D, lockedObjects: Set<string>, onRefresh?: () => 
     locked: lockedObjects.has(obj.uuid),
     object: obj,
     onRefresh,
-    children: obj.children
-      .filter((child) => !isSystemObject(child))
-      .map((child) => buildTree(child, lockedObjects, onRefresh)),
+    children: meaningfulChildren,
   };
+}
+
+/**
+ * Build tree starting from scene, skipping the Scene root itself
+ */
+function buildTreeFromScene(scene: Object3D, lockedObjects: Set<string>, onRefresh?: () => void): TreeNode[] {
+  return scene.children
+    .filter((child) => !isSystemObject(child) && hasMeaningfulContent(child))
+    .map((child) => buildTree(child, lockedObjects, onRefresh))
+    .filter((node): node is TreeNode => node !== null);
 }
 
 // ============================================================================
@@ -192,12 +279,42 @@ function NodeRenderer({ node, style, dragHandle }: NodeRendererProps<TreeNode>) 
 // Hierarchy Tab Content
 // ============================================================================
 
-function HierarchyContent() {
+function HierarchyContent({ onResetScene }: { onResetScene?: () => void }) {
   const { universalEditor, r3fScene, selectedObjects, lockedObjects, selectionVersion } = useSelection();
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 280, height: 400 });
+  const [isResetting, setIsResetting] = useState(false);
+
+  const handleResetScene = async () => {
+    if (!confirm('Clear browser cache?\n\nThis removes any locally stored scene data and reloads with an empty scene. Use this if you\'re seeing old/stale content.')) {
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      // Clear scene sync service cache (localStorage + Supabase)
+      sceneSyncService.clearState();
+
+      // Clear localStorage scene data directly as well
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('bisect_scene_state');
+        localStorage.removeItem('bisect_last_project');
+      }
+
+      // Notify parent if callback provided
+      if (onResetScene) {
+        onResetScene();
+      }
+
+      // Reload the page to start fresh (clears in-memory GLB cache)
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to reset scene:', error);
+      setIsResetting(false);
+    }
+  };
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -220,7 +337,8 @@ function HierarchyContent() {
   const treeData = useMemo(() => {
     const sceneRoot = r3fScene || universalEditor?.getScene();
     if (!sceneRoot) return [];
-    return [buildTree(sceneRoot, lockedObjects, handleRefresh)];
+    // Use buildTreeFromScene to skip the Scene root and filter system objects
+    return buildTreeFromScene(sceneRoot, lockedObjects, handleRefresh);
   }, [r3fScene, universalEditor, lockedObjects, refreshKey, handleRefresh, selectionVersion]);
 
   const filteredData = useMemo(() => {
@@ -282,18 +400,38 @@ function HierarchyContent() {
             {NodeRenderer}
           </Tree>
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-500 text-xs">
-            {searchQuery ? 'No objects found' : 'No scene loaded'}
+          <div className="flex flex-col items-center justify-center h-full text-gray-500 text-xs text-center px-4">
+            {searchQuery ? (
+              'No objects found'
+            ) : (
+              <>
+                <span>Scene is empty</span>
+                <span className="text-[10px] text-gray-600 mt-1">Import a 3D model or add primitives</span>
+              </>
+            )}
           </div>
         )}
       </div>
 
       {/* Footer */}
-      {selectedObjects.size > 0 && (
-        <div className="px-3 py-2 border-t border-white/10 text-[10px] text-gray-400">
-          {selectedObjects.size} selected
-        </div>
-      )}
+      <div className="px-3 py-2 border-t border-white/10 flex items-center justify-between">
+        <span className="text-[10px] text-gray-400">
+          {selectedObjects.size > 0 ? `${selectedObjects.size} selected` : ''}
+        </span>
+        <button
+          onClick={handleResetScene}
+          disabled={isResetting}
+          className="flex items-center gap-1 px-2 py-1 text-[10px] text-gray-500 hover:text-orange-400 hover:bg-orange-500/10 rounded transition-colors disabled:opacity-50"
+          title="Clear browser cache and start with empty scene"
+        >
+          {isResetting ? (
+            <div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <Trash2 className="w-3 h-3" />
+          )}
+          Clear Cache
+        </button>
+      </div>
     </div>
   );
 }

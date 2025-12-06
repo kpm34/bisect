@@ -397,44 +397,71 @@ function verifySignature(payload: string, signature: string): boolean {
 
 ---
 
-### AI APIs (`/api/ai/*`)
+### Texture Factory API (`/api/tex-factory/generate`)
 
-AI-powered scene editing and analysis.
+AI texture generation using Gemini image generation.
 
-| Endpoint | Purpose |
-|----------|---------|
-| `/api/ai/edit` | Natural language scene editing |
-| `/api/ai/analyze` | Scene analysis and suggestions |
-| `/api/ai/orchestrate` | Multi-step workflow orchestration |
+**Endpoint:** `POST /api/tex-factory/generate`
 
----
+**Request Body:**
 
-### Texture Factory APIs (`/api/tex-factory/*`)
+```typescript
+{
+  prompt: string;        // Description of the texture (required)
+  mode: 'MATCAP' | 'PBR'; // Texture type (required)
+  quality?: 'FAST' | 'HIGH'; // Generation quality (default: HIGH)
+  resolution?: '1K' | '2K';  // Output resolution (default: 1K)
+}
+```
 
-AI texture generation endpoints.
+**Response:**
 
-| Endpoint | Purpose |
-|----------|---------|
-| `/api/tex-factory/generate-matcap` | Generate MatCap texture |
-| `/api/tex-factory/generate-pbr` | Generate PBR texture set |
-| `/api/tex-factory/generate-normal` | Generate normal map |
+```typescript
+{
+  id: string;           // Unique texture ID
+  mode: 'MATCAP' | 'PBR';
+  prompt: string;
+  albedo: string;       // Base64 data URI of generated texture
+  timestamp: number;    // Unix timestamp
+  resolution: '1K' | '2K';
+}
+```
 
 **Example:**
 
 ```typescript
-const response = await fetch('/api/tex-factory/generate-pbr', {
+// Generate a MatCap texture
+const response = await fetch('/api/tex-factory/generate', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     prompt: 'weathered bronze metal with green patina',
-    resolution: 1024,
-    maps: ['diffuse', 'normal', 'roughness', 'metallic']
+    mode: 'MATCAP',
+    quality: 'HIGH',
+    resolution: '1K'
   })
 });
 
-const { textures } = await response.json();
-// { textures: { diffuse: 'data:image/png;...', normal: '...', ... } }
+const { id, albedo } = await response.json();
+// albedo = 'data:image/png;base64,...'
+
+// Generate a PBR texture
+const pbrResponse = await fetch('/api/tex-factory/generate', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    prompt: 'rough concrete with cracks',
+    mode: 'PBR',
+    resolution: '2K'
+  })
+});
+// Note: Normal/roughness maps are generated client-side from albedo
 ```
+
+**Notes:**
+- Uses Gemini 2.0 Flash with image generation capabilities
+- PBR normal and roughness maps should be generated client-side from the albedo
+- For interactive generation with live preview, use the UI at `/studio/tex-factory`
 
 ---
 

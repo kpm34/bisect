@@ -21,30 +21,55 @@ interface TreeNode {
 
 /**
  * Check if object is a system/internal object that should be hidden from hierarchy
+ * We hide all default scene elements - only show user-added objects and loaded models
  */
 function isSystemObject(obj: Object3D): boolean {
   const name = obj.name?.toLowerCase() || '';
   const type = obj.type || '';
-  
+
   // Filter out transform controls and gizmos
-  if (type === 'TransformControls' || 
+  if (type === 'TransformControls' ||
       name.includes('transformcontrols') ||
       name.includes('gizmo') ||
       name.includes('transformcontrolsgizmo') ||
       name.includes('transformcontrolsplane')) {
     return true;
   }
-  
+
   // Filter out children of TransformControls (gizmo parts)
   let parent = obj.parent;
   while (parent) {
-    if (parent.type === 'TransformControls' || 
+    if (parent.type === 'TransformControls' ||
         parent.name?.toLowerCase().includes('transformcontrols')) {
       return true;
     }
     parent = parent.parent;
   }
-  
+
+  // Filter out all lights (default scene lights)
+  const lightTypes = [
+    'AmbientLight',
+    'DirectionalLight',
+    'PointLight',
+    'SpotLight',
+    'HemisphereLight',
+    'RectAreaLight',
+    'Light',
+  ];
+  if (lightTypes.includes(type)) {
+    return true;
+  }
+
+  // Filter out cameras
+  const cameraTypes = [
+    'Camera',
+    'PerspectiveCamera',
+    'OrthographicCamera',
+  ];
+  if (cameraTypes.includes(type)) {
+    return true;
+  }
+
   // Filter out THREE.js helpers and editing tools
   const helperTypes = [
     'GridHelper',
@@ -57,22 +82,69 @@ function isSystemObject(obj: Object3D): boolean {
   if (helperTypes.includes(type)) {
     return true;
   }
-  
+
+  // Filter out environment/background objects
+  if (type === 'Scene' || name === 'scene') {
+    return true;
+  }
+
   // Filter out Spline internal objects and common system objects
-  return (
+  if (
     name.startsWith('buildin') ||
     name.startsWith('__') ||
     name === 'helper' ||
     name === 'grid' ||
     name.includes('helper') ||
-    name.includes('outline') // Filter selection outlines
-  );
+    name.includes('outline') ||
+    name.includes('environment') ||
+    name.includes('background')
+  ) {
+    return true;
+  }
+
+  // Filter out empty groups (groups with no meaningful children)
+  if (type === 'Group' && obj.children.length === 0) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Check if a node has any meaningful (non-system) descendants
+ */
+function hasMeaningfulContent(obj: Object3D): boolean {
+  // If it's a mesh, it's meaningful
+  if ((obj as any).isMesh) {
+    return true;
+  }
+
+  // Check children recursively
+  for (const child of obj.children) {
+    if (!isSystemObject(child) && hasMeaningfulContent(child)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**
  * Build hierarchical tree from THREE.js scene graph
+ * Only includes objects with meaningful content (meshes or groups containing meshes)
  */
-function buildTree(obj: Object3D, lockedObjects: Set<string>, onRefresh?: () => void): TreeNode {
+function buildTree(obj: Object3D, lockedObjects: Set<string>, onRefresh?: () => void): TreeNode | null {
+  // Filter children first
+  const meaningfulChildren = obj.children
+    .filter((child) => !isSystemObject(child) && hasMeaningfulContent(child))
+    .map((child) => buildTree(child, lockedObjects, onRefresh))
+    .filter((child): child is TreeNode => child !== null);
+
+  // If this is a Group with no meaningful children, skip it
+  if (obj.type === 'Group' && meaningfulChildren.length === 0 && !(obj as any).isMesh) {
+    return null;
+  }
+
   return {
     id: obj.uuid,
     name: obj.name || obj.type,
@@ -81,10 +153,18 @@ function buildTree(obj: Object3D, lockedObjects: Set<string>, onRefresh?: () => 
     locked: lockedObjects.has(obj.uuid),
     object: obj,
     onRefresh,
-    children: obj.children
-      .filter((child) => !isSystemObject(child)) // Filter out system objects
-      .map((child) => buildTree(child, lockedObjects, onRefresh)),
+    children: meaningfulChildren,
   };
+}
+
+/**
+ * Build tree starting from scene children (skip scene root)
+ */
+function buildTreeFromScene(scene: Object3D, lockedObjects: Set<string>, onRefresh?: () => void): TreeNode[] {
+  return scene.children
+    .filter((child) => !isSystemObject(child) && hasMeaningfulContent(child))
+    .map((child) => buildTree(child, lockedObjects, onRefresh))
+    .filter((node): node is TreeNode => node !== null);
 }
 
 /**
@@ -328,22 +408,22 @@ export default function SceneHierarchyPanel({
     setRefreshKey((prev) => prev + 1);
   }, []);
 
-  // Build tree from scene
+  // Build tree from scene - only shows meaningful content (loaded models, user-added objects)
   const treeData = useMemo(() => {
     // Get scene from R3F or fallback to UniversalEditor
     const sceneRoot = r3fScene || universalEditor?.getScene();
 
     if (!sceneRoot) {
-      console.warn('⚠️ Hierarchy: No scene available');
-      console.warn('  r3fScene:', r3fScene);
-      console.warn('  universalEditor:', universalEditor);
-      console.warn('  selectionVersion:', selectionVersion);
       return [];
     }
 
-    console.info('✅ Hierarchy: Scene detected, building tree...');
-    const tree = [buildTree(sceneRoot, lockedObjects, handleRefresh)];
-    console.info(`✅ Hierarchy: Tree built with ${sceneRoot.children.length} root children`);
+    // Build tree from scene children, skipping the scene root and all system objects
+    const tree = buildTreeFromScene(sceneRoot, lockedObjects, handleRefresh);
+
+    if (tree.length > 0) {
+      console.info(`✅ Hierarchy: Found ${tree.length} objects`);
+    }
+
     return tree;
   }, [r3fScene, universalEditor, lockedObjects, refreshKey, handleRefresh, selectionVersion]);
 
@@ -431,8 +511,15 @@ export default function SceneHierarchyPanel({
             {NodeRenderer}
           </Tree>
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-            {searchQuery ? 'No objects found' : 'No scene loaded'}
+          <div className="flex flex-col items-center justify-center h-full text-gray-400 text-sm gap-2 px-4 text-center">
+            {searchQuery ? (
+              'No objects found'
+            ) : (
+              <>
+                <span>No objects in scene</span>
+                <span className="text-xs text-gray-500">Upload a 3D file or add primitives to see them here</span>
+              </>
+            )}
           </div>
         )}
       </div>

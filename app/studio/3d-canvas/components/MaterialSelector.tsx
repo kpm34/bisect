@@ -536,20 +536,8 @@ export function MaterialSelector() {
 
   return (
     <div style={styles.container}>
-      {/* Selection Status */}
-      {selectedObject ? (
-        <p style={styles.subtitle}>
-          Selected: {selectedObject.name || 'Unnamed Object'}
-        </p>
-      ) : (
-        <p style={styles.subtitleInactive}>
-          Select an object to apply materials
-        </p>
-      )}
-
       {/* Material Swatches - Horizontal Row */}
       <div style={styles.section}>
-        <h4 style={styles.sectionTitle}>SELECT MATERIAL</h4>
         <div style={styles.swatchContainer}>
           {activeCategories.map((categoryId) => {
             const isMetalCategory = categoryId === 'metal';
@@ -714,22 +702,8 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     height: '100%',
-    backgroundColor: '#2d2d2d',
+    backgroundColor: 'transparent',
     overflow: 'visible', // Allow material popups to overflow container
-  },
-
-  subtitle: {
-    margin: '0 0 8px 0',
-    padding: '0 24px',
-    fontSize: '12px',
-    color: '#b0b0b0',
-  },
-
-  subtitleInactive: {
-    margin: '0 0 8px 0',
-    padding: '0 24px',
-    fontSize: '12px',
-    color: '#808080',
   },
 
   section: {
@@ -737,26 +711,16 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     gap: '16px',
-    padding: '24px',
+    padding: '16px 20px',
     overflow: 'visible', // Allow material popups to overflow
-    backgroundColor: '#262626',
+    backgroundColor: 'transparent',
   },
 
   tintSection: {
-    padding: '20px 24px',
+    padding: '16px 20px',
     marginTop: '8px',
-    borderTop: '1px solid #3a3a3a',
-    borderBottom: '1px solid #3a3a3a',
-    backgroundColor: '#1f1f1f',
-  },
-
-  sectionTitle: {
-    margin: 0,
-    fontSize: '11px',
-    fontWeight: 600,
-    color: '#909090',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
+    borderTop: '1px solid rgba(255,255,255,0.1)',
+    backgroundColor: 'transparent',
   },
 
   // Horizontal container for all category swatches - responsive to panel width
@@ -883,9 +847,9 @@ const styles: Record<string, React.CSSProperties> = {
   } as React.CSSProperties,
 
   footer: {
-    padding: '16px 24px',
+    padding: '16px 20px',
     marginTop: '8px',
-    backgroundColor: '#2d2d2d',
+    backgroundColor: 'transparent',
   },
 };
 

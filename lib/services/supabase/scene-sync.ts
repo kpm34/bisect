@@ -81,6 +81,7 @@ class SceneSyncService {
         sceneVariables: state.sceneVariables,
         environment: state.environment,
         effects: state.effects,
+        deletedObjectNames: state.deletedObjectNames,
         timestamp: state.timestamp,
       }));
 
@@ -170,6 +171,7 @@ class SceneSyncService {
         noise: false,
         vignette: false,
       },
+      deletedObjectNames: sd.deletedObjectNames || [],
       timestamp: sd.timestamp || Date.now(),
     };
   }

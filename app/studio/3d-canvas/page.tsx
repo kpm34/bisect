@@ -10,6 +10,7 @@ import { sceneSyncService } from '@/lib/services/supabase/scene-sync';
 import { SceneEnvironment } from '@/lib/core/materials/types';
 import { useUnifiedBridge, type SceneState } from '@/hooks/useUnifiedBridge';
 import { SceneStateManager } from './components/SceneStateManager';
+import { SceneRecoveryPrompt } from './components/SceneRecoveryPrompt';
 
 // Disable SSR for SceneCanvas (requires WebGL/browser APIs)
 // Using React Three Fiber for declarative 3D scene management
@@ -221,6 +222,8 @@ function EditorContent() {
   const [panelWidth, setPanelWidth] = useState(440);
   const [isResizing, setIsResizing] = useState(false);
   const [isRestoringScene, setIsRestoringScene] = useState(!!projectId); // Only restore if project ID present
+  const [showRecoveryPrompt, setShowRecoveryPrompt] = useState(!projectId); // Show prompt if no explicit project
+  const [shouldRestoreState, setShouldRestoreState] = useState(false); // User chose to continue
 
   // Environment state - shared between SceneCanvas and SceneInspector
   // Default state - SceneStateManager will restore from L1/L2 cache
@@ -234,6 +237,36 @@ function EditorContent() {
   // Callback for restoring environment from SceneStateManager
   const handleEnvironmentRestore = useCallback((env: SceneEnvironment) => {
     setEnvironment(env);
+  }, []);
+
+  // Recovery prompt handlers
+  const handleContinueSession = useCallback(() => {
+    setShouldRestoreState(true);
+    setShowRecoveryPrompt(false);
+    console.log('▶️ User chose to continue session');
+  }, []);
+
+  const handleStartFresh = useCallback(() => {
+    // Clear all cached state
+    sceneSyncService.clearState();
+
+    // Clear localStorage directly as well
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('bisect_scene_state');
+      localStorage.removeItem('bisect_last_project');
+    }
+
+    // Reset scene state
+    setSceneFile(null);
+    setCurrentProjectId(null);
+    setShouldRestoreState(false);
+    setShowRecoveryPrompt(false);
+    setIsRestoringScene(false);
+
+    // Update URL to remove project param
+    window.history.replaceState(null, '', '/studio/3d-canvas');
+
+    console.log('🆕 User chose to start fresh - cleared all cached data');
   }, []);
 
 
@@ -435,11 +468,21 @@ function EditorContent() {
 
   return (
     <SelectionProvider>
+      {/* Scene Recovery Prompt - shows when there's saved work and no explicit project */}
+      {showRecoveryPrompt && (
+        <SceneRecoveryPrompt
+          projectId={currentProjectId}
+          onContinue={handleContinueSession}
+          onStartFresh={handleStartFresh}
+        />
+      )}
       {/* Scene State Manager - auto-saves and restores scene state on refresh */}
+      {/* skipRestore: true when user chose "Start Fresh" */}
       <SceneStateManager
         projectId={currentProjectId}
         environment={environment}
         onEnvironmentRestore={handleEnvironmentRestore}
+        skipRestore={showRecoveryPrompt || (!shouldRestoreState && !projectId)}
       />
       {/* Unified Bridge Connector - connects to ws://localhost:9877 for Blender + AI orchestration */}
       <UnifiedBridgeConnector />

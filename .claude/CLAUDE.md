@@ -447,10 +447,13 @@ AI-powered tools for Claude Code integration:
 
 | Endpoint | Purpose |
 |----------|---------|
-| `/api/configurator` | Product config, pricing, e-commerce |
-| `/api/webhooks/scene/[id]` | Scene event notifications |
-| `/api/ai/edit` | AI scene editing |
-| `/api/tex-factory/*` | Texture generation |
+| `POST /api/ai` | AI routing (actions: smart_edit, analyze_scene, suggest_materials, plan_arrangement, debate) |
+| `GET /api/ai` | List AI capabilities and agents |
+| `GET /api/materials` | List 600+ material presets |
+| `POST /api/materials` | Get details, apply, recommend materials |
+| `POST /api/configurator` | Product config, pricing, e-commerce |
+| `POST /api/webhooks/scene/[id]` | Scene event notifications |
+| `POST /api/tex-factory/generate` | Texture generation (mode: MATCAP or PBR) |
 
 ---
 

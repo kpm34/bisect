@@ -330,13 +330,36 @@ export default function ObjectEditor() {
                         {/* Divider */}
                         <div className="border-t border-gray-200 pt-3" />
 
-                        {/* Transform controls (shown when object selected) */}
-                        {selectedObject && (
-                            <>
-                                <TransformGroup label="Position" values={pos} onChange={(a, v) => handleTransformChange('pos', a, v)} step={0.1} defaultValue={0} />
-                                <TransformGroup label="Rotation" values={rot} onChange={(a, v) => handleTransformChange('rot', a, v)} step={0.1} defaultValue={0} />
-                                <TransformGroup label="Scale" values={scl} onChange={(a, v) => handleTransformChange('scl', a, v)} step={0.1} defaultValue={1} />
-                            </>
+                        {/* Transform controls - always visible with defaults */}
+                        <TransformGroup
+                            label="Position"
+                            values={selectedObject ? pos : { x: 0, y: 0, z: 0 }}
+                            onChange={(a, v) => handleTransformChange('pos', a, v)}
+                            step={0.1}
+                            defaultValue={0}
+                            disabled={!selectedObject}
+                        />
+                        <TransformGroup
+                            label="Rotation"
+                            values={selectedObject ? rot : { x: 0, y: 0, z: 0 }}
+                            onChange={(a, v) => handleTransformChange('rot', a, v)}
+                            step={0.1}
+                            defaultValue={0}
+                            disabled={!selectedObject}
+                        />
+                        <TransformGroup
+                            label="Scale"
+                            values={selectedObject ? scl : { x: 1, y: 1, z: 1 }}
+                            onChange={(a, v) => handleTransformChange('scl', a, v)}
+                            step={0.1}
+                            defaultValue={1}
+                            disabled={!selectedObject}
+                        />
+
+                        {!selectedObject && (
+                            <p className="text-xs text-gray-400 text-center mt-2">
+                                Select an object to edit transforms
+                            </p>
                         )}
                     </div>
                 )}
@@ -697,12 +720,13 @@ export default function ObjectEditor() {
 }
 
 // Helper Component for Transform Inputs
-function TransformGroup({ label, values, onChange, step, defaultValue = 0 }: {
+function TransformGroup({ label, values, onChange, step, defaultValue = 0, disabled = false }: {
     label: string,
     values: { x: number, y: number, z: number },
     onChange: (axis: 'x' | 'y' | 'z', val: number) => void,
     step: number,
-    defaultValue?: number
+    defaultValue?: number,
+    disabled?: boolean
 }) {
     // Format value - show clean numbers, default if NaN/undefined
     const formatValue = (val: number | undefined | null): string => {
@@ -713,7 +737,7 @@ function TransformGroup({ label, values, onChange, step, defaultValue = 0 }: {
     };
 
     return (
-        <div>
+        <div className={disabled ? 'opacity-60' : ''}>
             <h4 className="text-xs font-semibold text-gray-600 mb-1">{label}</h4>
             <div className="grid grid-cols-3 gap-2">
                 {(['x', 'y', 'z'] as const).map(axis => (
@@ -727,7 +751,10 @@ function TransformGroup({ label, values, onChange, step, defaultValue = 0 }: {
                             value={formatValue(values[axis])}
                             placeholder={defaultValue.toFixed(2)}
                             onChange={(e) => onChange(axis, parseFloat(e.target.value) || defaultValue)}
-                            className="w-full pl-5 pr-1 py-1 text-xs border border-gray-300 rounded focus:border-blue-500 focus:outline-none"
+                            disabled={disabled}
+                            className={`w-full pl-5 pr-1 py-1 text-xs border border-gray-300 rounded focus:border-blue-500 focus:outline-none ${
+                                disabled ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'
+                            }`}
                         />
                     </div>
                 ))}

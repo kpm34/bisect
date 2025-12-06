@@ -21,20 +21,30 @@ interface SceneStateManagerProps {
   projectId: string | null;
   environment: SceneEnvironment;
   onEnvironmentRestore: (env: SceneEnvironment) => void;
+  skipRestore?: boolean; // Skip initial restore (user chose "Start Fresh")
 }
 
 export function SceneStateManager({
   projectId,
   environment,
   onEnvironmentRestore,
+  skipRestore = false,
 }: SceneStateManagerProps) {
-  const { addedObjects, effects, sceneVariables, setAddedObjects, setEffects, setSceneVariables } = useSelection();
+  const { addedObjects, effects, sceneVariables, deletedObjectNames, setAddedObjects, setEffects, setSceneVariables, setDeletedObjectNames } = useSelection();
   const hasRestoredRef = useRef(false);
   const isInitialMountRef = useRef(true);
 
   // Restore state on initial mount (async with L1/L2 fallback)
   useEffect(() => {
     if (hasRestoredRef.current) return;
+
+    // Skip restoration if user chose "Start Fresh"
+    if (skipRestore) {
+      console.log('⏭️ Skipping state restore - user chose Start Fresh');
+      hasRestoredRef.current = true;
+      isInitialMountRef.current = false;
+      return;
+    }
 
     const restoreState = async () => {
       // Try L1 (localStorage) first, then L2 (Supabase) if empty
@@ -50,6 +60,7 @@ export function SceneStateManager({
         if (shouldRestore) {
           console.log('🔄 Restoring scene state...', {
             objects: savedState.addedObjects?.length ?? 0,
+            deleted: savedState.deletedObjectNames?.length ?? 0,
             variables: savedState.sceneVariables?.length ?? 0,
             environment: savedState.environment?.preset,
             effects: savedState.effects,
@@ -79,6 +90,12 @@ export function SceneStateManager({
             console.log('✅ Restored effects');
           }
 
+          // Restore deleted object names (for filtering loaded GLB/GLTF)
+          if (savedState.deletedObjectNames && savedState.deletedObjectNames.length > 0) {
+            setDeletedObjectNames(savedState.deletedObjectNames);
+            console.log(`✅ Restored ${savedState.deletedObjectNames.length} deleted object names`);
+          }
+
           hasRestoredRef.current = true;
         } else {
           console.log('⏭️ Skipping state restore - different project');
@@ -95,7 +112,7 @@ export function SceneStateManager({
     };
 
     restoreState();
-  }, []); // Only run on mount
+  }, [skipRestore]); // Run on mount, re-run if skipRestore changes (user made choice)
 
   // Auto-save when addedObjects changes (L1 + L2)
   useEffect(() => {
@@ -136,6 +153,16 @@ export function SceneStateManager({
       sceneVariables,
     });
   }, [sceneVariables, projectId]);
+
+  // Auto-save when deletedObjectNames change (L1 + L2)
+  useEffect(() => {
+    if (isInitialMountRef.current) return;
+
+    sceneSyncService.saveState({
+      projectId,
+      deletedObjectNames,
+    });
+  }, [deletedObjectNames, projectId]);
 
   // Save project ID for quick restoration
   useEffect(() => {

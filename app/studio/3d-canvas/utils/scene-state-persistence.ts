@@ -27,6 +27,8 @@ export interface PersistedSceneState {
     noise: boolean;
     vignette: boolean;
   };
+  // Track deleted objects from loaded GLB/GLTF files
+  deletedObjectNames: string[];
   timestamp: number;
 }
 
@@ -77,6 +79,7 @@ class SceneStatePersistence {
         sceneVariables: state.sceneVariables ?? existing?.sceneVariables ?? [],
         environment: state.environment ?? existing?.environment ?? DEFAULT_ENVIRONMENT,
         effects: state.effects ?? existing?.effects ?? DEFAULT_EFFECTS,
+        deletedObjectNames: state.deletedObjectNames ?? existing?.deletedObjectNames ?? [],
         timestamp: Date.now(),
       };
 
@@ -84,6 +87,7 @@ class SceneStatePersistence {
       console.log('💾 Scene state saved:', {
         projectId: newState.projectId,
         objects: newState.addedObjects.length,
+        deleted: newState.deletedObjectNames.length,
         variables: newState.sceneVariables.length,
         env: newState.environment.preset,
       });
@@ -118,6 +122,7 @@ class SceneStatePersistence {
       console.log('📂 Scene state loaded:', {
         projectId: state.projectId,
         objects: state.addedObjects?.length ?? 0,
+        deleted: state.deletedObjectNames?.length ?? 0,
         variables: state.sceneVariables?.length ?? 0,
         env: state.environment?.preset,
         age: Math.round((Date.now() - state.timestamp) / 1000) + 's ago',

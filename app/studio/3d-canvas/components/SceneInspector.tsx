@@ -38,9 +38,28 @@ interface SceneInspectorProps {
 export default function SceneInspector({ onTabChange, environment, onEnvironmentChange }: SceneInspectorProps) {
   const [activeTab, setActiveTab] = useState<TabId>('material');
 
+  // Preset-specific blur values (studio needs less blur for clean product shots)
+  const PRESET_BLUR: Record<EnvironmentPreset, number> = {
+    studio: 0.5,
+    city: 0.8,
+    sunset: 0.7,
+    dawn: 0.7,
+    night: 0.6,
+    forest: 0.8,
+    warehouse: 0.6,
+    park: 0.8,
+    apartment: 0.7,
+    lobby: 0.6,
+  };
+
   // Environment setter helpers
   const setPreset = (preset: EnvironmentPreset) =>
-    onEnvironmentChange({ ...environment, preset, hdriUrl: undefined });
+    onEnvironmentChange({
+      ...environment,
+      preset,
+      blur: PRESET_BLUR[preset] ?? 0.8,
+      hdriUrl: undefined
+    });
   const setBackground = (background: boolean) =>
     onEnvironmentChange({ ...environment, background });
   const setBlur = (blur: number) =>
@@ -55,47 +74,44 @@ export default function SceneInspector({ onTabChange, environment, onEnvironment
 
   return (
     <>
-      {/* Tab Bar - Layer 3: Tab switching logic */}
-      <div className="px-3 pt-4 pb-2">
-        <nav className="flex gap-0.5 px-1.5 py-1.5 bg-[#f5f3ed] rounded-full shadow-md">
+      {/* Unified Tab Container - tabs and content connected */}
+      <div className="flex-1 mx-3 mb-3 mt-3 bg-[#1a1a1a] rounded-2xl shadow-lg overflow-hidden flex flex-col">
+        {/* Tab Bar - integrated with content */}
+        <nav className="flex gap-0.5 px-2 py-2 bg-[#262626] border-b border-white/5">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`flex-1 px-2 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${activeTab === tab.id
-                ? 'bg-[#5ba4cf] text-white shadow-md'
-                : 'bg-transparent text-gray-600 hover:text-gray-900'
+              className={`flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${activeTab === tab.id
+                ? 'bg-[#5ba4cf] text-white shadow-sm'
+                : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
             >
               {tab.label}
             </button>
           ))}
         </nav>
-      </div>
 
-      {/* Tab Content - Layer 3: Single container for content */}
-      <div className="flex-1 mx-4 mb-4 bg-[#f5f3ed] rounded-2xl shadow-inner overflow-y-auto px-4 pt-5 pb-8">
+        {/* Tab Content - flows from tabs */}
+        <div className="flex-1 overflow-y-auto">
         {activeTab === 'material' && <MaterialSelector />}
 
         {activeTab === 'object' && (
-          <>
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Object Editor</h3>
+          <div className="p-4">
             <ObjectEditor />
-          </>
+          </div>
         )}
 
         {activeTab === 'animation' && (
-          <>
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Animation</h3>
-            <p className="text-sm text-gray-600">
+          <div className="p-4">
+            <p className="text-sm text-gray-400">
               Animation timeline and controls will appear here.
             </p>
-          </>
+          </div>
         )}
 
         {activeTab === 'scene' && (
-          <>
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Environment & Lighting</h3>
+          <div className="p-4">
             <EnvironmentControls
               currentPreset={environment.preset || 'city'}
               onPresetChange={setPreset}
@@ -106,15 +122,15 @@ export default function SceneInspector({ onTabChange, environment, onEnvironment
               intensity={environment.intensity ?? 1.0}
               onIntensityChange={setIntensity}
             />
-          </>
+          </div>
         )}
 
         {activeTab === 'events' && (
-          <>
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Events & Effects</h3>
+          <div className="p-4">
             <EventsPanel />
-          </>
+          </div>
         )}
+        </div>
       </div>
     </>
   );
